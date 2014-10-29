@@ -1,4 +1,4 @@
-var QueueWorker = require('./queue_worker'),
+var QueueWorker = require('./lib/queue_worker'),
     Firebase = require('firebase');
 
 /**
