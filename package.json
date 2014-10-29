@@ -1,0 +1,27 @@
+{
+  "name": "firebase-queue",
+  "version": "0.0.1",
+  "description": "A Job Queue Built on Firebase",
+  "keywords": [
+    "firebase",
+    "queue"
+  ],
+  "author": "Firebase <support@firebase.com>",
+  "contributors": [
+    {
+      "name": "Chris Raynor",
+      "email": "chris@firebase.com"
+    }
+  ],
+  "repository": "https://github.com/firebase/firebase-queue.git",
+  "homepage": "https://github.com/firebase/firebase-queue",
+  "dependencies": {
+    "firebase": "1.2.0-beta.3",
+    "uuid": "2.x"
+  },
+  "main": "queue.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "engineStrict": true
+}
