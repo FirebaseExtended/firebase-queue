@@ -60,8 +60,9 @@ job definition. See our [Custom Authentication Guide](https://www.firebase.com/d
 
 Initializing the workers is fairly simple, simply specify the location of the
 queue, give it an access token, number of processes to run, and a processing
-function that takes a snapshot of the queue item, and two callback functions -
-one for if it completes successfully, and one for if it errors
+function that takes a snapshot of the queue item, and three callback functions -
+one for reporting back progress, one if the function completes successfully, and
+one for if it errors
 
 ```js
 var Q = require('firebase-queue');
@@ -70,7 +71,7 @@ var queue = new Q(
   'https://yourapp.firebaseio.com/queue',
   '<token>', // JWT for https://yourapp.firebaseio.com with the job ID as the 'uid'
   5, // number of workers
-  function(data, resolve, reject) {
+  function(data, progress, resolve, reject) {
   	// The processing function
     setTimeout(resolve, 2000, {some: "calculated result"});
   });

@@ -34,6 +34,7 @@ function QueueWorker(authenticatedRef, processId, processingFunction) {
   self.currentItemRef = null;
   self.newItemRef = null;
 
+  self.currentItemListener = null;
   self.newItemListener = null;
   self.processingItemAddedListener = null;
   self.processingItemRemovedListener = null;
@@ -117,6 +118,7 @@ QueueWorker.prototype.tryToProcess = function() {
         queueItem['_state'] = self.inProgressState;
         queueItem['_state_changed'] = Firebase.ServerValue.TIMESTAMP;
         queueItem['_owner'] = self.uuid;
+        queueItem['_progress'] = 0;
         queueItem['_error_details'] = null;
         return queueItem;
       } else {
@@ -134,9 +136,19 @@ QueueWorker.prototype.tryToProcess = function() {
         self.currentItemRef = new Firebase(snapshot.ref().toString(), new Firebase.Context());
         // -----------------------------------------------------------------------------------
         // self.currentItemRef = snapshot.ref();
+        self.currentItemListener = self.currentItemRef
+            .child('_owner').on('value', function(snapshot) {
+          if (snapshot.val() !== self.uuid) {
+            self.currentItemRef.child('_owner').off(
+              'value',
+              self.currentItemListener);
+            self.currentItemRef = null;
+          }
+        });
         self.busy = true;
         self.processingFunction(
           snapshot.val(),
+          self.updateProgress.bind(self),
           self.resolve.bind(self),
           self.reject.bind(self));
       }
@@ -240,35 +252,38 @@ QueueWorker.prototype.processTimeout = function(ref) {
  */
 QueueWorker.prototype.resolve = function(newQueueItem) {
   var self = this;
-  self.currentItemRef.transaction(function(queueItem) {
-    if (queueItem === null) {
-      return queueItem;
-    }
-    var currentState = queueItem['_state'] || null;
-    if (currentState === self.inProgressState &&
-        queueItem['_owner'] === self.uuid) {
-      if (typeof(newQueueItem) !== 'object') {
-        newQueueItem = queueItem;
+  if (self.currentItemRef !== null) {
+    self.currentItemRef.transaction(function(queueItem) {
+      if (queueItem === null) {
+        return queueItem;
       }
-      newQueueItem['_state'] = self.finishedState;
-      newQueueItem['_state_changed'] = Firebase.ServerValue.TIMESTAMP;
-      newQueueItem['_owner'] = null;
-      newQueueItem['_error_details'] = null;
-      return newQueueItem;
-    } else {
-      return;
-    }
-  }, function(error, committed, snapshot) {
-    if (error) {
-      throw error;
-    }
-    if (committed && snapshot.child('_state').val() === self.finishedState) {
-      console.log('Process ' + self.jobId + ':' + self.processId + ' (' +
-          self.uuid + ') completed ' + snapshot.name() + '.');
-    }
-    self.busy = false;
-    self.tryToProcess();
-  }, false);
+      var currentState = queueItem['_state'] || null;
+      if (currentState === self.inProgressState &&
+          queueItem['_owner'] === self.uuid) {
+        if (typeof(newQueueItem) !== 'object') {
+          newQueueItem = queueItem;
+        }
+        newQueueItem['_state'] = self.finishedState;
+        newQueueItem['_state_changed'] = Firebase.ServerValue.TIMESTAMP;
+        newQueueItem['_owner'] = null;
+        newQueueItem['_progress'] = 100;
+        newQueueItem['_error_details'] = null;
+        return newQueueItem;
+      } else {
+        return;
+      }
+    }, function(error, committed, snapshot) {
+      if (error) {
+        throw error;
+      }
+      if (committed && snapshot.child('_state').val() === self.finishedState) {
+        console.log('Process ' + self.jobId + ':' + self.processId + ' (' +
+            self.uuid + ') completed ' + snapshot.name() + '.');
+      }
+      self.busy = false;
+      self.tryToProcess();
+    }, false);
+  }
 };
 
 /**
@@ -278,36 +293,66 @@ QueueWorker.prototype.resolve = function(newQueueItem) {
  */
 QueueWorker.prototype.reject = function(error) {
   var self = this;
-  self.currentItemRef.transaction(function(queueItem) {
-    if (queueItem === null) {
-      return queueItem;
-    }
-    var currentState = queueItem['_state'] || null;
-    if (currentState === self.inProgressState &&
-        queueItem['_owner'] === self.uuid) {
-      queueItem['_state'] = 'error';
-      queueItem['_state_changed'] = Firebase.ServerValue.TIMESTAMP;
-      queueItem['_owner'] = null;
-      queueItem['_error_details'] = {
-        previousState: self.inProgressState,
-        error: error || null
-      };
-      return queueItem;
-    } else {
-      return;
-    }
-  }, function(error, committed, snapshot) {
-    if (error) {
-      throw error;
-    }
-    if (committed && snapshot.child('_state').val() === 'error') {
-      console.log('Process ' + self.jobId + ':' + self.processId + ' (' +
-          self.uuid + ') errored while attempting to complete ' +
-          snapshot.name() + '.');
-    }
-    self.busy = false;
-    self.tryToProcess();
-  }, false);
+  if (self.currentItemRef !== null) {
+    self.currentItemRef.transaction(function(queueItem) {
+      if (queueItem === null) {
+        return queueItem;
+      }
+      var currentState = queueItem['_state'] || null;
+      if (currentState === self.inProgressState &&
+          queueItem['_owner'] === self.uuid) {
+        queueItem['_state'] = 'error';
+        queueItem['_state_changed'] = Firebase.ServerValue.TIMESTAMP;
+        queueItem['_owner'] = null;
+        queueItem['_error_details'] = {
+          previousState: self.inProgressState,
+          error: error || null
+        };
+        return queueItem;
+      } else {
+        return;
+      }
+    }, function(error, committed, snapshot) {
+      if (error) {
+        throw error;
+      }
+      if (committed && snapshot.child('_state').val() === 'error') {
+        console.log('Process ' + self.jobId + ':' + self.processId + ' (' +
+            self.uuid + ') errored while attempting to complete ' +
+            snapshot.name() + '.');
+      }
+      self.busy = false;
+      self.tryToProcess();
+    }, false);
+  }
+};
+
+/**
+ * Updates the progress of the .
+ * @param {Number} progress The progress to report.
+ */
+QueueWorker.prototype.updateProgress = function(progress) {
+  var self = this;
+  if (typeof(progress) === 'number' && progress >= 0 && progress <= 100 &&
+      self.currentItemRef !== null) {
+    self.currentItemRef.transaction(function(queueItem) {
+      if (queueItem === null) {
+        return queueItem;
+      }
+      var currentState = queueItem['_state'] || null;
+      if (currentState === self.inProgressState &&
+          queueItem['_owner'] === self.uuid) {
+        queueItem['_progress'] = progress;
+        return queueItem;
+      } else {
+        return;
+      }
+    }, function(error, committed, snapshot) {
+      if (error) {
+        throw error;
+      }
+    }, false);
+  }
 };
 
 /**
