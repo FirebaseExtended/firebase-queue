@@ -37,7 +37,9 @@ function Queue(referenceUrl, token, numWorkers, processingFunction) {
       self.workers.push(QueueWorker(self.ref, i, processingFunction));
     }
 
-    self.ref.parent().child('_jobs').child(self.jobId).on('value',
+    var jobId = authData.uid;
+
+    self.ref.parent().child('_jobs').child(jobId).on('value',
       function(jobSpecSnap) {
         if (jobSpecSnap.val() === null) {
           throw new Error('No job specified for this worker');
