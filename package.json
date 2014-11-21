@@ -16,7 +16,7 @@
   "repository": "https://github.com/firebase/firebase-queue.git",
   "homepage": "https://github.com/firebase/firebase-queue",
   "dependencies": {
-    "firebase": "1.2.0-beta.4",
+    "firebase": "2.0.4",
     "uuid": "2.x"
   },
   "main": "queue.js",
