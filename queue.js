@@ -41,6 +41,8 @@ function Queue(ref, jobId, numWorkers, processingFunction) {
         throw new Error('No state specified for this job');
       }
 
+      // TODO: change state specification to be more intuative
+
       var jobSpec = {
         startState: jobSpecSnap.child('state/start').val(),
         inProgressState: jobSpecSnap.child('state/inProgress').val(),
