@@ -10,10 +10,10 @@ items will be pushed to. e.g. `https://yourapp.firebaseio.com/`
 ## Defining Jobs
 
 To get started first you'll need to define your jobs. The job definitions should
-be placed in an object with the name `Jobs` in the Firebase as a sibling to
+be placed in an object with the name `jobs` in the Firebase as a sibling to
 your queue location. e.g. assuming the queue location of
-`https://yourapp.firebaseio.com/Queue`, the job definition should be defined at
-`https://yourapp.firebaseio.com/Jobs` and have the form:
+`https://yourapp.firebaseio.com/queue`, the job definition should be defined at
+`https://yourapp.firebaseio.com/jobs` and have the form:
 
 ```json
 {

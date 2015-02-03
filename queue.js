@@ -29,10 +29,10 @@ function Queue(ref, jobId, numWorkers, processingFunction) {
   self.ref = ref;
   self.workers = [];
   for (var i = 0; i < numWorkers; i++) {
-    self.workers.push(QueueWorker(self.ref, i, processingFunction));
+    self.workers.push(QueueWorker(self.ref.child('queue'), i, processingFunction));
   }
 
-  self.ref.child('Jobs').child(jobId).on('value',
+  self.ref.child('jobs').child(jobId).on('value',
     function(jobSpecSnap) {
       if (jobSpecSnap.val() === null) {
         throw new Error('No job specified for this worker');
