@@ -24,7 +24,7 @@ function Queue(ref, jobId, numWorkers, processingFunction) {
   if (typeof(numWorkers) !== 'number' ||
         numWorkers % 1 !== 0 ||
         numWorkers <= 0) {
-    throw new Error('The number of workers must be a possitive integer');
+    throw new Error('The number of workers must be a positive integer');
   }
   self.ref = ref;
   self.workers = [];
@@ -32,7 +32,7 @@ function Queue(ref, jobId, numWorkers, processingFunction) {
     self.workers.push(QueueWorker(self.ref, i, processingFunction));
   }
 
-  self.ref.parent().child('_jobs').child(jobId).on('value',
+  self.ref.child('Jobs').child(jobId).on('value',
     function(jobSpecSnap) {
       if (jobSpecSnap.val() === null) {
         throw new Error('No job specified for this worker');
