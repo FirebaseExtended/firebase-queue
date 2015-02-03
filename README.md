@@ -5,16 +5,15 @@ A fault-tolerant, multi-worker, multi-stage job pipeline based on Firebase.
 ## The Queue
 
 The queue itself will be a location in a Firebase of your choosing that the
-items will be pushed to. This location can be any Firebase location not at the
-root of a Firebase. e.g. `https://yourapp.firebaseio.com/queue`
+items will be pushed to. e.g. `https://yourapp.firebaseio.com/`
 
 ## Defining Jobs
 
 To get started first you'll need to define your jobs. The job definitions should
-be placed in an object with the name `_jobs` in the Firebase as a sibling to
+be placed in an object with the name `Jobs` in the Firebase as a sibling to
 your queue location. e.g. assuming the queue location of
-`https://yourapp.firebaseio.com/queue`, the job definition should be defined at
-`https://yourapp.firebaseio.com/_jobs` and have the form:
+`https://yourapp.firebaseio.com/Queue`, the job definition should be defined at
+`https://yourapp.firebaseio.com/Jobs` and have the form:
 
 ```json
 {
@@ -68,7 +67,7 @@ one for if it errors
 var Q = require('firebase-queue');
 
 var queue = new Q(
-  'https://yourapp.firebaseio.com/queue',
+  'https://yourapp.firebaseio.com/',
   '<token>', // JWT for https://yourapp.firebaseio.com with the job ID as the 'uid'
   5, // number of workers
   function(data, progress, resolve, reject) {
