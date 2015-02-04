@@ -18,7 +18,6 @@ var QueueWorker = require('./lib/queue_worker');
  *         '_error_details/error' location in the queue item.
  */
 module.exports = Queue;
-var DEFAULT_JOB_ID = "default_job";
 var DEFAULT_JOB_STATE_FINISHED = "finished";
 var DEFAULT_JOB_STATE_IN_PROGRESS = "in_progress";
 var DEFAULT_NUM_WORKERS = 1;
@@ -27,33 +26,21 @@ function Queue() {
   var ref, options, jobId, numWorkers, processingFunction;
   if (arguments.length === 2) {
     ref = arguments[0];
-    jobId = DEFAULT_JOB_ID;
     numWorkers = DEFAULT_NUM_WORKERS;
     processingFunction = arguments[1];
-  }
-  else if (arguments.length === 3) {
+  } else if (arguments.length === 3) {
     ref = arguments[0];
     options = arguments[1];
     if (typeof(options.jobId) === 'string') {
       jobId = options.jobId;
     }
-    else {
-      jobId = DEFAULT_JOB_ID;
-    }
-    if (typeof(options.numWorkers === 'number')) {
+    if (typeof(options.numWorkers) === 'number' && options.numWorkers % 1 === 0 && options.numWorkers > 0) {
       numWorkers = options.numWorkers;
-      if (typeof(numWorkers) !== 'number' ||
-            numWorkers % 1 !== 0 ||
-            numWorkers <= 0) {
-        throw new Error('The number of workers must be a positive integer');
-      }
-    }
-    else {
+    } else {
       numWorkers = DEFAULT_NUM_WORKERS;
     }
     processingFunction = arguments[2];
-  }
-  else {
+  } else {
     throw new Error('Queue must at least have the queueRef and processingFunction arguments.');
   }
   var self = this;
@@ -62,7 +49,7 @@ function Queue() {
   for (var i = 0; i < numWorkers; i++) {
     self.workers.push(QueueWorker(self.ref.child('queue'), i, processingFunction));
   }
-  if (jobId !== DEFAULT_JOB_ID) {
+  if (jobId !== undefined) {
     self.ref.child('jobs').child(jobId).on('value',
       function(jobSpecSnap) {
         if (jobSpecSnap.val() === null) {
@@ -76,14 +63,12 @@ function Queue() {
         if (inProgressState === null) {
           throw new Error('No state_in_progress specified for this job');
         }
-
         var jobSpec = {
           startState: jobSpecSnap.child('state_start').val(),
           inProgressState: inProgressState,
           finishedState: finishedState,
           jobTimeout: jobSpecSnap.child('timeout').val()
         };
-
         for (var i = 0; i < numWorkers; i++) {
           self.workers[i].resetJob(jobSpec);
         }
@@ -91,8 +76,7 @@ function Queue() {
       function(error) {
         throw error;
       });
-  }
-  else {
+  } else {
     jobSpec = {
       startState: null,
       inProgressState: DEFAULT_JOB_STATE_IN_PROGRESS,
