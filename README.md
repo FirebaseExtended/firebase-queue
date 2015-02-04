@@ -5,7 +5,7 @@ A fault-tolerant, multi-worker, multi-stage job pipeline based on Firebase.
 ## The Queue
 
 The queue itself will be a location in a Firebase of your choosing that the
-items will be pushed to. e.g. `https://yourapp.firebaseio.com/`
+items will be pushed to. e.g. `https://yourapp.firebaseio.com/queue`
 
 ## Defining Jobs
 
@@ -18,32 +18,25 @@ your queue location. e.g. assuming the queue location of
 ```json
 {
   "job_1" : {
-    "state" : {
-      "finished" : "job_1_finished",
-      "inProgress" : "job_1_in_progress",
-      "start" : "job_1_ready"
-    },
+    "state_finished" : "job_1_finished",
+    "state_in_progress" : "job_1_in_progress",
+    "state_start" : "job_1_ready",
     "timeout" : 5000
   },
   "job_2" : {
-    "state" : {
-      "finished" : "job_2_finished",
-      "inProgress" : "job_2_in_progress",
-      "start" : "job_1_finished"
-    },
+    "state_finished" : "job_2_finished",
+    "state_in_progress" : "job_2_in_progress",
+    "state_start" : "job_1_finished",
     "timeout" : 9000
   }
 }
 ```
 
-`state/inProgress` and `state/finished` are required for each job, but
-`state/start` and `timeout` are optional. If the start state of the job is
+`state_in_progress` and `state_finished` are required for each job, but
+`state_start` and `timeout` are optional. If the start state of the job is
 omitted, the workers will match any item in the list without a `_state`
 parameter, and if `timeout` is omitted, each job will only ever be attempted
 once.
-
-Currently omitting `state/start` is broken, but a fix to the client should be
-coming soon.
 
 Here we're chaining jobs by specifying the same `state/start` for `job_2` as
 `state/finished` for `job_1`. If any job errors, the `_state` parameter is set
@@ -84,5 +77,5 @@ ensure that only one worker is processing a single queue item at a time.
 
 The final stage is pushing items onto the queue. Because we're using Firebase
 this is the easy bit. From any Firebase client, simply push an object with some
-metadata to pass to the first job to the queue location, with the `_state` key
-matching the `state/start` of the first job.
+metadata to pass to the first job to the queue location, optionally setting the
+ `_state` key matching the `state_start` of the first job.
