@@ -49,7 +49,7 @@ function Queue() {
   for (var i = 0; i < numWorkers; i++) {
     self.workers.push(QueueWorker(self.ref.child('queue'), i, processingFunction));
   }
-  if (jobId !== undefined) {
+  if (typeof(jobId) !== 'undefined') {
     self.ref.child('jobs').child(jobId).on('value',
       function(jobSpecSnap) {
         if (jobSpecSnap.val() === null) {
