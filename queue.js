@@ -3,9 +3,8 @@ var QueueWorker = require('./lib/queue_worker');
 /**
  * @constructor
  * @param {Firebase} ref A firebase reference to the queue.
- * @param {Object} (optional) 
-     Object containing keys for JobID: the current job ID.
-                            and numWorkers: The number of workers to create for this job.
+ * @param {Object} (optional) Object containing keys for jobId: the current job ID.
+     and numWorkers: The number of workers to create for this job.
  * @param {Function} processingFunction A function that is called each time to
  *   process the queue item. This function is passed three parameters:
  *     - data {Object} The current data at the location.
@@ -19,30 +18,29 @@ var QueueWorker = require('./lib/queue_worker');
  *         '_error_details/error' location in the queue item.
  */
 module.exports = Queue;
-
-var DEFAULT_JOB_ID = "Default_Job_ID";
-var DEFAULT_JOB_STATE_FINISHED = "Job Finished";
-var DEFAULT_JOB_STATE_IN_PROGRESS = "Job In Progress";
+var DEFAULT_JOB_ID = "default_job";
+var DEFAULT_JOB_STATE_FINISHED = "finished";
+var DEFAULT_JOB_STATE_IN_PROGRESS = "in_progress";
 var DEFAULT_NUM_WORKERS = 1;
 var DEFAULT_TIMEOUT = 360000;
-
 function Queue() {
-  if (arguments.length == 2) {
+  var ref, options, jobId, numWorkers, processingFunction;
+  if (arguments.length === 2) {
     ref = arguments[0];
-    jobID = DEFAULT_JOB_ID;
+    jobId = DEFAULT_JOB_ID;
     numWorkers = DEFAULT_NUM_WORKERS;
     processingFunction = arguments[1];
   }
-  else if (arguments.length == 3) {
+  else if (arguments.length === 3) {
     ref = arguments[0];
     options = arguments[1];
-    if ('jobID' in options) {
-      jobID = options.jobID;
+    if (typeof(options.jobId) === 'string') {
+      jobId = options.jobId;
     }
     else {
-      jobID = DEFAULT_JOB_ID;
+      jobId = DEFAULT_JOB_ID;
     }
-    if ('numWorkers' in options) {
+    if (typeof(options.numWorkers === 'number')) {
       numWorkers = options.numWorkers;
       if (typeof(numWorkers) !== 'number' ||
             numWorkers % 1 !== 0 ||
@@ -55,17 +53,17 @@ function Queue() {
     }
     processingFunction = arguments[2];
   }
-
+  else {
+    throw new Error('Queue must at least have the queueRef and processingFunction arguments.');
+  }
   var self = this;
-
   self.ref = ref;
   self.workers = [];
   for (var i = 0; i < numWorkers; i++) {
     self.workers.push(QueueWorker(self.ref.child('queue'), i, processingFunction));
   }
-
-  if (jobID !== DEFAULT_JOB_ID) {
-    self.ref.child('jobs').child(jobID).on('value',
+  if (jobId !== DEFAULT_JOB_ID) {
+    self.ref.child('jobs').child(jobId).on('value',
       function(jobSpecSnap) {
         if (jobSpecSnap.val() === null) {
           throw new Error('No job specified for this worker');
@@ -93,7 +91,6 @@ function Queue() {
       function(error) {
         throw error;
       });
-    
   }
   else {
     jobSpec = {
@@ -106,6 +103,5 @@ function Queue() {
       self.workers[j].resetJob(jobSpec);
     }
   }
-
   return self;
 }
