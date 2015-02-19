@@ -1,20 +1,114 @@
 # Firebase Queue
 
-A fault-tolerant, multi-worker, multi-stage job pipeline based on Firebase.
+A fault-tolerant, multi-worker, multi-stage job pipeline based on top of Firebase.
 
-## The Queue
+## The Queue in Firebase
 
-The queue itself will be a location in a Firebase of your choosing that the
-items will be pushed to. e.g. `https://yourapp.firebaseio.com/queue`
+Provide a location in your Firebase for the queue to operate in e.g. `https://yourapp.firebaseio.com/location`.  This location will have a `queue` subtree and an optional `jobs` subtree
+```
+location
+  -> jobs
+  -> queue
+```
 
-## Defining Jobs
+## Queue Workers
 
-To get started first you'll need to define your jobs. The job definitions should
-be placed in an object with the name `jobs` in the Firebase as a sibling to
-your queue location. e.g. assuming the queue location of
-`https://yourapp.firebaseio.com/queue`, the job definition should be defined at
-`https://yourapp.firebaseio.com/jobs` and have the form:
+Start a worker process by passing in a Firebase [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function that takes a snapshot of the queue item, and three callback functions:
+  - `progress()` for reporting back job progress,
+  - `resolve()` for reporting successful job completion,
+  - `reject()` for reporting job error
 
+```js
+// queue-worker.js
+
+var Queue = require('firebase-queue'),
+    Firebase = require('firebase');
+
+var ref = new Firebase('https://yourapp.firebaseio.com/location');
+var queue = new Queue(ref, function(data, progress, resolve, reject) {
+  // Read and process job data
+  console.log(data);
+
+  // Do some work
+  progress(50);
+
+  // Finish the job
+  resolve({ 'foo': 'baz' });
+});
+```
+
+```shell
+node queue-worker.js
+```
+
+
+Multiple queue workers can be initialized on multiple machines and Firebase-Queue will ensure that only one worker is processing a single queue item at a time.
+
+#### Queue Worker Options
+
+Queue workers can take an optional options object to specify:
+  - `jobId` - specifies the job type for this worker
+  - `numWorkers` - specifies the number of workers to run simultaneously for this node.js thread.  Defaults to 1 worker.
+
+```js
+...
+
+var options = {
+  'jobId': 'job_id_1',
+  'numWorkers': 5
+};
+var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
+  ...
+});
+```
+
+## Pushing Jobs Onto the Queue
+
+Using any Firebase client or the REST API, push an object with some metadata onto the `queue` subtree of your Firebase.  Queue Workers listening on that subtree will automatically pick up and process the job.
+
+```shell
+# Using curl in shell
+curl -X POST -d '{"foo": "bar"}' https://yourapp.firebaseio.com/location/queue.json
+```
+or
+```js
+// Firebase Javascript Client
+var Firebase = require('firebase');
+
+var ref = new Firebase('https://yourapp.firebaseio.com/location/queue');
+ref.push({'foo':'bar'});
+```
+
+## Defining Jobs (Optional)
+
+#### Default Job
+
+A default job configuration is assumed if no jobs are specified in the `jobs` subtree.  The default job has the following characteristics:
+
+```json
+{
+  "default_job" : {
+    "state_start" : null,
+    "state_finished" : "finished",
+    "state_in_progress" : "in_progress",
+    "timeout" : 360000
+  }
+}
+```
+
+- `state_start` - The default job has no "state_start".  Which means any job pushed onto the `queue` subtree without a `_state` key will be picked up by default job workers.
+- `state_in_progress` - When a worker picks up a job and begins processing it, it will change the job's `_state` to the value of `state_in_progress`
+- `state_finished` - When a worker completes a job, it will change the job's `_state` to the value of `state_finished`
+- `timeout` - When a job has been claimed by a worker and has not completed or errored after `timeout` milliseconds, other jobs will report that job as timed out, and reset that job to be claimable by other workers.  
+
+#### Custom Jobs and Job Chaining
+
+Custom jobs may be defined to coordinate different jobs for different workers.  In this jobs example, we're chaining jobs.  New jobs start in `job_1_ready` state, and on completion they become `job_1_finished` which is the start state for `job_2`.
+
+```
+location
+  -> jobs
+```
 ```json
 {
   "job_1" : {
@@ -31,51 +125,3 @@ your queue location. e.g. assuming the queue location of
   }
 }
 ```
-
-`state_in_progress` and `state_finished` are required for each job, but
-`state_start` and `timeout` are optional. If the start state of the job is
-omitted, the workers will match any item in the list without a `_state`
-parameter, and if `timeout` is omitted, each job will only ever be attempted
-once.
-
-Here we're chaining jobs by specifying the same `state/start` for `job_2` as
-`state/finished` for `job_1`. If any job errors, the `_state` parameter is set
-to `error`.
-
-## Custom Tokens
-
-In order for a worker to know which job it is acting as, it must be passed an
-access token to the Firebase with the `uid` set to the job ID matching the
-job definition. See our [Custom Authentication Guide](https://www.firebase.com/docs/web/guide/login/custom.html)
-
-## Creating Workers
-
-Initializing the workers is fairly simple, simply specify the location of the
-queue, give it an access token, number of processes to run, and a processing
-function that takes a snapshot of the queue item, and three callback functions -
-one for reporting back progress, one if the function completes successfully, and
-one for if it errors
-
-```js
-var Q = require('firebase-queue');
-
-var queue = new Q(
-  'https://yourapp.firebaseio.com/',
-  '<token>', // JWT for https://yourapp.firebaseio.com with the job ID as the 'uid'
-  5, // number of workers
-  function(data, progress, resolve, reject) {
-  	// The processing function
-    setTimeout(resolve, 2000, {some: "calculated result"});
-  });
-```
-
-Multiple worker queues can be initialized for different jobs in the same file,
-or the same job can be initialized on multiple machines and the queue will
-ensure that only one worker is processing a single queue item at a time.
-
-## Pushing Items onto the Queue
-
-The final stage is pushing items onto the queue. Because we're using Firebase
-this is the easy bit. From any Firebase client, simply push an object with some
-metadata to pass to the first job to the queue location, optionally setting the
- `_state` key matching the `state_start` of the first job.
