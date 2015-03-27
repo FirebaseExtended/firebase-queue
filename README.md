@@ -54,7 +54,7 @@ Queue workers can take an optional options object to specify:
 ...
 
 var options = {
-  'jobId': 'job_id_1',
+  'jobId': 'job_1',
   'numWorkers': 5
 };
 var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
