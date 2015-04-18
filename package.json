@@ -1,10 +1,13 @@
 {
   "name": "firebase-queue",
   "version": "0.0.1",
-  "description": "A Job Queue Built on Firebase",
+  "description": "A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.",
   "keywords": [
     "firebase",
-    "queue"
+    "queue",
+    "worker",
+    "job",
+    "pipeline"
   ],
   "author": "Firebase <support@firebase.com>",
   "contributors": [
@@ -20,7 +23,8 @@
   "repository": "https://github.com/firebase/firebase-queue.git",
   "homepage": "https://github.com/firebase/firebase-queue",
   "dependencies": {
-    "firebase": "2.1.x",
+    "firebase": "2.x",
+    "rsvp": "3.x",
     "uuid": "2.x"
   },
   "main": "queue.js",
