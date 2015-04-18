@@ -77,7 +77,7 @@ function Queue() {
         jobTimeout: DEFAULT_TIMEOUT
       };
       for (var j = 0; j < self.numWorkers; j++) {
-        self.workers[j].resetJob(jobSpec);
+        self.workers[j].setJob(jobSpec);
       }
       return resolve();
     } else {
@@ -91,7 +91,7 @@ function Queue() {
             };
 
         for (var i = 0; i < self.numWorkers; i++) {
-          self.workers[i].resetJob(jobSpec);
+          self.workers[i].setJob(jobSpec);
         }
         if (!initialized) {
           initialized = true;
