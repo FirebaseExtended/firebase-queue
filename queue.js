@@ -35,19 +35,20 @@ var DEFAULT_NUM_WORKERS = 1,
  */
 function Queue() {
   var self = this;
+  var constructorArguments = arguments;
 
   return new RSVP.Promise(function(resolve, reject) {
     self.numWorkers = DEFAULT_NUM_WORKERS;
 
-    if (arguments.length < 2) {
+    if (constructorArguments.length < 2) {
       return reject('Queue must at least have the queueRef and ' +
         'processingFunction arguments.');
-    } else if (arguments.length === 2) {
-      self.ref = arguments[0];
-      self.processingFunction = arguments[1];
-    } else if (arguments.length === 3) {
-      self.ref = arguments[0];
-      var options = arguments[1];
+    } else if (constructorArguments.length === 2) {
+      self.ref = constructorArguments[0];
+      self.processingFunction = constructorArguments[1];
+    } else if (constructorArguments.length === 3) {
+      self.ref = constructorArguments[0];
+      var options = constructorArguments[1];
       if (typeof(options.jobId) === 'string') {
         self.jobId = options.jobId;
       }
@@ -56,7 +57,7 @@ function Queue() {
           options.numWorkers > 0) {
         self.numWorkers = options.numWorkers;
       }
-      self.processingFunction = arguments[2];
+      self.processingFunction = constructorArguments[2];
     } else {
       return reject('Queue can only take at most three arguments - queueRef, ' +
         'options (optional), and processingFunction.');
