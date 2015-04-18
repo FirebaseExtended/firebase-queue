@@ -1,6 +1,7 @@
 'use strict';
 
-var RSVP = require('rsvp'),
+var _ = require('lodash'),
+    RSVP = require('rsvp'),
     logger = require('winston'),
     QueueWorker = require('./lib/queue_worker');
 
@@ -38,29 +39,34 @@ function Queue() {
   var constructorArguments = arguments;
 
   return new RSVP.Promise(function(resolve, reject) {
+    var error;
     self.numWorkers = DEFAULT_NUM_WORKERS;
 
     if (constructorArguments.length < 2) {
-      return reject('Queue must at least have the queueRef and ' +
-        'processingFunction arguments.');
+      error = 'Queue must at least have the queueRef and ' +
+        'processingFunction arguments.';
+      logger.error('Queue(): Error during initialization', error);
+      return reject(error);
     } else if (constructorArguments.length === 2) {
       self.ref = constructorArguments[0];
       self.processingFunction = constructorArguments[1];
     } else if (constructorArguments.length === 3) {
       self.ref = constructorArguments[0];
       var options = constructorArguments[1];
-      if (typeof(options.jobId) === 'string') {
+      if (_.isString(options.jobId)) {
         self.jobId = options.jobId;
       }
-      if (typeof(options.numWorkers) === 'number' &&
+      if (_.isNumber(options.numWorkers) &&
           options.numWorkers % 1 === 0 &&
           options.numWorkers > 0) {
         self.numWorkers = options.numWorkers;
       }
       self.processingFunction = constructorArguments[2];
     } else {
-      return reject('Queue can only take at most three arguments - queueRef, ' +
-        'options (optional), and processingFunction.');
+      error = 'Queue can only take at most three arguments - queueRef, ' +
+        'options (optional), and processingFunction.';
+      logger.error('Queue(): Error during initialization', error);
+      return reject(error);
     }
 
     self.workers = [];
@@ -73,7 +79,7 @@ function Queue() {
       ));
     }
 
-    if (typeof(self.jobId) === 'undefined') {
+    if (_.isUndefined(self.jobId)) {
       var jobSpec = {
         startState: null,
         inProgressState: DEFAULT_JOB_STATE_IN_PROGRESS,
@@ -102,11 +108,11 @@ function Queue() {
           return resolve();
         }
       }, function(error) {
+        logger.error('Queue(): Error connecting to Firebase reference', error);
         if (!initialized) {
           initialized = true;
-          return reject(error);
-        } else {
-          logger.error('Queue(): Error connecting to Firebase reference', error);
+          return reject(error.message || 'Error connectino to Firebase ' +
+            'Reference');
         }
       });
     }
