@@ -1,9 +1,12 @@
+'use strict';
+
 var RSVP = require('rsvp'),
+    logger = require('winston'),
     QueueWorker = require('./lib/queue_worker');
 
 var DEFAULT_NUM_WORKERS = 1,
-    DEFAULT_JOB_STATE_IN_PROGRESS = "in_progress",
-    DEFAULT_JOB_STATE_FINISHED = "finished",
+    DEFAULT_JOB_STATE_IN_PROGRESS = 'in_progress',
+    DEFAULT_JOB_STATE_FINISHED = 'finished',
     DEFAULT_TIMEOUT = 360000;
 
 /**
@@ -102,7 +105,7 @@ function Queue() {
           initialized = true;
           return reject(error);
         } else {
-          console.log(error);
+          logger.error('Queue(): Error connecting to Firebase reference', error);
         }
       });
     }
