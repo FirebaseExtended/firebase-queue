@@ -20,7 +20,7 @@ var DEFAULT_NUM_WORKERS = 1,
  *     - resolve {Function} An asychronous callback function - call this
  *         function when the processingFunction completes successfully. This
  *         takes an optional Object parameter that, if passed, will overwrite
- *         the data at the queue item location
+ *         the data at the queue item location.
  *     - reject {Function} An asynchronous callback function - call this
  *         function if the processingFunction encounters an error. This takes
  *         an optional String or Object parameter that will be stored in the
@@ -30,7 +30,8 @@ function Queue() {
   var self = this;
   self.numWorkers = DEFAULT_NUM_WORKERS;
   if (arguments.length < 2) {
-    throw new Error('Queue must at least have the queueRef and processingFunction arguments.');
+    throw new Error('Queue must at least have the queueRef and ' +
+      'processingFunction arguments.');
   } else if (arguments.length === 2) {
     self.ref = arguments[0];
     self.processingFunction = arguments[1];
@@ -40,17 +41,24 @@ function Queue() {
     if (typeof(options.jobId) === 'string') {
       self.jobId = options.jobId;
     }
-    if (typeof(options.numWorkers) === 'number' && options.numWorkers % 1 === 0 && options.numWorkers > 0) {
+    if (typeof(options.numWorkers) === 'number' &&
+        options.numWorkers % 1 === 0 &&
+        options.numWorkers > 0) {
       self.numWorkers = options.numWorkers;
     }
     self.processingFunction = arguments[2];
   } else {
-    throw new Error('Queue can only take at most three arguments - queueRef, options (optional), and processingFunction.');
+    throw new Error('Queue can only take at most three arguments - queueRef, ' +
+      'options (optional), and processingFunction.');
   }
   self.workers = [];
   for (var i = 0; i < self.numWorkers; i++) {
     var processId = (self.jobId ? self.jobId + ':' : '') + i;
-    self.workers.push(new QueueWorker(self.ref.child('queue'), processId, self.processingFunction));
+    self.workers.push(new QueueWorker(
+      self.ref.child('queue'),
+      processId,
+      self.processingFunction
+    ));
   }
   if (typeof(self.jobId) === 'undefined') {
     var jobSpec = {
@@ -63,32 +71,21 @@ function Queue() {
       self.workers[j].resetJob(jobSpec);
     }
   } else {
-    self.ref.child('jobs').child(self.jobId).on('value',
-      function(jobSpecSnap) {
-        if (jobSpecSnap.val() === null) {
-          throw new Error('No job specified for this worker');
-        }
-        var finishedState = jobSpecSnap.child('state_finished').val();
-        if (finishedState === null) {
-          throw new Error('No state_finished specified for this job');
-        }
-        var inProgressState = jobSpecSnap.child('state_in_progress').val();
-        if (inProgressState === null) {
-          throw new Error('No state_in_progress specified for this job');
-        }
-        var jobSpec = {
-          startState: jobSpecSnap.child('state_start').val(),
-          inProgressState: inProgressState,
-          finishedState: finishedState,
-          jobTimeout: jobSpecSnap.child('timeout').val()
-        };
-        for (var i = 0; i < self.numWorkers; i++) {
-          self.workers[i].resetJob(jobSpec);
-        }
-      },
-      function(error) {
-        throw error;
-      });
+    self.ref.child('jobs').child(self.jobId).on('value', function(jobSpecSnap) {
+      var jobSpec = {
+            startState: jobSpecSnap.child('state_start').val(),
+            inProgressState: jobSpecSnap.child('state_in_progress').val(),
+            finishedState: jobSpecSnap.child('state_finished').val(),
+            jobTimeout: jobSpecSnap.child('timeout').val()
+          };
+
+      for (var i = 0; i < self.numWorkers; i++) {
+        self.workers[i].resetJob(jobSpec);
+      }
+    },
+    function(error) {
+      throw error;
+    });
   }
   return self;
 }
