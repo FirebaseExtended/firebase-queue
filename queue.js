@@ -13,7 +13,7 @@ var DEFAULT_NUM_WORKERS = 1,
 /**
  * @constructor
  * @param {Firebase} ref A Firebase reference to the queue.
- * @param {Object} (optional) Object containing possible keys:
+ * @param {Object} options (optional) Object containing possible keys:
  *   - jobId: {String} the current job identifier.
  *   - numWorkers: {Number} The number of workers to create for this job.
  * @param {Function} processingFunction A function that is called each time to
@@ -53,13 +53,30 @@ function Queue() {
     } else if (constructorArguments.length === 3) {
       self.ref = constructorArguments[0];
       var options = constructorArguments[1];
-      if (_.isString(options.jobId)) {
-        self.jobId = options.jobId;
+      if (!_.isPlainObject(options)) {
+        error = 'Options parameter must be a plain object.';
+        logger.error('Queue(): Error during initialization', error);
+        return reject(error);
       }
-      if (_.isNumber(options.numWorkers) &&
-          options.numWorkers % 1 === 0 &&
-          options.numWorkers > 0) {
-        self.numWorkers = options.numWorkers;
+      if (!_.isUndefined(options.jobId)) {
+        if (_.isString(options.jobId)) {
+          self.jobId = options.jobId;
+        } else {
+          error = 'options.jobId must be a String.';
+          logger.error('Queue(): Error during initialization', error);
+          return reject(error);
+        }
+      }
+      if (!_.isUndefined(options.numWorkers)) {
+        if (_.isNumber(options.numWorkers) &&
+            options.numWorkers % 1 === 0 &&
+            options.numWorkers > 0) {
+          self.numWorkers = options.numWorkers;
+        } else {
+          error = 'options.numWorkers must be a positive integer.';
+          logger.error('Queue(): Error during initialization', error);
+          return reject(error);
+        }
       }
       self.processingFunction = constructorArguments[2];
     } else {
@@ -89,7 +106,7 @@ function Queue() {
       for (var j = 0; j < self.numWorkers; j++) {
         self.workers[j].setJob(jobSpec);
       }
-      return resolve();
+      return resolve(self);
     } else {
       var initialized = false;
       self.ref.child('jobs').child(self.jobId).on('value', function(jobSpecSnap) {
@@ -103,11 +120,12 @@ function Queue() {
         for (var i = 0; i < self.numWorkers; i++) {
           self.workers[i].setJob(jobSpec);
         }
+        /* istanbul ignore else */
         if (!initialized) {
           initialized = true;
-          return resolve();
+          return resolve(self);
         }
-      }, function(error) {
+      }, /* istanbul ignore next */ function(error) {
         logger.error('Queue(): Error connecting to Firebase reference', error);
         if (!initialized) {
           initialized = true;
