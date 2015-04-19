@@ -20,8 +20,8 @@ var DEFAULT_NUM_WORKERS = 1,
  *   process the queue item. This function is passed three parameters:
  *     - data {Object} The current data at the location.
  *     - progress {Function} A function to update the progress percent of the
- *         queue item for informational purposes. Pass it an integer
- *         between 0 and 100.
+ *         queue item for informational purposes. Pass it a number between
+ *         0 and 100.
  *     - resolve {Function} An asychronous callback function - call this
  *         function when the processingFunction completes successfully. This
  *         takes an optional Object parameter that, if passed, will overwrite
