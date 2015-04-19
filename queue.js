@@ -120,7 +120,6 @@ function Queue() {
         for (var i = 0; i < self.numWorkers; i++) {
           self.workers[i].setJob(jobSpec);
         }
-        /* istanbul ignore else */
         if (!initialized) {
           initialized = true;
           return resolve(self);

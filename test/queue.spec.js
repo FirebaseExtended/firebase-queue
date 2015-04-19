@@ -56,9 +56,9 @@ describe('Queue', function() {
   });
 
   _.forEach(_.range(1, 20), function(numWorkers) {
-    it('should create a Queue with ' + numWorkers + ' workers when options.numWorkers is specified', function() {
+    it('should create a Queue with ' + numWorkers + ' workers when specified in options.numWorkers', function() {
       return new th.Queue(th.testRef, { numWorkers: numWorkers }, _.noop).then(function(q) {
-        expect(q.workers.length === numWorkers);
+        expect(q.workers.length).to.equal(numWorkers);
       }).should.eventually.be.fulfilled;
     });
   });
@@ -66,7 +66,7 @@ describe('Queue', function() {
   it('should create a Queue with a specific jobId when specified', function() {
     var jobId = 'test_job';
     return new th.Queue(th.testRef, { jobId: jobId }, _.noop).then(function(q) {
-      expect(q.jobId === jobId);
+      expect(q.jobId).to.equal(jobId);
     }).should.eventually.be.fulfilled;
   });
 
