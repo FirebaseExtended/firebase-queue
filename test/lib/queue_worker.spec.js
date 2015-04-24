@@ -57,18 +57,22 @@ describe('QueueWorker', function() {
     var qw = new th.QueueWorker(queueRef, '0', _.noop);
 
     it('should construct a log entry given a string', function() {
-      expect(qw._getLogEntry('informative message')).to.equal('QueueWorker 0 (null) informative message');
+      expect(qw._getLogEntry('informative message')).to.equal('QueueWorker 0 (' + qw.uuid + ') informative message');
     });
 
     it('should construct a log entry given a non-string', function() {
       [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-        expect(qw._getLogEntry(nonStringObject)).to.equal('QueueWorker 0 (null) ' + nonStringObject);
+        expect(qw._getLogEntry(nonStringObject)).to.equal('QueueWorker 0 (' + qw.uuid + ') ' + nonStringObject);
       });
     });
   });
 
   describe('#_isValidJobSpec', function() {
-    var qw = new th.QueueWorker(queueRef, '0', _.noop);
+    var qw;
+
+    before(function() {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+    });
 
     it('should not accept a non-plain object as a valid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], null, _.noop].forEach(function(nonPlainObject) {
@@ -86,34 +90,85 @@ describe('QueueWorker', function() {
 
     it('should not accept a startState that is not a string as a valid job spec', function() {
       [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-        expect(qw._isValidJobSpec({ startState: nonStringObject, inProgressState: 'valid', finishedState: 'valid' })).to.be.false;
+        var jobSpec = _.clone(th.validJobSpec);
+        jobSpec.startState = nonStringObject;
+        expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
     });
 
     it('should not accept an inProgressState that is not a string as a valid job spec', function() {
       [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-        expect(qw._isValidJobSpec({ inProgressState: nonStringObject, finishedState: 'valid' })).to.be.false;
+        var jobSpec = _.clone(th.validJobSpec);
+        jobSpec.inProgressState = nonStringObject;
+        expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
     });
 
     it('should not accept a finishedState that is not a string as a valid job spec', function() {
       [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-        expect(qw._isValidJobSpec({ inProgressState: 'valid', finishedState: nonStringObject })).to.be.false;
+        var jobSpec = _.clone(th.validJobSpec);
+        jobSpec.finishedState = nonStringObject;
+        expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
     });
 
     it('should not accept a timeout that is not a positive integer as a valid job spec', function() {
-      ['', 'foo', NaN, Infinity, true, false, 0, -1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonPositiveIntigerObject) {
-        expect(qw._isValidJobSpec({ inProgressState: 'valid', finishedState: 'valid', jobTimeout: nonPositiveIntigerObject })).to.be.false;
+      ['', 'foo', NaN, Infinity, true, false, 0, -1, 1.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonPositiveIntigerObject) {
+        var jobSpec = _.clone(th.validJobSpec);
+        jobSpec.jobTimeout = nonPositiveIntigerObject;
+        expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
     });
 
     it('should accept a valid job spec without a timeout', function() {
-      expect(qw._isValidJobSpec({ inProgressState: 'valid', finishedState: 'valid' })).to.be.true;
+      expect(qw._isValidJobSpec(th.validJobSpec)).to.be.true;
     });
 
     it('should accept a valid job spec with a timeout', function() {
-      expect(qw._isValidJobSpec({ inProgressState: 'valid', finishedState: 'valid', jobTimeout: 1 })).to.be.true;
+      var jobSpec = _.clone(th.validJobSpec);
+      jobSpec.jobTimeout = 1;
+      expect(qw._isValidJobSpec(jobSpec)).to.be.true;
+    });
+
+    it('should not accept a jobSpec with the same startState and inProgressState', function() {
+      var jobSpec = _.clone(th.validJobSpec);
+      jobSpec.startState = jobSpec.inProgressState;
+      expect(qw._isValidJobSpec(jobSpec)).to.be.false;
+    });
+
+    it('should not accept a jobSpec with the same startState and finishedState', function() {
+      var jobSpec = _.clone(th.validJobSpec);
+      jobSpec.startState = jobSpec.finishedState;
+      expect(qw._isValidJobSpec(jobSpec)).to.be.false;
+    });
+
+    it('should not accept a jobSpec with the same inProgressState and finishedState', function() {
+      var jobSpec = _.clone(th.validJobSpec);
+      jobSpec.inProgressState = jobSpec.finishedState;
+      expect(qw._isValidJobSpec(jobSpec)).to.be.false;
+    });
+  });
+
+  describe('#setJob', function() {
+    var qw;
+
+    before(function() {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+    });
+
+    it('should reset the worker when called with an invalid job spec', function() {
+      ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
+        var oldUUID = qw.uuid;
+        qw.setJob(invalidJobSpec);
+        expect(qw.uuid).to.not.equal(oldUUID);
+        expect(qw.startState).to.be.null;
+        expect(qw.inProgressState).to.be.null;
+        expect(qw.finishedState).to.be.null;
+        expect(qw.jobTimeout).to.be.null;
+        expect(qw.newItemRef).to.be.null;
+        expect(qw.newItemListener).to.be.null;
+        expect(qw.expiryTimeouts).to.deep.equal({});
+      });
     });
   });
 

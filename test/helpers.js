@@ -6,6 +6,10 @@ module.exports = function() {
   this.testRef = new Firebase('https://firebase-queue-test-' + _.random(1, 2 << 29) + '.firebaseio-demo.com');
   this.Queue = require('../queue.js');
   this.QueueWorker = require('../lib/queue_worker.js');
+  this.validJobSpec = {
+    inProgressState: 'in_progress',
+    finishedState: 'finished_state'
+  }
 
   return this;
 }
