@@ -69,8 +69,8 @@ function Queue() {
       }
       if (!_.isUndefined(options.numWorkers)) {
         if (_.isNumber(options.numWorkers) &&
-            options.numWorkers % 1 === 0 &&
-            options.numWorkers > 0) {
+            options.numWorkers > 0 &&
+            options.numWorkers % 1 === 0) {
           self.numWorkers = options.numWorkers;
         } else {
           error = 'options.numWorkers must be a positive integer.';
