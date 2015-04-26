@@ -90,7 +90,7 @@ describe('QueueWorker', function() {
 
     it('should not accept a startState that is not a string as a valid job spec', function() {
       [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-        var jobSpec = _.clone(th.validJobSpec);
+        var jobSpec = _.clone(th.validBasicJobSpec);
         jobSpec.startState = nonStringObject;
         expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
@@ -98,7 +98,7 @@ describe('QueueWorker', function() {
 
     it('should not accept an inProgressState that is not a string as a valid job spec', function() {
       [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-        var jobSpec = _.clone(th.validJobSpec);
+        var jobSpec = _.clone(th.validBasicJobSpec);
         jobSpec.inProgressState = nonStringObject;
         expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
@@ -106,7 +106,7 @@ describe('QueueWorker', function() {
 
     it('should not accept a finishedState that is not a string as a valid job spec', function() {
       [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-        var jobSpec = _.clone(th.validJobSpec);
+        var jobSpec = _.clone(th.validBasicJobSpec);
         jobSpec.finishedState = nonStringObject;
         expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
@@ -114,36 +114,42 @@ describe('QueueWorker', function() {
 
     it('should not accept a timeout that is not a positive integer as a valid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, 0, -1, 1.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonPositiveIntigerObject) {
-        var jobSpec = _.clone(th.validJobSpec);
+        var jobSpec = _.clone(th.validBasicJobSpec);
         jobSpec.jobTimeout = nonPositiveIntigerObject;
         expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
     });
 
     it('should accept a valid job spec without a timeout', function() {
-      expect(qw._isValidJobSpec(th.validJobSpec)).to.be.true;
+      expect(qw._isValidJobSpec(th.validBasicJobSpec)).to.be.true;
+    });
+
+    it('should accept a valid job spec with a startState', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithStartState)).to.be.true;
+    });
+
+    it('should accept a valid job spec with a startState and a timeout', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithStartStateAndTimeout)).to.be.true;
     });
 
     it('should accept a valid job spec with a timeout', function() {
-      var jobSpec = _.clone(th.validJobSpec);
-      jobSpec.jobTimeout = 1;
-      expect(qw._isValidJobSpec(jobSpec)).to.be.true;
+      expect(qw._isValidJobSpec(th.validJobSpecWithTimeout)).to.be.true;
     });
 
     it('should not accept a jobSpec with the same startState and inProgressState', function() {
-      var jobSpec = _.clone(th.validJobSpec);
+      var jobSpec = _.clone(th.validBasicJobSpec);
       jobSpec.startState = jobSpec.inProgressState;
       expect(qw._isValidJobSpec(jobSpec)).to.be.false;
     });
 
     it('should not accept a jobSpec with the same startState and finishedState', function() {
-      var jobSpec = _.clone(th.validJobSpec);
+      var jobSpec = _.clone(th.validBasicJobSpec);
       jobSpec.startState = jobSpec.finishedState;
       expect(qw._isValidJobSpec(jobSpec)).to.be.false;
     });
 
     it('should not accept a jobSpec with the same inProgressState and finishedState', function() {
-      var jobSpec = _.clone(th.validJobSpec);
+      var jobSpec = _.clone(th.validBasicJobSpec);
       jobSpec.inProgressState = jobSpec.finishedState;
       expect(qw._isValidJobSpec(jobSpec)).to.be.false;
     });
@@ -152,12 +158,43 @@ describe('QueueWorker', function() {
   describe('#setJob', function() {
     var qw;
 
-    before(function() {
-      qw = new th.QueueWorker(queueRef, '0', _.noop);
-    });
-
     it('should reset the worker when called with an invalid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
+        qw = new th.QueueWorker(queueRef, '0', _.noop);
+        var oldUUID = qw.uuid;
+        qw.setJob(invalidJobSpec);
+        expect(qw.uuid).to.not.equal(oldUUID);
+        expect(qw.startState).to.be.null;
+        expect(qw.inProgressState).to.be.null;
+        expect(qw.finishedState).to.be.null;
+        expect(qw.jobTimeout).to.be.null;
+        expect(qw.newItemRef).to.be.null;
+        expect(qw.newItemListener).to.be.null;
+        expect(qw.expiryTimeouts).to.deep.equal({});
+      });
+    });
+
+    it('should reset the worker when called with an invalid job spec after a valid job spec', function() {
+      ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
+        qw = new th.QueueWorker(queueRef, '0', _.noop);
+        qw.setJob(th.validBasicJobSpec);
+        var oldUUID = qw.uuid;
+        qw.setJob(invalidJobSpec);
+        expect(qw.uuid).to.not.equal(oldUUID);
+        expect(qw.startState).to.be.null;
+        expect(qw.inProgressState).to.be.null;
+        expect(qw.finishedState).to.be.null;
+        expect(qw.jobTimeout).to.be.null;
+        expect(qw.newItemRef).to.be.null;
+        expect(qw.newItemListener).to.be.null;
+        expect(qw.expiryTimeouts).to.deep.equal({});
+      });
+    });
+
+    it('should reset the worker when called with an invalid job spec after a valid job spec with a timeout', function() {
+      ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
+        qw = new th.QueueWorker(queueRef, '0', _.noop);
+        qw.setJob(th.validJobSpecWithTimeout);
         var oldUUID = qw.uuid;
         qw.setJob(invalidJobSpec);
         expect(qw.uuid).to.not.equal(oldUUID);
