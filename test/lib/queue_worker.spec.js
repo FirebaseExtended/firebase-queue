@@ -3,21 +3,20 @@ var _ = require('lodash'),
     chai = require('chai'),
     should = chai.should(),
     expect = chai.expect,
+    sinon = require('sinon'),
+    sinonChai = require('sinon-chai'),
     winston = require('winston'),
     chaiAsPromised = require('chai-as-promised');
 
 winston.level = 'none';
 
+chai.use(sinonChai);
 chai.use(chaiAsPromised);
 
 var th = new Helpers(),
     queueRef = th.testRef.child('queue');
 
 describe('QueueWorker', function() {
-
-  after(function(done) {
-    queueRef.set(null, done);
-  });
 
   it('should not create a QueueWorker with no parameters', function() {
     expect(function() {
@@ -162,6 +161,10 @@ describe('QueueWorker', function() {
   describe('#setJob', function() {
     var qw;
 
+    afterEach(function(done) {
+      queueRef.set(null, done);
+    });
+
     it('should reset the worker when called with an invalid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
         qw = new th.QueueWorker(queueRef, '0', _.noop);
@@ -266,6 +269,61 @@ describe('QueueWorker', function() {
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should not pick up items on the queue not for the current item', function(done) {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      var spy = sinon.spy(qw, '_tryToProcess');
+      queueRef.once('child_added', function() {
+        try {
+          expect(qw._tryToProcess).to.not.have.been.called;
+          spy.restore();
+          done();
+        } catch (error) {
+          spy.restore();
+          done(error);
+        }
+      });
+      queueRef.push({ '_state': 'other' });
+    });
+
+    it('should pick up items on the queue with no "_state" when a job is specified without a startState', function(done) {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      th.QueueWorker.prototype._tryToProcess = _.noop;
+      var spy = sinon.spy(qw, '_tryToProcess');
+      var ref = queueRef.push();
+      queueRef.once('child_added', function() {
+        try {
+          expect(qw._tryToProcess).to.have.been.calledOnce.and.calledWith(ref);
+          spy.restore();
+          done();
+        } catch (error) {
+          spy.restore();
+          done(error);
+        }
+      });
+      ref.set({ 'foo': 'bar' });
+    });
+
+    it('should pick up items on the queue with the corresponding "_state" when a job is specifies a startState', function(done) {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validJobSpecWithStartState);
+      th.QueueWorker.prototype._tryToProcess = _.noop;
+      var spy = sinon.spy(qw, '_tryToProcess');
+      var ref = queueRef.push();
+      queueRef.once('child_added', function() {
+        try {
+          expect(qw._tryToProcess).to.have.been.calledOnce.and.calledWith(ref);
+          spy.restore();
+          done();
+        } catch (error) {
+          spy.restore();
+          done(error);
+        }
+      });
+      ref.set({ '_state': th.validJobSpecWithStartState.startState });
     });
   });
 
