@@ -15,6 +15,10 @@ var th = new Helpers(),
 
 describe('QueueWorker', function() {
 
+  after(function(done) {
+    queueRef.set(null, done);
+  });
+
   it('should not create a QueueWorker with no parameters', function() {
     expect(function() {
       new th.QueueWorker();
@@ -206,6 +210,62 @@ describe('QueueWorker', function() {
         expect(qw.newItemListener).to.be.null;
         expect(qw.expiryTimeouts).to.deep.equal({});
       });
+    });
+
+    it('should reset a worker when called with a basic valid job spec', function() {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validBasicJobSpec);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.be.null;
+      expect(qw.inProgressState).to.equal(th.validBasicJobSpec.inProgressState);
+      expect(qw.finishedState).to.equal(th.validBasicJobSpec.finishedState);
+      expect(qw.jobTimeout).to.be.null;
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should reset a worker when called with a valid job spec with a timeout', function() {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validJobSpecWithTimeout);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.be.null;
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithTimeout.inProgressState);
+      expect(qw.finishedState).to.equal(th.validJobSpecWithTimeout.finishedState);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithTimeout.jobTimeout);
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should reset a worker when called with a valid job spec with a startState', function() {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validJobSpecWithStartState);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.equal(th.validJobSpecWithStartState.startState);
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithStartState.inProgressState);
+      expect(qw.finishedState).to.equal(th.validJobSpecWithStartState.finishedState);
+      expect(qw.jobTimeout).to.be.null;
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should reset a worker when called with a valid job spec with a timeout and a startState', function() {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validJobSpecWithStartStateAndTimeout);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.equal(th.validJobSpecWithStartStateAndTimeout.startState);
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithStartStateAndTimeout.inProgressState);
+      expect(qw.finishedState).to.equal(th.validJobSpecWithStartStateAndTimeout.finishedState);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithStartStateAndTimeout.jobTimeout);
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
     });
   });
 
