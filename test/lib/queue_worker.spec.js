@@ -329,14 +329,66 @@ describe('QueueWorker', function() {
   describe('#_updateProgress', function() {
     var qw;
 
-    it('should ignore invalid inputs to update the progress', function() {
-      ['', 'foo', NaN, Infinity, true, false, -1, 100.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidPercentageValue) {
-        qw = new th.QueueWorker(queueRef, '0', _.noop);
+    ['', 'foo', NaN, Infinity, true, false, -1, 100.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidPercentageValue) {
+      it('should ignore invalid input ' + invalidPercentageValue + ' to update the progress', function() {
+        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
         qw.currentItemRef = queueRef.push();
-        var spy = sinon.spy(qw.currentItemRef, 'transaction');
-        qw._updateProgress(invalidPercentageValue);
-        expect(qw.currentItemRef.transaction).to.not.have.been.called;
-        spy.restore();
+        return qw._updateProgress(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
+      });
+    });
+
+    it('should not update the progress of an item no longer owned by the current worker', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': 'someone_else' }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+      });
+    });
+
+    it('should not update the progress of an item if the worker is no longer processing it', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('No item currently being processed').notify(done);
+      });
+    });
+
+    it('should not update the progress of an item if the item is no longer in progress', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.finishedState, '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+      });
+    });
+
+    it('should not update the progress of an item if the item has no _state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      qw.currentItemRef = queueRef.push({ '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+      });
+    });
+
+    it('should update the progress of the current item', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.fulfilled.notify(done);
       });
     });
   });
