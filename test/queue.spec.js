@@ -12,7 +12,7 @@ chai.use(chaiAsPromised);
 
 var th = new Helpers();
 
-xdescribe('Queue', function() {
+describe('Queue', function() {
   it('should not create a Queue with only a queue reference', function() {
     return new th.Queue(th.testRef).should.eventually.be.rejectedWith('Queue must at least have the queueRef and processingFunction arguments.');
   });

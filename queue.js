@@ -6,9 +6,10 @@ var _ = require('lodash'),
     QueueWorker = require('./lib/queue_worker');
 
 var DEFAULT_NUM_WORKERS = 1,
-    DEFAULT_JOB_STATE_IN_PROGRESS = 'in_progress',
-    DEFAULT_JOB_STATE_FINISHED = 'finished',
-    DEFAULT_TIMEOUT = 360000;
+    DEFAULT_JOB_SPEC = {
+      inProgressState: 'in_progress',
+      jobTimeout: 360000
+    };
 
 /**
  * @constructor
@@ -25,11 +26,13 @@ var DEFAULT_NUM_WORKERS = 1,
  *     - resolve {Function} An asychronous callback function - call this
  *         function when the processingFunction completes successfully. This
  *         takes an optional Object parameter that, if passed, will overwrite
- *         the data at the queue item location.
+ *         the data at the queue item location, and returns a promise of
+ *         whether the operation was successful.
  *     - reject {Function} An asynchronous callback function - call this
  *         function if the processingFunction encounters an error. This takes
  *         an optional String or Object parameter that will be stored in the
- *         '_error_details/error' location in the queue item.
+ *         '_error_details/error' location in the queue item and returns a
+ *         promise of whether the operation was successful.
  * @returns {RSVP.Promise} A resolved promise if the Queue is initialized
  *   correctly, or a rejection if the parameters or Firebase reference are
  *   incorrect.
@@ -97,14 +100,8 @@ function Queue() {
     }
 
     if (_.isUndefined(self.jobId)) {
-      var jobSpec = {
-        startState: null,
-        inProgressState: DEFAULT_JOB_STATE_IN_PROGRESS,
-        finishedState: DEFAULT_JOB_STATE_FINISHED,
-        jobTimeout: DEFAULT_TIMEOUT
-      };
       for (var j = 0; j < self.numWorkers; j++) {
-        self.workers[j].setJob(jobSpec);
+        self.workers[j].setJob(DEFAULT_JOB_SPEC);
       }
       return resolve(self);
     } else {
