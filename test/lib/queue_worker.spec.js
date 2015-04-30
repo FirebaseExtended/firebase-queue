@@ -90,7 +90,10 @@ describe('QueueWorker', function() {
         '_state_changed': new Date().getTime(),
         '_owner': 'someone',
         '_progress': 10
-      }, function() {
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         var initial = true;
         testRef.on('value', function(snapshot) {
@@ -103,8 +106,8 @@ describe('QueueWorker', function() {
               expect(item).to.have.all.keys(['_state_changed']);
               expect(item['_state_changed']).to.be.closeTo(new Date().getTime(), 250);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           }
         });
@@ -138,15 +141,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._resetItem(testRef).then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -161,15 +167,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._resetItem(testRef).then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -194,7 +203,10 @@ describe('QueueWorker', function() {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
         '_progress': 0
-      }, function() {
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         var initial = true;
         testRef.on('value', function(snapshot) {
@@ -205,8 +217,8 @@ describe('QueueWorker', function() {
             try {
               expect(snapshot.val()).to.be.null;
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           }
         });
@@ -221,7 +233,10 @@ describe('QueueWorker', function() {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
         '_progress': 0
-      }, function() {
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         var initial = true;
         testRef.on('value', function(snapshot) {
@@ -236,8 +251,8 @@ describe('QueueWorker', function() {
               expect(item['_state']).to.equal(th.validJobSpecWithFinishedState.finishedState);
               expect(item['_state_changed']).to.be.closeTo(new Date().getTime(), 250);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           }
         });
@@ -253,7 +268,10 @@ describe('QueueWorker', function() {
           '_state_changed': new Date().getTime(),
           '_owner': qw.uuid,
           '_progress': 0
-        }, function() {
+        }, function(errorA) {
+          if (errorA) {
+            return done(errorA);
+          }
           qw.currentItemRef = testRef;
           var initial = true;
           testRef.on('value', function(snapshot) {
@@ -268,8 +286,8 @@ describe('QueueWorker', function() {
                 expect(item['_state']).to.equal(th.validJobSpecWithFinishedState.finishedState);
                 expect(item['_state_changed']).to.be.closeTo(new Date().getTime(), 250);
                 done();
-              } catch (error) {
-                done(error);
+              } catch (errorB) {
+                done(errorB);
               }
             }
           });
@@ -285,7 +303,10 @@ describe('QueueWorker', function() {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
         '_progress': 0
-      }, function() {
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         var initial = true;
         testRef.on('value', function(snapshot) {
@@ -301,8 +322,8 @@ describe('QueueWorker', function() {
               expect(item['_state_changed']).to.be.closeTo(new Date().getTime(), 250);
               expect(item.foo).to.equal('bar');
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           }
         });
@@ -336,15 +357,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -360,15 +384,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -383,15 +410,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -407,14 +437,17 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -439,7 +472,10 @@ describe('QueueWorker', function() {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
         '_progress': 0
-      }, function() {
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         var initial = true;
         testRef.on('value', function(snapshot) {
@@ -456,8 +492,8 @@ describe('QueueWorker', function() {
               expect(item['_error_details']).to.have.all.keys(['previousState']);
               expect(item['_error_details'].previousState).to.equal(th.validBasicJobSpec.inProgressState);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           }
         });
@@ -473,7 +509,10 @@ describe('QueueWorker', function() {
           '_state_changed': new Date().getTime(),
           '_owner': qw.uuid,
           '_progress': 0
-        }, function() {
+        }, function(errorA) {
+          if (errorA) {
+            return done(errorA);
+          }
           qw.currentItemRef = testRef;
           var initial = true;
           testRef.on('value', function(snapshot) {
@@ -490,8 +529,8 @@ describe('QueueWorker', function() {
                 expect(item['_error_details']).to.have.all.keys(['previousState']);
                 expect(item['_error_details'].previousState).to.equal(th.validBasicJobSpec.inProgressState);
                 done();
-              } catch (error) {
-                done(error);
+              } catch (errorB) {
+                done(errorB);
               }
             }
           });
@@ -508,7 +547,10 @@ describe('QueueWorker', function() {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
         '_progress': 0
-      }, function() {
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         var initial = true;
         testRef.on('value', function(snapshot) {
@@ -526,8 +568,8 @@ describe('QueueWorker', function() {
               expect(item['_error_details'].previousState).to.equal(th.validBasicJobSpec.inProgressState);
               expect(item['_error_details'].error).to.equal(error);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           }
         });
@@ -560,15 +602,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -584,15 +629,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -607,15 +655,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw.currentItemRef = testRef;
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -631,14 +682,17 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push(originalItem, function() {
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
               done();
-            } catch (error) {
-              done(error);
+            } catch (errorB) {
+              done(errorB);
             }
           });
         }).catch(done);
@@ -1016,7 +1070,11 @@ describe('QueueWorker', function() {
           done(error);
         }
       });
-      queueRef.push({ '_state': 'other' });
+      queueRef.push({ '_state': 'other' }, function(error) {
+        if (error) {
+          return done(error);
+        }
+      });
     });
 
     it('should pick up items on the queue with no "_state" when a job is specified without a startState', function(done) {
