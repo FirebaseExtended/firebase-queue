@@ -245,14 +245,12 @@ describe('QueueWorker', function() {
     });
 
     it('should not resolve an item that no longer exists', function(done) {
-      testRef = queueRef.push();
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validJobSpecWithFinishedState);
 
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
+      testRef = queueRef.push();
+      qw.currentItemRef = testRef;
+      qw._resolve().then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -261,59 +259,22 @@ describe('QueueWorker', function() {
             done(error);
           }
         });
-      };
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
-
-      qw.setJob(th.validJobSpecWithFinishedState);
-      qw.currentItemRef = testRef;
-      qw._resolve();
+      }).catch(done);
     });
 
     it('should not resolve an item if it is no longer owned by the current worker', function(done) {
-      testRef = queueRef.push();
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': 'other_worker',
         '_progress': 0
       };
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        testRef.once('value', function(snapshot) {
-          try {
-            expect(snapshot.val()).to.deep.equal(originalItem);
-            done();
-          } catch (error) {
-            done(error);
-          }
-        });
-      };
-
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
         qw.currentItemRef = testRef;
-        qw._resolve();
-      });
-    });
-
-    it('should not resolve an item if it is has already changed state', function(done) {
-      testRef = queueRef.push();
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      var first = true;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        if (first) {
-          first = false;
+        qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -322,10 +283,12 @@ describe('QueueWorker', function() {
               done(error);
             }
           });
-        }
-      };
+        }).catch(done);
+      });
+    });
 
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
+    it('should not resolve an item if it is has already changed state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
@@ -333,24 +296,10 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
         qw.currentItemRef = testRef;
-        qw._resolve();
-      });
-    });
-
-    it('should not resolve an item if it is has no state', function(done) {
-      testRef = queueRef.push();
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      var first = true;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        if (first) {
-          first = false;
+        qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -359,34 +308,22 @@ describe('QueueWorker', function() {
               done(error);
             }
           });
-        }
-      };
+        }).catch(done);
+      });
+    });
 
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
+    it('should not resolve an item if it is has no state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
         qw.currentItemRef = testRef;
-        qw._resolve();
-      });
-    });
-
-    it('should not resolve an item if it is no longer being processed', function(done) {
-      testRef = queueRef.push();
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      var first = true;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        if (first) {
-          first = false;
+        qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -395,10 +332,12 @@ describe('QueueWorker', function() {
               done(error);
             }
           });
-        }
-      };
+        }).catch(done);
+      });
+    });
 
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
+    it('should not resolve an item if it is no longer being processed', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
@@ -406,8 +345,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
-        qw._resolve();
+        qw._resolve().then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalItem);
+              done();
+            } catch (error) {
+              done(error);
+            }
+          });
+        }).catch(done);
       });
     });
   });
@@ -525,14 +474,11 @@ describe('QueueWorker', function() {
     });
 
     it('should not reject an item that no longer exists', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validJobSpecWithFinishedState);
       testRef = queueRef.push();
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
+      qw.currentItemRef = testRef;
+      qw._reject().then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -541,59 +487,22 @@ describe('QueueWorker', function() {
             done(error);
           }
         });
-      };
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
-
-      qw.setJob(th.validJobSpecWithFinishedState);
-      qw.currentItemRef = testRef;
-      qw._reject();
+      }).catch(done);
     });
 
     it('should not reject an item if it is no longer owned by the current worker', function(done) {
-      testRef = queueRef.push();
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': 'other_worker',
         '_progress': 0
       };
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        testRef.once('value', function(snapshot) {
-          try {
-            expect(snapshot.val()).to.deep.equal(originalItem);
-            done();
-          } catch (error) {
-            done(error);
-          }
-        });
-      };
-
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
         qw.currentItemRef = testRef;
-        qw._reject();
-      });
-    });
-
-    it('should not reject an item if it is has already changed state', function(done) {
-      testRef = queueRef.push();
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      var first = true;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        if (first) {
-          first = false;
+        qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -602,10 +511,12 @@ describe('QueueWorker', function() {
               done(error);
             }
           });
-        }
-      };
+        }).catch(done);
+      });
+    });
 
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
+    it('should not reject an item if it is has already changed state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
@@ -613,24 +524,10 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
         qw.currentItemRef = testRef;
-        qw._reject();
-      });
-    });
-
-    it('should not reject an item if it is has no state', function(done) {
-      testRef = queueRef.push();
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      var first = true;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        if (first) {
-          first = false;
+        qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -639,34 +536,22 @@ describe('QueueWorker', function() {
               done(error);
             }
           });
-        }
-      };
+        }).catch(done);
+      });
+    });
 
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
+    it('should not reject an item if it is has no state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
         qw.currentItemRef = testRef;
-        qw._reject();
-      });
-    });
-
-    it('should not reject an item if it is no longer being processed', function(done) {
-      testRef = queueRef.push();
-
-      var CallbackQueueWorker = function() {
-        th.QueueWorker.apply(this, arguments);
-      };
-      util.inherits(CallbackQueueWorker, th.QueueWorker);
-      CallbackQueueWorker.prototype._setUpTimeouts = _.noop;
-      var first = true;
-      CallbackQueueWorker.prototype._tryToProcess = function() {
-        if (first) {
-          first = false;
+        qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -675,10 +560,12 @@ describe('QueueWorker', function() {
               done(error);
             }
           });
-        }
-      };
+        }).catch(done);
+      });
+    });
 
-      qw = new CallbackQueueWorker(queueRef, '0', _.noop);
+    it('should not reject an item if it is no longer being processed', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
@@ -686,8 +573,18 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push();
       testRef.set(originalItem, function() {
-        qw._reject();
+        qw._reject().then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalItem);
+              done();
+            } catch (error) {
+              done(error);
+            }
+          });
+        }).catch(done);
       });
     });
   });
