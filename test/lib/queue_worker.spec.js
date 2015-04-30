@@ -73,7 +73,44 @@ describe('QueueWorker', function() {
     });
   });
 
-  xdescribe('#_resetItem', _.noop);
+  describe('#_resetItem', function() {
+    var qw, testRef;
+
+    afterEach(function(done) {
+      qw.setJob();
+      testRef.off();
+      queueRef.set(null, done);
+    });
+
+    it('should reset a job that is currently in progress', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      testRef = queueRef.push({
+        '_state': th.validBasicJobSpec.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': 'someone',
+        '_progress': 10
+      }, function() {
+        qw.currentItemRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._resetItem(testRef);
+          } else {
+            try {
+              var item = snapshot.val();
+              expect(item).to.have.all.keys(['_state_changed']);
+              expect(item['_state_changed']).to.be.closeTo(new Date().getTime(), 250);
+              done();
+            } catch (error) {
+              done(error);
+            }
+          }
+        });
+      });
+    });
+  });
 
   describe('#_resolve', function() {
     var qw, testRef;
