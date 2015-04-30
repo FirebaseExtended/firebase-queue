@@ -110,6 +110,71 @@ describe('QueueWorker', function() {
         });
       });
     });
+
+    it('should not reset an item that no longer exists', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+
+      testRef = queueRef.push();
+      qw.currentItemRef = testRef;
+      qw._resetItem(testRef).then(function() {
+        testRef.once('value', function(snapshot) {
+          try {
+            expect(snapshot.val()).to.be.null;
+            done();
+          } catch (error) {
+            done(error);
+          }
+        });
+      }).catch(done);
+    });
+
+    it('should not reset an item if it is has already changed state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      var originalItem = {
+        '_state': th.validJobSpecWithFinishedState.finishedState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.uuid,
+        '_progress': 0
+      };
+      qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push(originalItem, function() {
+        qw.currentItemRef = testRef;
+        qw._resetItem(testRef).then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalItem);
+              done();
+            } catch (error) {
+              done(error);
+            }
+          });
+        }).catch(done);
+      });
+    });
+
+    it('should not reset an item if it is has no state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      var originalItem = {
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.uuid,
+        '_progress': 0
+      };
+      qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push(originalItem, function() {
+        qw.currentItemRef = testRef;
+        qw._resetItem(testRef).then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalItem);
+              done();
+            } catch (error) {
+              done(error);
+            }
+          });
+        }).catch(done);
+      });
+    });
   });
 
   describe('#_resolve', function() {
@@ -271,8 +336,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw.currentItemRef = testRef;
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
@@ -296,8 +360,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw.currentItemRef = testRef;
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
@@ -320,8 +383,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw.currentItemRef = testRef;
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
@@ -345,8 +407,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw._resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
@@ -499,8 +560,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw.currentItemRef = testRef;
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
@@ -524,8 +584,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw.currentItemRef = testRef;
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
@@ -548,8 +607,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw.currentItemRef = testRef;
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
@@ -573,8 +631,7 @@ describe('QueueWorker', function() {
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
-      testRef = queueRef.push();
-      testRef.set(originalItem, function() {
+      testRef = queueRef.push(originalItem, function() {
         qw._reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
