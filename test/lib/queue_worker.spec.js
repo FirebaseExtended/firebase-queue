@@ -769,7 +769,67 @@ describe('QueueWorker', function() {
 
   xdescribe('#_tryToProcess', _.noop);
 
-  xdescribe('#_setUpTimeouts', _.noop);
+  describe('#_setUpTimeouts', function() {
+    var qw,
+        clock;
+
+    beforeEach(function() {
+      clock = sinon.useFakeTimers(new Date().getTime());
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+    });
+
+    afterEach(function() {
+      clock.restore();
+    });
+
+    it('should not set up timeouts when no job timeout is set', function(done) {
+      qw.setJob(th.validBasicJobSpec);
+      queueRef.push({
+        '_state': th.validJobSpecWithTimeout.inProgressState,
+        '_state_changed': new Date().getTime()
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.deep.equal({});
+          done();
+        } catch (errorB) {
+          done(errorB);
+        }
+      });
+    });
+
+    it('should set up timeout listeners when a job timeout is set', function() {
+      expect(qw.expiryTimeouts).to.deep.equal({});
+      expect(qw.processingItemsRef).to.be.null;
+      expect(qw.processingItemAddedListener).to.be.null;
+      expect(qw.processingItemRemovedListener).to.be.null;
+
+      qw.setJob(th.validJobSpecWithTimeout);
+
+      expect(qw.expiryTimeouts).to.deep.equal({});
+      expect(qw.processingItemsRef).to.not.be.null;
+      expect(qw.processingItemAddedListener).to.not.be.null;
+      expect(qw.processingItemRemovedListener).to.not.be.null;
+    });
+
+    it('should remove timeout listeners when a job timeout is not specified after a previous job specified a timeout', function() {
+      qw.setJob(th.validJobSpecWithTimeout);
+
+      expect(qw.expiryTimeouts).to.deep.equal({});
+      expect(qw.processingItemsRef).to.not.be.null;
+      expect(qw.processingItemAddedListener).to.not.be.null;
+      expect(qw.processingItemRemovedListener).to.not.be.null;
+
+      qw.setJob(th.validBasicJobSpec);
+
+      expect(qw.expiryTimeouts).to.deep.equal({});
+      expect(qw.processingItemsRef).to.be.null;
+      expect(qw.processingItemAddedListener).to.be.null;
+      expect(qw.processingItemRemovedListener).to.be.null;
+    });
+  });
 
   describe('#_isValidJobSpec', function() {
     var qw;
