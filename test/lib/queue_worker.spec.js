@@ -18,41 +18,43 @@ var th = new Helpers(),
 
 describe('QueueWorker', function() {
 
-  it('should not create a QueueWorker with no parameters', function() {
-    expect(function() {
-      new th.QueueWorker();
-    }).to.throw('No queue reference provided.');
-  });
-
-  it('should not create a QueueWorker with only a queueRef', function() {
-    expect(function() {
-      new th.QueueWorker(queueRef);
-    }).to.throw('Invalid process ID provided.');
-  });
-
-  it('should not create a QueueWorker with only a queueRef and a process ID', function() {
-    expect(function() {
-      new th.QueueWorker(queueRef, '0');
-    }).to.throw('No processing function provided.');
-  });
-
-  it('should not create a QueueWorker with a queueRef, processId and an invalid processing function', function() {
-    ['', 'foo', NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }].forEach(function(nonFunctionObject) {
+  describe('initialize', function() {
+    it('should not create a QueueWorker with no parameters', function() {
       expect(function() {
-        new th.QueueWorker(queueRef, '0', nonFunctionObject);
+        new th.QueueWorker();
+      }).to.throw('No queue reference provided.');
+    });
+
+    it('should not create a QueueWorker with only a queueRef', function() {
+      expect(function() {
+        new th.QueueWorker(queueRef);
+      }).to.throw('Invalid process ID provided.');
+    });
+
+    it('should not create a QueueWorker with only a queueRef and a process ID', function() {
+      expect(function() {
+        new th.QueueWorker(queueRef, '0');
       }).to.throw('No processing function provided.');
     });
-  });
 
-  it('should create a QueueWorker with a queueRef, processId and a processing function', function() {
-    new th.QueueWorker(queueRef, '0', _.noop);
-  });
+    it('should not create a QueueWorker with a queueRef, processId and an invalid processing function', function() {
+      ['', 'foo', NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }].forEach(function(nonFunctionObject) {
+        expect(function() {
+          new th.QueueWorker(queueRef, '0', nonFunctionObject);
+        }).to.throw('No processing function provided.');
+      });
+    });
 
-  it('should not create a QueueWorker with a non-string processId specified', function() {
-    [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-      expect(function() {
-        new th.QueueWorker(queueRef, nonStringObject, _.noop);
-      }).to.throw('Invalid process ID provided.');
+    it('should create a QueueWorker with a queueRef, processId and a processing function', function() {
+      new th.QueueWorker(queueRef, '0', _.noop);
+    });
+
+    it('should not create a QueueWorker with a non-string processId specified', function() {
+      [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
+        expect(function() {
+          new th.QueueWorker(queueRef, nonStringObject, _.noop);
+        }).to.throw('Invalid process ID provided.');
+      });
     });
   });
 
@@ -69,6 +71,83 @@ describe('QueueWorker', function() {
       });
     });
   });
+
+  xdescribe('#_resetItem', _.noop);
+
+  xdescribe('#_resolve', _.noop);
+
+  xdescribe('#_reject', _.noop);
+
+  describe('#_updateProgress', function() {
+    var qw;
+
+    ['', 'foo', NaN, Infinity, true, false, -1, 100.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidPercentageValue) {
+      it('should ignore invalid input ' + invalidPercentageValue + ' to update the progress', function() {
+        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+        qw.currentItemRef = queueRef.push();
+        return qw._updateProgress(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
+      });
+    });
+
+    it('should not update the progress of an item no longer owned by the current worker', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': 'someone_else' }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+      });
+    });
+
+    it('should not update the progress of an item if the worker is no longer processing it', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('No item currently being processed').notify(done);
+      });
+    });
+
+    it('should not update the progress of an item if the item is no longer in progress', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validJobSpecWithFinishedState);
+      qw.currentItemRef = queueRef.push({ '_state': th.validJobSpecWithFinishedState.finishedState, '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+      });
+    });
+
+    it('should not update the progress of an item if the item has no _state', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      qw.currentItemRef = queueRef.push({ '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+      });
+    });
+
+    it('should update the progress of the current item', function(done) {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw.setJob(th.validBasicJobSpec);
+      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
+        if (error) {
+          return done(error);
+        }
+        qw._updateProgress(10).should.eventually.be.fulfilled.notify(done);
+      });
+    });
+  });
+
+  xdescribe('#_tryToProcess', _.noop);
+
+  xdescribe('#_setUpTimeouts', _.noop);
 
   describe('#_isValidJobSpec', function() {
     var qw;
@@ -108,7 +187,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not accept a finishedState that is not a string as a valid job spec', function() {
-      [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
+      [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
         var jobSpec = _.clone(th.validBasicJobSpec);
         jobSpec.finishedState = nonStringObject;
         expect(qw._isValidJobSpec(jobSpec)).to.be.false;
@@ -131,31 +210,58 @@ describe('QueueWorker', function() {
       expect(qw._isValidJobSpec(th.validJobSpecWithStartState)).to.be.true;
     });
 
-    it('should accept a valid job spec with a startState and a timeout', function() {
-      expect(qw._isValidJobSpec(th.validJobSpecWithStartStateAndTimeout)).to.be.true;
-    });
-
-    it('should accept a valid job spec with a timeout', function() {
-      expect(qw._isValidJobSpec(th.validJobSpecWithTimeout)).to.be.true;
-    });
-
     it('should not accept a jobSpec with the same startState and inProgressState', function() {
       var jobSpec = _.clone(th.validBasicJobSpec);
       jobSpec.startState = jobSpec.inProgressState;
       expect(qw._isValidJobSpec(jobSpec)).to.be.false;
     });
 
-    it('should not accept a jobSpec with the same startState and finishedState', function() {
+    it('should accept a valid job spec with a finishedState', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithFinishedState)).to.be.true;
+    });
+
+    it('should not accept a jobSpec with the same finishedState and inProgressState', function() {
       var jobSpec = _.clone(th.validBasicJobSpec);
+      jobSpec.finishedState = jobSpec.inProgressState;
+      expect(qw._isValidJobSpec(jobSpec)).to.be.false;
+    });
+
+    it('should accept a valid job spec with a timeout', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithTimeout)).to.be.true;
+    });
+
+    it('should accept a valid job spec with a startState and a timeout', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithStartStateAndTimeout)).to.be.true;
+    });
+
+    it('should accept a valid job spec with a startState and a finishedState', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithStartStateAndFinishedState)).to.be.true;
+    });
+
+    it('should not accept a jobSpec with the same startState and finishedState', function() {
+      var jobSpec = _.clone(th.validJobSpecWithFinishedState);
       jobSpec.startState = jobSpec.finishedState;
       expect(qw._isValidJobSpec(jobSpec)).to.be.false;
     });
 
-    it('should not accept a jobSpec with the same inProgressState and finishedState', function() {
-      var jobSpec = _.clone(th.validBasicJobSpec);
-      jobSpec.inProgressState = jobSpec.finishedState;
-      expect(qw._isValidJobSpec(jobSpec)).to.be.false;
+    it('should accept a valid job spec with a finishedState and a timeout', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithFinishedStateAndTimeout)).to.be.true;
     });
+
+    it('should accept a valid job spec with a startState, a finishedState, and a timeout', function() {
+      expect(qw._isValidJobSpec(th.validJobSpecWithEverything)).to.be.true;
+    });
+
+    it('should accept a valid basic job spec with null parameters for everything else', function() {
+      var jobSpec = _.clone(th.validBasicJobSpec);
+      jobSpec = _.assign(jobSpec, {
+        startState: null,
+        finishedState: null,
+        jobTimeout: null
+      });
+      expect(qw._isValidJobSpec(jobSpec)).to.be.true;
+    });
+
   });
 
   describe('#setJob', function() {
@@ -199,10 +305,10 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should reset the worker when called with an invalid job spec after a valid job spec with a timeout', function() {
+    it('should reset the worker when called with an invalid job spec after a valid job spec with everythin', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
         qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
-        qw.setJob(th.validJobSpecWithTimeout);
+        qw.setJob(th.validJobSpecWithEverything);
         var oldUUID = qw.uuid;
         qw.setJob(invalidJobSpec);
         expect(qw.uuid).to.not.equal(oldUUID);
@@ -223,7 +329,35 @@ describe('QueueWorker', function() {
       expect(qw.uuid).to.not.equal(oldUUID);
       expect(qw.startState).to.be.null;
       expect(qw.inProgressState).to.equal(th.validBasicJobSpec.inProgressState);
-      expect(qw.finishedState).to.equal(th.validBasicJobSpec.finishedState);
+      expect(qw.finishedState).to.be.null;
+      expect(qw.jobTimeout).to.be.null;
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should reset a worker when called with a valid job spec with a startState', function() {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validJobSpecWithStartState);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.equal(th.validJobSpecWithStartState.startState);
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithStartState.inProgressState);
+      expect(qw.finishedState).to.be.null;
+      expect(qw.jobTimeout).to.be.null;
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should reset a worker when called with a valid job spec with a finishedState', function() {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validJobSpecWithFinishedState);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.be.null;
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithFinishedState.inProgressState);
+      expect(qw.finishedState).to.equal(th.validJobSpecWithFinishedState.finishedState);
       expect(qw.jobTimeout).to.be.null;
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
@@ -237,36 +371,64 @@ describe('QueueWorker', function() {
       expect(qw.uuid).to.not.equal(oldUUID);
       expect(qw.startState).to.be.null;
       expect(qw.inProgressState).to.equal(th.validJobSpecWithTimeout.inProgressState);
-      expect(qw.finishedState).to.equal(th.validJobSpecWithTimeout.finishedState);
+      expect(qw.finishedState).to.be.null;
       expect(qw.jobTimeout).to.equal(th.validJobSpecWithTimeout.jobTimeout);
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
     });
 
-    it('should reset a worker when called with a valid job spec with a startState', function() {
+    it('should reset a worker when called with a valid job spec with a startState and a finishedState', function() {
       qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
-      qw.setJob(th.validJobSpecWithStartState);
+      qw.setJob(th.validJobSpecWithStartStateAndFinishedState);
       expect(qw.uuid).to.not.equal(oldUUID);
-      expect(qw.startState).to.equal(th.validJobSpecWithStartState.startState);
-      expect(qw.inProgressState).to.equal(th.validJobSpecWithStartState.inProgressState);
-      expect(qw.finishedState).to.equal(th.validJobSpecWithStartState.finishedState);
+      expect(qw.startState).to.equal(th.validJobSpecWithStartStateAndFinishedState.startState);
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithStartStateAndFinishedState.inProgressState);
+      expect(qw.finishedState).to.equal(th.validJobSpecWithStartStateAndFinishedState.finishedState);
       expect(qw.jobTimeout).to.be.null;
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
     });
 
-    it('should reset a worker when called with a valid job spec with a timeout and a startState', function() {
+    it('should reset a worker when called with a valid job spec with a startState and a timeout', function() {
       qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithStartStateAndTimeout);
       expect(qw.uuid).to.not.equal(oldUUID);
       expect(qw.startState).to.equal(th.validJobSpecWithStartStateAndTimeout.startState);
       expect(qw.inProgressState).to.equal(th.validJobSpecWithStartStateAndTimeout.inProgressState);
-      expect(qw.finishedState).to.equal(th.validJobSpecWithStartStateAndTimeout.finishedState);
+      expect(qw.finishedState).to.be.null;
       expect(qw.jobTimeout).to.equal(th.validJobSpecWithStartStateAndTimeout.jobTimeout);
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should reset a worker when called with a valid job spec with a finishedState and a timeout', function() {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validJobSpecWithFinishedStateAndTimeout);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.be.null;
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithFinishedStateAndTimeout.inProgressState);
+      expect(qw.finishedState).to.equal(th.validJobSpecWithFinishedStateAndTimeout.finishedState);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithFinishedStateAndTimeout.jobTimeout);
+      expect(qw.newItemRef).to.have.property('on').and.be.a('function');
+      expect(qw.newItemListener).to.be.a('function');
+      expect(qw.expiryTimeouts).to.deep.equal({});
+    });
+
+    it('should reset a worker when called with a valid job spec with everything', function() {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      var oldUUID = qw.uuid;
+      qw.setJob(th.validJobSpecWithEverything);
+      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.startState).to.equal(th.validJobSpecWithEverything.startState);
+      expect(qw.inProgressState).to.equal(th.validJobSpecWithEverything.inProgressState);
+      expect(qw.finishedState).to.equal(th.validJobSpecWithEverything.finishedState);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithEverything.jobTimeout);
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
@@ -323,73 +485,6 @@ describe('QueueWorker', function() {
         }
       });
       ref.set({ '_state': th.validJobSpecWithStartState.startState });
-    });
-  });
-
-  describe('#_updateProgress', function() {
-    var qw;
-
-    ['', 'foo', NaN, Infinity, true, false, -1, 100.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidPercentageValue) {
-      it('should ignore invalid input ' + invalidPercentageValue + ' to update the progress', function() {
-        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
-        qw.currentItemRef = queueRef.push();
-        return qw._updateProgress(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
-      });
-    });
-
-    it('should not update the progress of an item no longer owned by the current worker', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
-      qw.setJob(th.validBasicJobSpec);
-      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': 'someone_else' }, function(error) {
-        if (error) {
-          return done(error);
-        }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
-      });
-    });
-
-    it('should not update the progress of an item if the worker is no longer processing it', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
-      qw.setJob(th.validBasicJobSpec);
-      queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
-        if (error) {
-          return done(error);
-        }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('No item currently being processed').notify(done);
-      });
-    });
-
-    it('should not update the progress of an item if the item is no longer in progress', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
-      qw.setJob(th.validBasicJobSpec);
-      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.finishedState, '_owner': qw.uuid }, function(error) {
-        if (error) {
-          return done(error);
-        }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
-      });
-    });
-
-    it('should not update the progress of an item if the item has no _state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
-      qw.setJob(th.validBasicJobSpec);
-      qw.currentItemRef = queueRef.push({ '_owner': qw.uuid }, function(error) {
-        if (error) {
-          return done(error);
-        }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
-      });
-    });
-
-    it('should update the progress of the current item', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
-      qw.setJob(th.validBasicJobSpec);
-      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
-        if (error) {
-          return done(error);
-        }
-        qw._updateProgress(10).should.eventually.be.fulfilled.notify(done);
-      });
     });
   });
 });

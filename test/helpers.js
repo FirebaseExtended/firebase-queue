@@ -17,19 +17,41 @@ module.exports = function() {
   this.RestrictedQueueWorker.prototype._setUpTimeouts = _.noop;
 
   this.validBasicJobSpec = {
+    inProgressState: 'in_progress'
+  };
+  this.validJobSpecWithStartState = {
+    inProgressState: 'in_progress',
+    startState: 'start_state'
+  };
+  this.validJobSpecWithFinishedState = {
     inProgressState: 'in_progress',
     finishedState: 'finished_state'
   };
-  this.validJobSpecWithStartState = _.assign({
-    startState: 'start_state'
-  }, this.validBasicJobSpec);
-  this.validJobSpecWithTimeout = _.assign({
+  this.validJobSpecWithTimeout = {
+    inProgressState: 'in_progress',
     jobTimeout: 10
-  }, this.validBasicJobSpec);
-  this.validJobSpecWithStartStateAndTimeout = _.assign({
+  };
+  this.validJobSpecWithStartStateAndTimeout = {
+    inProgressState: 'in_progress',
     startState: 'start_state',
     jobTimeout: 10
-  }, this.validBasicJobSpec);
+  };
+  this.validJobSpecWithStartStateAndFinishedState = {
+    inProgressState: 'in_progress',
+    startState: 'start_state',
+    finishedState: 'finished_state'
+  };
+  this.validJobSpecWithFinishedStateAndTimeout = {
+    inProgressState: 'in_progress',
+    finishedState: 'finished_state',
+    jobTimeout: 10
+  };
+  this.validJobSpecWithEverything = {
+    inProgressState: 'in_progress',
+    startState: 'start_state',
+    finishedState: 'finished_state',
+    jobTimeout: 10
+  };
 
   return this;
 }
