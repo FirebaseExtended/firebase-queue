@@ -4,7 +4,7 @@ A fault-tolerant, multi-worker, multi-stage job pipeline based on Firebase.
 
 ## The Queue in Firebase
 
-Provide a location in your Firebase for the queue to operate in e.g. `https://yourapp.firebaseio.com/location`.  This location will have a `queue` subtree and an optional `jobs` subtree
+Provide a location in your Firebase for the queue to operate in e.g. `https://yourapp.firebaseio.com/location`. This location will have a `queue` subtree and an optional `jobs` subtree
 ```
 location
   -> jobs
@@ -13,32 +13,35 @@ location
 
 ## Queue Workers
 
-Start a worker process by passing in a Firebase [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function that takes a snapshot of the queue item, and three callback functions:
-  - `progress()` for reporting back job progress,
-  - `resolve()` for reporting successful job completion,
-  - `reject()` for reporting job error
+Start a worker process by passing in a Firebase [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function that takes four parameters:
+  - `data` a plain JavaScript object containing the claimed item's data,
+  - `progress()` a callback function for reporting back job progress,
+  - `resolve()` a callback function for reporting successful job completion,
+  - `reject()` a callback for reporting a job error
 
 ```js
-// queue-worker.js
+// my_queue_worker.js
 
 var Queue = require('firebase-queue'),
     Firebase = require('firebase');
 
 var ref = new Firebase('https://yourapp.firebaseio.com/location');
 var queue = new Queue(ref, function(data, progress, resolve, reject) {
-  // Read and process job data
+  // Read and process item data
   console.log(data);
 
   // Do some work
   progress(50);
 
-  // Finish the job
-  resolve({ 'foo': 'baz' });
+  setTimeout(function() {
+    // Finish the job asynchronously
+    resolve({ 'foo': 'baz' });
+  }, 1000);
 });
 ```
 
 ```shell
-node queue-worker.js
+node my_queue_worker.js
 ```
 
 
@@ -48,7 +51,7 @@ Multiple queue workers can be initialized on multiple machines and Firebase-Queu
 
 Queue workers can take an optional options object to specify:
   - `jobId` - specifies the job type for this worker
-  - `numWorkers` - specifies the number of workers to run simultaneously for this node.js thread.  Defaults to 1 worker.
+  - `numWorkers` - specifies the number of workers to run simultaneously for this node.js thread. Defaults to 1 worker.
 
 ```js
 ...
@@ -62,9 +65,9 @@ var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
 });
 ```
 
-## Pushing Jobs Onto the Queue
+## Pushing Items Onto the Queue
 
-Using any Firebase client or the REST API, push an object with some metadata onto the `queue` subtree of your Firebase.  Queue Workers listening on that subtree will automatically pick up and process the job.
+Using any Firebase client or the REST API, push an object with some metadata onto the `queue` subtree of your Firebase. Queue Workers listening on that subtree will automatically pick up and process the item.
 
 ```shell
 # Using curl in shell
@@ -83,27 +86,29 @@ ref.push({'foo':'bar'});
 
 #### Default Job
 
-A default job configuration is assumed if no jobs are specified in the `jobs` subtree.  The default job has the following characteristics:
+A default job configuration is assumed if no jobs are specified in the `jobs` subtree in the Firebase. The default job has the following characteristics:
 
 ```json
 {
   "default_job" : {
-    "state_start" : null,
-    "state_finished" : "finished",
-    "state_in_progress" : "in_progress",
-    "timeout" : 360000
+    "start_state" : null,
+    "in_progress_state" : "in_progress",
+    "finished_state" : null,
+    "timeout" : 300000
   }
 }
 ```
 
-- `state_start` - The default job has no "state_start".  Which means any job pushed onto the `queue` subtree without a `_state` key will be picked up by default job workers.
-- `state_in_progress` - When a worker picks up a job and begins processing it, it will change the job's `_state` to the value of `state_in_progress`
-- `state_finished` - When a worker completes a job, it will change the job's `_state` to the value of `state_finished`
-- `timeout` - When a job has been claimed by a worker and has not completed or errored after `timeout` milliseconds, other jobs will report that job as timed out, and reset that job to be claimable by other workers.  
+- `start_state` - The default job has no "start_state", which means any job pushed onto the `queue` subtree without a `_state` key will be picked up by default job workers. If it is specified, only jobs with that `_state` may be claimed by the worker.
+- `in_progress_state` - When a worker picks up a job and begins processing it, it will change the job's `_state` to the value of `in_progress_state`. This is the only required job property, and it cannot equal the `start_state` or the `finished_state`.
+- `finished_state` - The default job has no "finished_state" and so will remove items from the queue if they complete successfully. If it is specified, when a job completes successfully the job's `_state` value will be updated to this option. This can be useful for chaining jobs by setting this to the same as another job's "start_state".
+- `timeout` - The default timeout is 5 minutes. When a job has been claimed by a worker but has not completed within `timeout` milliseconds, other jobs will report that job as timed out, and reset that job to be claimable once again. If this is not specified a job will be claimed at most once and never leave that state if the worker processing it fails during the process.
 
 #### Custom Jobs and Job Chaining
 
-Custom jobs may be defined to coordinate different jobs for different workers.  In this jobs example, we're chaining jobs.  New jobs start in `job_1_ready` state, and on completion they become `job_1_finished` which is the start state for `job_2`.
+In order to use a job specification other than the default, the specification must be defined in the Firebase under the `jobs` subtree. This allows us to coordinate job specification changes between workers and enforce expected behavior with Firebase security rules.
+
+In this example, we're chaining three jobs. New items pushed onto the queue without a `_state` key will be picked up by "job_1" and go into the `job_1_in_progress` state. Once "job_1" completes and the item goes into the `job_1_finished` state, "job_2" takes over and puts it into the `job_2_in_progress` state. Again, once "job_2" completes and the item goes into the `job_2_finished` state, "job_3" takes over and puts it into the `job_3_in_progress` state and finally removes it once completed. If, during any stage in the process there's an error, the item will end up in an `error` state.
 
 ```
 location
@@ -112,16 +117,20 @@ location
 ```json
 {
   "job_1" : {
-    "state_finished" : "job_1_finished",
-    "state_in_progress" : "job_1_in_progress",
-    "state_start" : "job_1_ready",
+    "in_progress_state" : "job_1_in_progress",
+    "finished_state" : "job_1_finished",
     "timeout" : 5000
   },
   "job_2" : {
-    "state_finished" : "job_2_finished",
-    "state_in_progress" : "job_2_in_progress",
-    "state_start" : "job_1_finished",
-    "timeout" : 9000
+    "start_state" : "job_1_finished",
+    "in_progress_state" : "job_2_in_progress",
+    "finished_state" : "job_2_finished",
+    "timeout" : 20000
+  },
+  "job_3" : {
+    "start_state" : "job_2_finished",
+    "in_progress_state" : "job_3_in_progress",
+    "timeout" : 3000
   }
 }
 ```
