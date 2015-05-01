@@ -716,7 +716,7 @@ describe('QueueWorker', function() {
     ['', 'foo', NaN, Infinity, true, false, -1, 100.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidPercentageValue) {
       it('should ignore invalid input ' + invalidPercentageValue + ' to update the progress', function() {
         qw.currentItemRef = queueRef.push();
-        return qw._updateProgress(qw.currentItemRef)(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
+        return qw._updateProgress(qw.jobNumber)(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
       });
     });
 
@@ -726,7 +726,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.currentItemRef)(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
       });
     });
 
@@ -736,7 +736,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.currentItemRef)(10).should.eventually.be.rejectedWith('No item currently being processed').notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
       });
     });
 
@@ -746,7 +746,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.currentItemRef)(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
       });
     });
 
@@ -756,7 +756,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.currentItemRef)(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
       });
     });
 
@@ -766,7 +766,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.currentItemRef)(10).should.eventually.be.fulfilled.notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
       });
     });
 
@@ -776,9 +776,9 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        var updateProgress = qw._updateProgress(qw.currentItemRef);
-        qw.currentItemRef = queueRef.push();
-        updateProgress(10).should.eventually.be.rejectedWith('No longer processing current item').notify(done);
+        var updateProgress = qw._updateProgress(qw.jobNumber);
+        qw.jobNumber += 1;
+        updateProgress(10).should.eventually.be.fulfilled.notify(done);
       });
     });
   });
