@@ -6,6 +6,10 @@ module.exports = function() {
   var self = this;
 
   this.testRef = new Firebase('https://firebase-queue-test-' + _.random(1, 2 << 29) + '.firebaseio-demo.com');
+  this.offset = 0;
+  self.testRef.child('.info/serverTimeOffset').on('value', function(snapshot) {
+    self.offset = snapshot.val();
+  });
   this.Queue = require('../queue.js');
   this.QueueWorker = require('../lib/queue_worker.js');
 

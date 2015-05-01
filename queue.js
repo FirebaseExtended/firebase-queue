@@ -3,7 +3,7 @@
 var _ = require('lodash'),
     RSVP = require('rsvp'),
     logger = require('winston'),
-    QueueWorker = require('./lib/queue_worker');
+    QueueWorker = require('./lib/queue_worker.js');
 
 var DEFAULT_NUM_WORKERS = 1,
     DEFAULT_JOB_SPEC = {
