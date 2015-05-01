@@ -8,7 +8,7 @@ var _ = require('lodash'),
 var DEFAULT_NUM_WORKERS = 1,
     DEFAULT_JOB_SPEC = {
       inProgressState: 'in_progress',
-      jobTimeout: 360000
+      timeout: 360000
     };
 
 /**
@@ -108,10 +108,10 @@ function Queue() {
       var initialized = false;
       self.ref.child('jobs').child(self.jobId).on('value', function(jobSpecSnap) {
         var jobSpec = {
-              startState: jobSpecSnap.child('state_start').val(),
-              inProgressState: jobSpecSnap.child('state_in_progress').val(),
-              finishedState: jobSpecSnap.child('state_finished').val(),
-              jobTimeout: jobSpecSnap.child('timeout').val()
+              startState: jobSpecSnap.child('start_state').val(),
+              inProgressState: jobSpecSnap.child('in_progress_state').val(),
+              finishedState: jobSpecSnap.child('finished_state').val(),
+              timeout: jobSpecSnap.child('timeout').val()
             };
 
         for (var i = 0; i < self.numWorkers; i++) {

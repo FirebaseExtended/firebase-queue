@@ -39,12 +39,12 @@ module.exports = function() {
   };
   this.validJobSpecWithTimeout = {
     inProgressState: 'in_progress',
-    jobTimeout: 10
+    timeout: 10
   };
   this.validJobSpecWithStartStateAndTimeout = {
     inProgressState: 'in_progress',
     startState: 'start_state',
-    jobTimeout: 10
+    timeout: 10
   };
   this.validJobSpecWithStartStateAndFinishedState = {
     inProgressState: 'in_progress',
@@ -54,13 +54,13 @@ module.exports = function() {
   this.validJobSpecWithFinishedStateAndTimeout = {
     inProgressState: 'in_progress',
     finishedState: 'finished_state',
-    jobTimeout: 10
+    timeout: 10
   };
   this.validJobSpecWithEverything = {
     inProgressState: 'in_progress',
     startState: 'start_state',
     finishedState: 'finished_state',
-    jobTimeout: 10
+    timeout: 10
   };
 
   return this;

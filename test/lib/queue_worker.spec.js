@@ -1002,7 +1002,7 @@ describe('QueueWorker', function() {
         }
         try {
           expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
-          expect(setTimeout.getCall(0).args[1]).to.equal(th.validJobSpecWithTimeout.jobTimeout - 5);
+          expect(setTimeout.getCall(0).args[1]).to.equal(th.validJobSpecWithTimeout.timeout - 5);
           spy.restore();
           done();
         } catch (errorB) {
@@ -1023,7 +1023,7 @@ describe('QueueWorker', function() {
         }
         try {
           expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
-          expect(setTimeout.getCall(0).args[1]).to.equal(th.validJobSpecWithTimeout.jobTimeout);
+          expect(setTimeout.getCall(0).args[1]).to.equal(th.validJobSpecWithTimeout.timeout);
           spy.restore();
           done();
         } catch (errorB) {
@@ -1138,7 +1138,7 @@ describe('QueueWorker', function() {
     it('should not accept a timeout that is not a positive integer as a valid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, 0, -1, 1.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonPositiveIntigerObject) {
         var jobSpec = _.clone(th.validBasicJobSpec);
-        jobSpec.jobTimeout = nonPositiveIntigerObject;
+        jobSpec.timeout = nonPositiveIntigerObject;
         expect(qw._isValidJobSpec(jobSpec)).to.be.false;
       });
     });
@@ -1198,7 +1198,7 @@ describe('QueueWorker', function() {
       jobSpec = _.assign(jobSpec, {
         startState: null,
         finishedState: null,
-        jobTimeout: null
+        timeout: null
       });
       expect(qw._isValidJobSpec(jobSpec)).to.be.true;
     });
@@ -1313,7 +1313,7 @@ describe('QueueWorker', function() {
       expect(qw.startState).to.be.null;
       expect(qw.inProgressState).to.equal(th.validJobSpecWithTimeout.inProgressState);
       expect(qw.finishedState).to.be.null;
-      expect(qw.jobTimeout).to.equal(th.validJobSpecWithTimeout.jobTimeout);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithTimeout.timeout);
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
@@ -1341,7 +1341,7 @@ describe('QueueWorker', function() {
       expect(qw.startState).to.equal(th.validJobSpecWithStartStateAndTimeout.startState);
       expect(qw.inProgressState).to.equal(th.validJobSpecWithStartStateAndTimeout.inProgressState);
       expect(qw.finishedState).to.be.null;
-      expect(qw.jobTimeout).to.equal(th.validJobSpecWithStartStateAndTimeout.jobTimeout);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithStartStateAndTimeout.timeout);
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
@@ -1355,7 +1355,7 @@ describe('QueueWorker', function() {
       expect(qw.startState).to.be.null;
       expect(qw.inProgressState).to.equal(th.validJobSpecWithFinishedStateAndTimeout.inProgressState);
       expect(qw.finishedState).to.equal(th.validJobSpecWithFinishedStateAndTimeout.finishedState);
-      expect(qw.jobTimeout).to.equal(th.validJobSpecWithFinishedStateAndTimeout.jobTimeout);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithFinishedStateAndTimeout.timeout);
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
@@ -1369,7 +1369,7 @@ describe('QueueWorker', function() {
       expect(qw.startState).to.equal(th.validJobSpecWithEverything.startState);
       expect(qw.inProgressState).to.equal(th.validJobSpecWithEverything.inProgressState);
       expect(qw.finishedState).to.equal(th.validJobSpecWithEverything.finishedState);
-      expect(qw.jobTimeout).to.equal(th.validJobSpecWithEverything.jobTimeout);
+      expect(qw.jobTimeout).to.equal(th.validJobSpecWithEverything.timeout);
       expect(qw.newItemRef).to.have.property('on').and.be.a('function');
       expect(qw.newItemListener).to.be.a('function');
       expect(qw.expiryTimeouts).to.deep.equal({});
