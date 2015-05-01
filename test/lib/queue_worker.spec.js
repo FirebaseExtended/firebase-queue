@@ -82,7 +82,7 @@ describe('QueueWorker', function() {
       queueRef.set(null, done);
     });
 
-    it('should reset a job that is currently in progress', function(done) {
+    it('should reset an item that is currently in progress', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       testRef = queueRef.push({
@@ -771,7 +771,143 @@ describe('QueueWorker', function() {
     });
   });
 
-  xdescribe('#_tryToProcess', _.noop);
+  describe('#_tryToProcess', function() {
+    var qw;
+
+    beforeEach(function() {
+      qw = new th.QueueWorker(queueRef, '0', _.noop);
+    });
+
+    afterEach(function() {
+      qw.setJob();
+    });
+
+    it('should not try and process an item if busy', function(done) {
+      qw.startState = th.validJobSpecWithStartState.startState;
+      qw.inProgressState = th.validJobSpecWithStartState.inProgressState;
+      qw.busy = true;
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithStartState.startState
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentItemRef).to.be.null;
+            done();
+          } catch (errorB) {
+            done(errorB);
+          }
+        }).catch(done);
+      });
+    });
+
+    it('should try and process an item if not busy', function(done) {
+      qw.startState = th.validJobSpecWithStartState.startState;
+      qw.inProgressState = th.validJobSpecWithStartState.inProgressState;
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithStartState.startState
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentItemRef).to.not.be.null;
+            expect(qw.busy).to.be.true;
+            done();
+          } catch (errorB) {
+            done(errorB);
+          }
+        }).catch(done);
+      });
+    });
+
+    it('should not try and process an item if not a plain object', function(done) {
+      qw.inProgressState = th.validJobSpecWithStartState.inProgressState;
+      var testRef = queueRef.push('invalid', function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentItemRef).to.be.null;
+            expect(qw.busy).to.be.false;
+            testRef.once('value', function(snapshot) {
+              try {
+                var item = snapshot.val();
+                expect(item).to.have.all.keys(['_error_details', '_state', '_state_changed', '_queue_item']);
+                expect(item['_error_details']).to.have.all.keys(['error']);
+                expect(item['_error_details']['error']).to.equal('Queue item was malformed');
+                expect(item['_state']).to.equal('error');
+                expect(item['_queue_item']).to.equal('invalid');
+                expect(item['_state_changed']).to.be.closeTo(new Date().getTime(), 250);
+                done();
+              } catch (errorB) {
+                done(errorB);
+              }
+            });
+          } catch (errorC) {
+            done(errorC);
+          }
+        }).catch(done);
+      });
+    });
+
+    it('should not try and process an item if no longer in correct startState', function(done) {
+      qw.startState = th.validJobSpecWithStartState.startState;
+      qw.inProgressState = th.validJobSpecWithStartState.inProgressState;
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithStartState.inProgressState
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentItemRef).to.be.null;
+            done();
+          } catch (errorB) {
+            done(errorB);
+          }
+        }).catch(done);
+      });
+    });
+
+    it('should invalidate callbacks if another process times the item out', function(done) {
+      qw.startState = th.validJobSpecWithStartState.startState;
+      qw.inProgressState = th.validJobSpecWithStartState.inProgressState;
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithStartState.startState
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentItemRef).to.not.be.null;
+            expect(qw.busy).to.be.true;
+            testRef.update({
+              '_owner': null
+            }, function(errorB) {
+              if (errorB) {
+                return done(errorB);
+              }
+              try {
+                expect(qw.currentItemRef).to.be.null;
+                done();
+              } catch (errorC) {
+                done(errorC);
+              }
+            });
+          } catch (errorD) {
+            done(errorD);
+          }
+        }).catch(done);
+      });
+    });
+  });
 
   describe('#_setUpTimeouts', function() {
     var qw,
@@ -784,8 +920,8 @@ describe('QueueWorker', function() {
 
     afterEach(function(done) {
       qw.setJob();
-      queueRef.set(null, done);
       clock.restore();
+      queueRef.set(null, done);
     });
 
     it('should not set up timeouts when no job timeout is set', function(done) {
