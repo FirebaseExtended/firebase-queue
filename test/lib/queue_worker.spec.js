@@ -212,7 +212,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resolve()();
+            qw._resolve(qw.jobNumber)();
           } else {
             try {
               expect(snapshot.val()).to.be.null;
@@ -242,7 +242,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resolve()();
+            qw._resolve(qw.jobNumber)();
           } else {
             try {
               var item = snapshot.val();
@@ -277,7 +277,7 @@ describe('QueueWorker', function() {
           testRef.on('value', function(snapshot) {
             if (initial) {
               initial = false;
-              qw._resolve()(nonPlainObject);
+              qw._resolve(qw.jobNumber)(nonPlainObject);
             } else {
               try {
                 var item = snapshot.val();
@@ -312,7 +312,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resolve()({ foo: 'bar' });
+            qw._resolve(qw.jobNumber)({ foo: 'bar' });
           } else {
             try {
               var item = snapshot.val();
@@ -336,7 +336,7 @@ describe('QueueWorker', function() {
 
       testRef = queueRef.push();
       qw.currentItemRef = testRef;
-      qw._resolve()().then(function() {
+      qw._resolve(qw.jobNumber)().then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -362,7 +362,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._resolve()().then(function() {
+        qw._resolve(qw.jobNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -389,7 +389,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._resolve()().then(function() {
+        qw._resolve(qw.jobNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -415,7 +415,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._resolve()().then(function() {
+        qw._resolve(qw.jobNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -441,7 +441,36 @@ describe('QueueWorker', function() {
         if (errorA) {
           return done(errorA);
         }
-        qw._resolve()().then(function() {
+        qw._resolve(qw.jobNumber)().then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalItem);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          });
+        }).catch(done);
+      });
+    });
+
+    it('should not resolve an item if a new job is being processed', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
+      var originalItem = {
+        '_state': th.validJobSpecWithFinishedState.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.uuid,
+        '_progress': 0
+      };
+      qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentItemRef = testRef;
+        var resolve = qw._resolve(qw.jobNumber);
+        qw.jobNumber += 1;
+        resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
