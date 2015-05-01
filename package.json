@@ -24,7 +24,7 @@
   "homepage": "https://github.com/firebase/firebase-queue",
   "dependencies": {
     "firebase": "2.x",
-    "lodash": "3.7.0",
+    "lodash": "~3.7.0",
     "rsvp": "3.x",
     "uuid": "2.x",
     "winston": "1.x"
@@ -40,6 +40,9 @@
     "jshint-stylish": "1.0.1",
     "sinon": "1.14.1",
     "sinon-chai": "2.7.0"
+  },
+  "scripts": {
+    "test": "gulp"
   },
   "main": "queue.js",
   "engines": {

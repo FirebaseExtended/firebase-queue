@@ -1,6 +1,6 @@
 # Firebase Queue
 
-A fault-tolerant, multi-worker, multi-stage job pipeline based on top of Firebase.
+A fault-tolerant, multi-worker, multi-stage job pipeline based on Firebase.
 
 ## The Queue in Firebase
 
