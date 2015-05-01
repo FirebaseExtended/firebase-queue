@@ -8,7 +8,7 @@ var _ = require('lodash'),
 var DEFAULT_NUM_WORKERS = 1,
     DEFAULT_JOB_SPEC = {
       inProgressState: 'in_progress',
-      timeout: 360000
+      timeout: 300000 // 5 minutes
     };
 
 /**

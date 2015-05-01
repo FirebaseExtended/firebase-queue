@@ -212,7 +212,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resolve();
+            qw._resolve()();
           } else {
             try {
               expect(snapshot.val()).to.be.null;
@@ -242,7 +242,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resolve();
+            qw._resolve()();
           } else {
             try {
               var item = snapshot.val();
@@ -277,7 +277,7 @@ describe('QueueWorker', function() {
           testRef.on('value', function(snapshot) {
             if (initial) {
               initial = false;
-              qw._resolve(nonPlainObject);
+              qw._resolve()(nonPlainObject);
             } else {
               try {
                 var item = snapshot.val();
@@ -312,7 +312,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resolve({ foo: 'bar' });
+            qw._resolve()({ foo: 'bar' });
           } else {
             try {
               var item = snapshot.val();
@@ -336,7 +336,7 @@ describe('QueueWorker', function() {
 
       testRef = queueRef.push();
       qw.currentItemRef = testRef;
-      qw._resolve().then(function() {
+      qw._resolve()().then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -362,7 +362,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._resolve().then(function() {
+        qw._resolve()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -389,7 +389,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._resolve().then(function() {
+        qw._resolve()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -415,7 +415,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._resolve().then(function() {
+        qw._resolve()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -441,7 +441,7 @@ describe('QueueWorker', function() {
         if (errorA) {
           return done(errorA);
         }
-        qw._resolve().then(function() {
+        qw._resolve()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -481,7 +481,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._reject();
+            qw._reject()();
           } else {
             try {
               var item = snapshot.val();
@@ -518,7 +518,7 @@ describe('QueueWorker', function() {
           testRef.on('value', function(snapshot) {
             if (initial) {
               initial = false;
-              qw._reject(nonStringObject);
+              qw._reject()(nonStringObject);
             } else {
               try {
                 var item = snapshot.val();
@@ -556,7 +556,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._reject(error);
+            qw._reject()(error);
           } else {
             try {
               var item = snapshot.val();
@@ -581,7 +581,7 @@ describe('QueueWorker', function() {
       qw.setJob(th.validJobSpecWithFinishedState);
       testRef = queueRef.push();
       qw.currentItemRef = testRef;
-      qw._reject().then(function() {
+      qw._reject()().then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -607,7 +607,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._reject().then(function() {
+        qw._reject()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -634,7 +634,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._reject().then(function() {
+        qw._reject()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -660,7 +660,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._reject().then(function() {
+        qw._reject()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -686,7 +686,7 @@ describe('QueueWorker', function() {
         if (errorA) {
           return done(errorA);
         }
-        qw._reject().then(function() {
+        qw._reject()().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -716,7 +716,7 @@ describe('QueueWorker', function() {
     ['', 'foo', NaN, Infinity, true, false, -1, 100.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidPercentageValue) {
       it('should ignore invalid input ' + invalidPercentageValue + ' to update the progress', function() {
         qw.currentItemRef = queueRef.push();
-        return qw._updateProgress(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
+        return qw._updateProgress()(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
       });
     });
 
@@ -726,7 +726,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+        qw._updateProgress()(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
       });
     });
 
@@ -736,7 +736,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('No item currently being processed').notify(done);
+        qw._updateProgress()(10).should.eventually.be.rejectedWith('No item currently being processed').notify(done);
       });
     });
 
@@ -746,7 +746,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+        qw._updateProgress()(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
       });
     });
 
@@ -756,7 +756,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
+        qw._updateProgress()(10).should.eventually.be.rejectedWith('Current item no longer owned by this process').notify(done);
       });
     });
 
@@ -766,7 +766,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(10).should.eventually.be.fulfilled.notify(done);
+        qw._updateProgress()(10).should.eventually.be.fulfilled.notify(done);
       });
     });
   });
