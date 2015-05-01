@@ -83,7 +83,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a job that is currently in progress', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       testRef = queueRef.push({
         '_state': th.validBasicJobSpec.inProgressState,
@@ -115,7 +115,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reset an item that no longer exists', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
 
       testRef = queueRef.push();
@@ -133,7 +133,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reset an item if it is has already changed state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
@@ -160,7 +160,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reset an item if it is has no state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
@@ -196,7 +196,7 @@ describe('QueueWorker', function() {
     });
 
     it('should resolve an item owned by the current worker and remove it when no finishedState is specified', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       testRef = queueRef.push({
         '_state': th.validBasicJobSpec.inProgressState,
@@ -226,7 +226,7 @@ describe('QueueWorker', function() {
     });
 
     it('should resolve an item owned by the current worker and change the state when a finishedState is specified and no object passed', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithFinishedState);
       testRef = queueRef.push({
         '_state': th.validJobSpecWithFinishedState.inProgressState,
@@ -261,7 +261,7 @@ describe('QueueWorker', function() {
 
     ['', 'foo', NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], null, _.noop].forEach(function(nonPlainObject) {
       it('should resolve an item owned by the current worker and change the state when a finishedState is specified and an invalid object ' + nonPlainObject + ' passed', function(done) {
-        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+        qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
         qw.setJob(th.validJobSpecWithFinishedState);
         testRef = queueRef.push({
           '_state': th.validJobSpecWithFinishedState.inProgressState,
@@ -296,7 +296,7 @@ describe('QueueWorker', function() {
     });
 
     it('should resolve an item owned by the current worker and change the state when a finishedState is specified and a plain object passed', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithFinishedState);
       testRef = queueRef.push({
         '_state': th.validJobSpecWithFinishedState.inProgressState,
@@ -331,7 +331,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not resolve an item that no longer exists', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithFinishedState);
 
       testRef = queueRef.push();
@@ -349,7 +349,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not resolve an item if it is no longer owned by the current worker', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
@@ -376,7 +376,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not resolve an item if it is has already changed state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
@@ -403,7 +403,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not resolve an item if it is has no state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
@@ -429,7 +429,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not resolve an item if it is no longer being processed', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
@@ -465,7 +465,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reject an item owned by the current worker', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       testRef = queueRef.push({
         '_state': th.validBasicJobSpec.inProgressState,
@@ -502,7 +502,7 @@ describe('QueueWorker', function() {
 
     [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
       it('should reject an item owned by the current worker and not add report the error if not a string: ' + nonStringObject, function(done) {
-        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+        qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
         qw.setJob(th.validBasicJobSpec);
         testRef = queueRef.push({
           '_state': th.validBasicJobSpec.inProgressState,
@@ -539,7 +539,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reject an item owned by the current worker and append the error string to the _error_details', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var error = 'My error message';
       qw.setJob(th.validBasicJobSpec);
       testRef = queueRef.push({
@@ -577,7 +577,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reject an item that no longer exists', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithFinishedState);
       testRef = queueRef.push();
       qw.currentItemRef = testRef;
@@ -594,7 +594,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reject an item if it is no longer owned by the current worker', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
@@ -621,7 +621,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reject an item if it is has already changed state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
@@ -648,7 +648,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reject an item if it is has no state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.uuid,
@@ -674,7 +674,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not reject an item if it is no longer being processed', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
@@ -704,7 +704,7 @@ describe('QueueWorker', function() {
     var qw;
 
     beforeEach(function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw._tryToProcess = _.noop;
     });
 
@@ -779,19 +779,37 @@ describe('QueueWorker', function() {
 
     beforeEach(function() {
       clock = sinon.useFakeTimers(new Date().getTime());
-      qw = new th.QueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessing(queueRef, '0', _.noop);
     });
 
     afterEach(function(done) {
-      clock.restore();
       qw.setJob();
       queueRef.set(null, done);
+      clock.restore();
     });
 
     it('should not set up timeouts when no job timeout is set', function(done) {
       qw.setJob(th.validBasicJobSpec);
       queueRef.push({
-        '_state': th.validJobSpecWithTimeout.inProgressState,
+        '_state': th.validBasicJobSpec.inProgressState,
+        '_state_changed': new Date().getTime()
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.deep.equal({});
+          done();
+        } catch (errorB) {
+          done(errorB);
+        }
+      });
+    });
+
+    it('should not set up timeouts when an item not in progress is added and a job timeout is set', function(done) {
+      qw.setJob(th.validJobSpecWithFinishedStateAndTimeout);
+      queueRef.push({
+        '_state': th.validJobSpecWithFinishedStateAndTimeout.finishedState,
         '_state_changed': new Date().getTime()
       }, function(errorA) {
         if (errorA) {
@@ -834,6 +852,105 @@ describe('QueueWorker', function() {
       expect(qw.processingItemsRef).to.be.null;
       expect(qw.processingItemAddedListener).to.be.null;
       expect(qw.processingItemRemovedListener).to.be.null;
+    });
+
+    it('should set up a timeout when a job timeout is set and an item added', function(done) {
+      var spy = sinon.spy(global, 'setTimeout');
+      qw.setJob(th.validJobSpecWithTimeout);
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithTimeout.inProgressState,
+        '_state_changed': new Date().getTime() - 5
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(setTimeout.getCall(0).args[1]).to.equal(th.validJobSpecWithTimeout.jobTimeout - 5);
+          spy.restore();
+          done();
+        } catch (errorB) {
+          spy.restore();
+          done(errorB);
+        }
+      });
+    });
+
+    it('should set up a timeout when a job timeout is set and an item added without a _state_changed time', function(done) {
+      var spy = sinon.spy(global, 'setTimeout');
+      qw.setJob(th.validJobSpecWithTimeout);
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithTimeout.inProgressState
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(setTimeout.getCall(0).args[1]).to.equal(th.validJobSpecWithTimeout.jobTimeout);
+          spy.restore();
+          done();
+        } catch (errorB) {
+          spy.restore();
+          done(errorB);
+        }
+      });
+    });
+
+    it('should clear timeouts when a job timeout is not set and a timeout exists', function(done) {
+      qw.setJob(th.validJobSpecWithTimeout);
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithTimeout.inProgressState,
+        '_state_changed': new Date().getTime()
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          qw.setJob();
+          expect(qw.expiryTimeouts).to.deep.equal({});
+          done();
+        } catch (errorB) {
+          done(errorB);
+        }
+      });
+    });
+
+    it('should clear a timeout when an item is completed', function(done) {
+      var spy = sinon.spy(qw, '_resetItem');
+      qw.setJob(th.validJobSpecWithFinishedStateAndTimeout);
+      var testRef = queueRef.push({
+        '_state': th.validJobSpecWithFinishedStateAndTimeout.inProgressState,
+        '_state_changed': new Date().getTime()
+      }, function(errorA) {
+        if (errorA) {
+          spy.restore();
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          testRef.update({
+            '_state': th.validJobSpecWithFinishedStateAndTimeout.finishedState
+          }, function(errorB) {
+            if (errorB) {
+              return done(errorB);
+            }
+            try {
+              expect(qw.expiryTimeouts).to.deep.equal({});
+              expect(qw._resetItem).to.not.have.been.called;
+              spy.restore();
+              done();
+            } catch (errorC) {
+              spy.restore();
+              done(errorC);
+            }
+          });
+        } catch (errorD) {
+          spy.restore();
+          done(errorD);
+        }
+      });
     });
   });
 
@@ -962,7 +1079,7 @@ describe('QueueWorker', function() {
 
     it('should reset the worker when called with an invalid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
-        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+        qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
         var oldUUID = qw.uuid;
         qw.setJob(invalidJobSpec);
         expect(qw.uuid).to.not.equal(oldUUID);
@@ -978,7 +1095,7 @@ describe('QueueWorker', function() {
 
     it('should reset the worker when called with an invalid job spec after a valid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
-        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+        qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
         qw.setJob(th.validBasicJobSpec);
         var oldUUID = qw.uuid;
         qw.setJob(invalidJobSpec);
@@ -995,7 +1112,7 @@ describe('QueueWorker', function() {
 
     it('should reset the worker when called with an invalid job spec after a valid job spec with everythin', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
-        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+        qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
         qw.setJob(th.validJobSpecWithEverything);
         var oldUUID = qw.uuid;
         qw.setJob(invalidJobSpec);
@@ -1011,7 +1128,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a basic valid job spec', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validBasicJobSpec);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1025,7 +1142,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a valid job spec with a startState', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithStartState);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1039,7 +1156,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a valid job spec with a finishedState', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithFinishedState);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1053,7 +1170,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a valid job spec with a timeout', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithTimeout);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1067,7 +1184,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a valid job spec with a startState and a finishedState', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithStartStateAndFinishedState);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1081,7 +1198,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a valid job spec with a startState and a timeout', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithStartStateAndTimeout);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1095,7 +1212,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a valid job spec with a finishedState and a timeout', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithFinishedStateAndTimeout);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1109,7 +1226,7 @@ describe('QueueWorker', function() {
     });
 
     it('should reset a worker when called with a valid job spec with everything', function() {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var oldUUID = qw.uuid;
       qw.setJob(th.validJobSpecWithEverything);
       expect(qw.uuid).to.not.equal(oldUUID);
@@ -1123,7 +1240,7 @@ describe('QueueWorker', function() {
     });
 
     it('should not pick up items on the queue not for the current item', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       var spy = sinon.spy(qw, '_tryToProcess');
       queueRef.once('child_added', function() {
@@ -1144,7 +1261,7 @@ describe('QueueWorker', function() {
     });
 
     it('should pick up items on the queue with no "_state" when a job is specified without a startState', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       var spy = sinon.spy(qw, '_tryToProcess');
       var ref = queueRef.push();
@@ -1162,7 +1279,7 @@ describe('QueueWorker', function() {
     });
 
     it('should pick up items on the queue with the corresponding "_state" when a job is specifies a startState', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithStartState);
       var spy = sinon.spy(qw, '_tryToProcess');
       var ref = queueRef.push();

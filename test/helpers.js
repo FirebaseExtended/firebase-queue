@@ -9,12 +9,18 @@ module.exports = function() {
   this.Queue = require('../queue.js');
   this.QueueWorker = require('../lib/queue_worker.js');
 
-  this.RestrictedQueueWorker = function() {
+  this.QueueWorkerWithoutProcessingOrTimeouts = function() {
     self.QueueWorker.apply(this, arguments);
   };
-  util.inherits(this.RestrictedQueueWorker, this.QueueWorker);
-  this.RestrictedQueueWorker.prototype._tryToProcess = _.noop;
-  this.RestrictedQueueWorker.prototype._setUpTimeouts = _.noop;
+  util.inherits(this.QueueWorkerWithoutProcessingOrTimeouts, this.QueueWorker);
+  this.QueueWorkerWithoutProcessingOrTimeouts.prototype._tryToProcess = _.noop;
+  this.QueueWorkerWithoutProcessingOrTimeouts.prototype._setUpTimeouts = _.noop;
+
+  this.QueueWorkerWithoutProcessing = function() {
+    self.QueueWorker.apply(this, arguments);
+  };
+  util.inherits(this.QueueWorkerWithoutProcessing, this.QueueWorker);
+  this.QueueWorkerWithoutProcessing.prototype._tryToProcess = _.noop;
 
   this.validBasicJobSpec = {
     inProgressState: 'in_progress'
