@@ -481,7 +481,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._reject()();
+            qw._reject(qw.jobNumber)();
           } else {
             try {
               var item = snapshot.val();
@@ -518,7 +518,7 @@ describe('QueueWorker', function() {
           testRef.on('value', function(snapshot) {
             if (initial) {
               initial = false;
-              qw._reject()(nonStringObject);
+              qw._reject(qw.jobNumber)(nonStringObject);
             } else {
               try {
                 var item = snapshot.val();
@@ -556,7 +556,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._reject()(error);
+            qw._reject(qw.jobNumber)(error);
           } else {
             try {
               var item = snapshot.val();
@@ -581,7 +581,7 @@ describe('QueueWorker', function() {
       qw.setJob(th.validJobSpecWithFinishedState);
       testRef = queueRef.push();
       qw.currentItemRef = testRef;
-      qw._reject()().then(function() {
+      qw._reject(qw.jobNumber)().then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -607,7 +607,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._reject()().then(function() {
+        qw._reject(qw.jobNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -634,7 +634,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._reject()().then(function() {
+        qw._reject(qw.jobNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -660,7 +660,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentItemRef = testRef;
-        qw._reject()().then(function() {
+        qw._reject(qw.jobNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -686,7 +686,36 @@ describe('QueueWorker', function() {
         if (errorA) {
           return done(errorA);
         }
-        qw._reject()().then(function() {
+        qw._reject(qw.jobNumber)().then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalItem);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          });
+        }).catch(done);
+      });
+    });
+
+    it('should not reject an item if a new job is being processed', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
+      var originalItem = {
+        '_state': th.validJobSpecWithFinishedState.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.uuid,
+        '_progress': 0
+      };
+      qw.setJob(th.validJobSpecWithFinishedState);
+      testRef = queueRef.push(originalItem, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentItemRef = testRef;
+        var reject = qw._reject(qw.jobNumber);
+        qw.jobNumber += 1;
+        reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
