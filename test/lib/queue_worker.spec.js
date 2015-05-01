@@ -703,16 +703,24 @@ describe('QueueWorker', function() {
   describe('#_updateProgress', function() {
     var qw;
 
+    beforeEach(function() {
+      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
+      qw._tryToProcess = _.noop;
+    });
+
+    afterEach(function(done) {
+      qw.setJob();
+      queueRef.set(null, done);
+    });
+
     ['', 'foo', NaN, Infinity, true, false, -1, 100.1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidPercentageValue) {
       it('should ignore invalid input ' + invalidPercentageValue + ' to update the progress', function() {
-        qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
         qw.currentItemRef = queueRef.push();
         return qw._updateProgress(invalidPercentageValue).should.eventually.be.rejectedWith('Invalid progress');
       });
     });
 
     it('should not update the progress of an item no longer owned by the current worker', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': 'someone_else' }, function(error) {
         if (error) {
@@ -723,7 +731,6 @@ describe('QueueWorker', function() {
     });
 
     it('should not update the progress of an item if the worker is no longer processing it', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
         if (error) {
@@ -734,7 +741,6 @@ describe('QueueWorker', function() {
     });
 
     it('should not update the progress of an item if the item is no longer in progress', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       qw.setJob(th.validJobSpecWithFinishedState);
       qw.currentItemRef = queueRef.push({ '_state': th.validJobSpecWithFinishedState.finishedState, '_owner': qw.uuid }, function(error) {
         if (error) {
@@ -745,7 +751,6 @@ describe('QueueWorker', function() {
     });
 
     it('should not update the progress of an item if the item has no _state', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       qw.currentItemRef = queueRef.push({ '_owner': qw.uuid }, function(error) {
         if (error) {
@@ -756,7 +761,6 @@ describe('QueueWorker', function() {
     });
 
     it('should update the progress of the current item', function(done) {
-      qw = new th.RestrictedQueueWorker(queueRef, '0', _.noop);
       qw.setJob(th.validBasicJobSpec);
       qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
         if (error) {
@@ -778,8 +782,10 @@ describe('QueueWorker', function() {
       qw = new th.QueueWorker(queueRef, '0', _.noop);
     });
 
-    afterEach(function() {
+    afterEach(function(done) {
       clock.restore();
+      qw.setJob();
+      queueRef.set(null, done);
     });
 
     it('should not set up timeouts when no job timeout is set', function(done) {
