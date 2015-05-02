@@ -1,6 +1,6 @@
 # Firebase Queue
 
-A fault-tolerant, multi-worker, multi-stage job pipeline based on Firebase.
+A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.
 
 ## The Queue in Firebase
 
@@ -101,7 +101,7 @@ A default job configuration is assumed if no jobs are specified in the `jobs` su
 ```
 
 - `start_state` - The default job has no "start_state", which means any job pushed onto the `queue` subtree without a `_state` key will be picked up by default job workers. If it is specified, only jobs with that `_state` may be claimed by the worker.
-- `in_progress_state` - When a worker picks up a job and begins processing it, it will change the job's `_state` to the value of `in_progress_state`. This is the only required job property, and it cannot equal the `start_state` or the `finished_state`.
+- `in_progress_state` - When a worker picks up a job and begins processing it, it will change the job's `_state` to the value of `in_progress_state`. This is the only required job property, and it cannot equal the `start_state`, the `finished_state`, or the `errorState`.
 - `finished_state` - The default job has no "finished_state" and so will remove items from the queue if they complete successfully. If it is specified, when a job completes successfully the job's `_state` value will be updated to this option. This can be useful for chaining jobs by setting this to the same as another job's "start_state".
 - `error_state` - If the job gets rejected the `_state` will be updated to this value and an additional key `_error_details` will be populated with the `previousState` and an optional error message from the `reject()` callback. If this isn't specified, it defaults to "error". This can be useful for specifying different error states for different jobs, or chaining errors so that they can be logged.
 - `timeout` - The default timeout is 5 minutes. When a job has been claimed by a worker but has not completed within `timeout` milliseconds, other jobs will report that job as timed out, and reset that job to be claimable once again. If this is not specified a job will be claimed at most once and never leave that state if the worker processing it fails during the process.
@@ -110,7 +110,7 @@ A default job configuration is assumed if no jobs are specified in the `jobs` su
 
 In order to use a job specification other than the default, the specification must be defined in the Firebase under the `jobs` subtree. This allows us to coordinate job specification changes between workers and enforce expected behavior with Firebase security rules.
 
-In this example, we're chaining three jobs. New items pushed onto the queue without a `_state` key will be picked up by "job_1" and go into the `job_1_in_progress` state. Once "job_1" completes and the item goes into the `job_1_finished` state, "job_2" takes over and puts it into the `job_2_in_progress` state. Again, once "job_2" completes and the item goes into the `job_2_finished` state, "job_3" takes over and puts it into the `job_3_in_progress` state and finally removes it once completed. If, during any stage in the process there's an error, the item will end up in an `error` state.
+In this example, we're chaining three jobs. New items pushed onto the queue without a `_state` key will be picked up by "job_1" and go into the `job_1_in_progress` state. Once "job_1" completes and the item goes into the `job_1_finished` state, "job_2" takes over and puts it into the `job_2_in_progress` state. Again, once "job_2" completes and the item goes into the `job_2_finished` state, "job_3" takes over and puts it into the `job_3_in_progress` state. Finally, "job_3" removes it once complete. If, during any stage in the process there's an error, the item will end up in an "error" state.
 
 ```
 location
