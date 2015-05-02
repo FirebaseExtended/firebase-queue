@@ -37,29 +37,19 @@ module.exports = function() {
     inProgressState: 'in_progress',
     finishedState: 'finished_state'
   };
+  this.validJobSpecWithErrorState = {
+    inProgressState: 'in_progress',
+    errorState: 'error_state'
+  };
   this.validJobSpecWithTimeout = {
     inProgressState: 'in_progress',
-    timeout: 10
-  };
-  this.validJobSpecWithStartStateAndTimeout = {
-    inProgressState: 'in_progress',
-    startState: 'start_state',
-    timeout: 10
-  };
-  this.validJobSpecWithStartStateAndFinishedState = {
-    inProgressState: 'in_progress',
-    startState: 'start_state',
-    finishedState: 'finished_state'
-  };
-  this.validJobSpecWithFinishedStateAndTimeout = {
-    inProgressState: 'in_progress',
-    finishedState: 'finished_state',
     timeout: 10
   };
   this.validJobSpecWithEverything = {
     inProgressState: 'in_progress',
     startState: 'start_state',
     finishedState: 'finished_state',
+    errorState: 'error_state',
     timeout: 10
   };
 
