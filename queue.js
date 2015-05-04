@@ -111,7 +111,7 @@ function Queue() {
               startState: jobSpecSnap.child('start_state').val(),
               inProgressState: jobSpecSnap.child('in_progress_state').val(),
               finishedState: jobSpecSnap.child('finished_state').val(),
-              errorState: jobSpecSnap.child('finished_state').val(),
+              errorState: jobSpecSnap.child('error_state').val(),
               timeout: jobSpecSnap.child('timeout').val()
             };
 
