@@ -137,7 +137,7 @@ describe('QueueWorker', function() {
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -163,7 +163,7 @@ describe('QueueWorker', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -201,7 +201,7 @@ describe('QueueWorker', function() {
       testRef = queueRef.push({
         '_state': th.validBasicJobSpec.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       }, function(errorA) {
         if (errorA) {
@@ -231,7 +231,7 @@ describe('QueueWorker', function() {
       testRef = queueRef.push({
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       }, function(errorA) {
         if (errorA) {
@@ -266,7 +266,7 @@ describe('QueueWorker', function() {
         testRef = queueRef.push({
           '_state': th.validJobSpecWithFinishedState.inProgressState,
           '_state_changed': new Date().getTime(),
-          '_owner': qw.uuid,
+          '_owner': qw.uuid + ':' + qw.jobNumber,
           '_progress': 0
         }, function(errorA) {
           if (errorA) {
@@ -301,7 +301,7 @@ describe('QueueWorker', function() {
       testRef = queueRef.push({
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       }, function(errorA) {
         if (errorA) {
@@ -380,7 +380,7 @@ describe('QueueWorker', function() {
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -406,7 +406,7 @@ describe('QueueWorker', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -433,7 +433,7 @@ describe('QueueWorker', function() {
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid  + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -459,7 +459,7 @@ describe('QueueWorker', function() {
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -499,7 +499,7 @@ describe('QueueWorker', function() {
       testRef = queueRef.push({
         '_state': th.validBasicJobSpec.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       }, function(errorA) {
         if (errorA) {
@@ -535,7 +535,7 @@ describe('QueueWorker', function() {
       testRef = queueRef.push({
         '_state': th.validBasicJobSpec.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       }, function(errorA) {
         if (errorA) {
@@ -572,7 +572,7 @@ describe('QueueWorker', function() {
         testRef = queueRef.push({
           '_state': th.validBasicJobSpec.inProgressState,
           '_state_changed': new Date().getTime(),
-          '_owner': qw.uuid,
+          '_owner': qw.uuid + ':' + qw.jobNumber,
           '_progress': 0
         }, function(errorA) {
           if (errorA) {
@@ -610,7 +610,7 @@ describe('QueueWorker', function() {
       testRef = queueRef.push({
         '_state': th.validBasicJobSpec.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       }, function(errorA) {
         if (errorA) {
@@ -690,7 +690,7 @@ describe('QueueWorker', function() {
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -716,7 +716,7 @@ describe('QueueWorker', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
       var originalItem = {
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -743,7 +743,7 @@ describe('QueueWorker', function() {
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -769,7 +769,7 @@ describe('QueueWorker', function() {
       var originalItem = {
         '_state': th.validJobSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.uuid,
+        '_owner': qw.uuid + ':' + qw.jobNumber,
         '_progress': 0
       };
       qw.setJob(th.validJobSpecWithFinishedState);
@@ -826,7 +826,7 @@ describe('QueueWorker', function() {
 
     it('should not update the progress of an item if the worker is no longer processing it', function(done) {
       qw.setJob(th.validBasicJobSpec);
-      queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
+      queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid + ':' + qw.jobNumber }, function(error) {
         if (error) {
           return done(error);
         }
@@ -836,7 +836,7 @@ describe('QueueWorker', function() {
 
     it('should not update the progress of an item if the item is no longer in progress', function(done) {
       qw.setJob(th.validJobSpecWithFinishedState);
-      qw.currentItemRef = queueRef.push({ '_state': th.validJobSpecWithFinishedState.finishedState, '_owner': qw.uuid }, function(error) {
+      qw.currentItemRef = queueRef.push({ '_state': th.validJobSpecWithFinishedState.finishedState, '_owner': qw.uuid + ':' + qw.jobNumber }, function(error) {
         if (error) {
           return done(error);
         }
@@ -846,7 +846,7 @@ describe('QueueWorker', function() {
 
     it('should not update the progress of an item if the item has no _state', function(done) {
       qw.setJob(th.validBasicJobSpec);
-      qw.currentItemRef = queueRef.push({ '_owner': qw.uuid }, function(error) {
+      qw.currentItemRef = queueRef.push({ '_owner': qw.uuid + ':' + qw.jobNumber }, function(error) {
         if (error) {
           return done(error);
         }
@@ -856,7 +856,7 @@ describe('QueueWorker', function() {
 
     it('should update the progress of the current item', function(done) {
       qw.setJob(th.validBasicJobSpec);
-      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid }, function(error) {
+      qw.currentItemRef = queueRef.push({ '_state': th.validBasicJobSpec.inProgressState, '_owner': qw.uuid + ':' + qw.jobNumber }, function(error) {
         if (error) {
           return done(error);
         }
@@ -866,13 +866,13 @@ describe('QueueWorker', function() {
 
     it('should not update the progress of an item if a new item is being processed', function(done) {
       qw.setJob(th.validBasicJobSpec);
-      qw.currentItemRef = queueRef.push({ '_owner': qw.uuid }, function(error) {
+      qw.currentItemRef = queueRef.push({ '_owner': qw.uuid + ':' + qw.jobNumber }, function(error) {
         if (error) {
           return done(error);
         }
         var updateProgress = qw._updateProgress(qw.jobNumber);
         qw.jobNumber += 1;
-        updateProgress(10).should.eventually.be.fulfilled.notify(done);
+        updateProgress(10).should.eventually.be.rejectedWith('Can\'t update progress - no item currently being processed').notify(done);
       });
     });
   });
@@ -1134,6 +1134,78 @@ describe('QueueWorker', function() {
           done();
         } catch (errorB) {
           spy.restore();
+          done(errorB);
+        }
+      });
+    });
+
+    it('should set up a timeout when a job timeout is set and an item owner changed', function(done) {
+      qw.setJob(th.validJobSpecWithTimeout);
+      var testRef = queueRef.push({
+        '_owner': qw.uuid + ':0',
+        '_state': th.validJobSpecWithTimeout.inProgressState,
+        '_state_changed': new Date().getTime() - 10
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          var spy = sinon.spy(global, 'setTimeout');
+          testRef.update({
+            '_owner': qw.uuid + ':1',
+            '_state_changed': new Date().getTime() - 5
+          }, function(errorB) {
+            if (errorB) {
+              return done(errorB);
+            }
+            try {
+              expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+              expect(setTimeout.getCall(setTimeout.callCount - 1).args[1]).to.equal(th.validJobSpecWithTimeout.timeout - 5);
+              spy.restore();
+              done();
+            } catch (errorC) {
+              spy.restore();
+              done(errorC);
+            }
+          });
+        } catch (errorB) {
+          done(errorB);
+        }
+      });
+    });
+
+    it('should not set up a timeout when a job timeout is set and an item updated', function(done) {
+      qw.setJob(th.validJobSpecWithTimeout);
+      var spy = sinon.spy(global, 'setTimeout');
+      var testRef = queueRef.push({
+        '_owner': qw.uuid + ':0',
+        '_progress': 0,
+        '_state': th.validJobSpecWithTimeout.inProgressState,
+        '_state_changed': new Date().getTime() - 5
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          testRef.update({
+            '_progress': 1
+          }, function(errorB) {
+            if (errorB) {
+              return done(errorB);
+            }
+            try {
+              expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+              expect(setTimeout.getCall(0).args[1]).to.equal(th.validJobSpecWithTimeout.timeout - 5);
+              spy.restore();
+              done();
+            } catch (errorC) {
+              spy.restore();
+              done(errorC);
+            }
+          });
+        } catch (errorB) {
           done(errorB);
         }
       });
