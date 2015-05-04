@@ -33,8 +33,8 @@ var queue = new Queue(ref, function(data, progress, resolve, reject) {
   // Do some work
   progress(50);
 
+  // Finish the job asynchronously
   setTimeout(function() {
-    // Finish the job asynchronously
     resolve({ 'foo': 'baz' });
   }, 1000);
 });
@@ -90,12 +90,12 @@ A default job configuration is assumed if no jobs are specified in the `jobs` su
 
 ```json
 {
-  "default_job" : {
-    "start_state" : null,
-    "in_progress_state" : "in_progress",
-    "finished_state" : null,
+  "default_job": {
+    "start_state": null,
+    "in_progress_state": "in_progress",
+    "finished_state": null,
     "error_state": "error",
-    "timeout" : 300000
+    "timeout": 300000 // 5 minutes
   }
 }
 ```
@@ -118,21 +118,21 @@ location
 ```
 ```json
 {
-  "job_1" : {
-    "in_progress_state" : "job_1_in_progress",
-    "finished_state" : "job_1_finished",
-    "timeout" : 5000
+  "job_1": {
+    "in_progress_state": "job_1_in_progress",
+    "finished_state": "job_1_finished",
+    "timeout": 5000
   },
-  "job_2" : {
-    "start_state" : "job_1_finished",
-    "in_progress_state" : "job_2_in_progress",
-    "finished_state" : "job_2_finished",
+  "job_2": {
+    "start_state": "job_1_finished",
+    "in_progress_state": "job_2_in_progress",
+    "finished_state": "job_2_finished",
     "timeout" : 20000
   },
-  "job_3" : {
-    "start_state" : "job_2_finished",
-    "in_progress_state" : "job_3_in_progress",
-    "timeout" : 3000
+  "job_3": {
+    "start_state": "job_2_finished",
+    "in_progress_state": "job_3_in_progress",
+    "timeout": 3000
   }
 }
 ```
