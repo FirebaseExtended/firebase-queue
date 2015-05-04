@@ -930,6 +930,27 @@ describe('QueueWorker', function() {
       });
     });
 
+    it('should try and process an item without a _state if not busy', function(done) {
+      qw.startState = null;
+      qw.inProgressState = th.validBasicJobSpec.inProgressState;
+      var testRef = queueRef.push({
+        foo: 'bar'
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentItemRef).to.not.be.null;
+            expect(qw.busy).to.be.true;
+            done();
+          } catch (errorB) {
+            done(errorB);
+          }
+        }).catch(done);
+      });
+    });
+
     it('should not try and process an item if not a plain object', function(done) {
       qw.inProgressState = th.validJobSpecWithStartState.inProgressState;
       var testRef = queueRef.push('invalid', function(errorA) {
