@@ -820,7 +820,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current item no longer owned by this process').notify(done);
       });
     });
 
@@ -830,7 +830,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - no item currently being processed').notify(done);
       });
     });
 
@@ -840,7 +840,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current item no longer owned by this process').notify(done);
       });
     });
 
@@ -850,7 +850,7 @@ describe('QueueWorker', function() {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.fulfilled.notify(done);
+        qw._updateProgress(qw.jobNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current item no longer owned by this process').notify(done);
       });
     });
 
