@@ -1436,9 +1436,9 @@ describe('QueueWorker', function() {
     it('should reset the worker when called with an invalid job spec', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
         qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
-        var oldUUID = qw.uuid;
+        var oldJobNumber = qw.jobNumber;
         qw.setJob(invalidJobSpec);
-        expect(qw.uuid).to.not.equal(oldUUID);
+        expect(qw.jobNumber).to.not.equal(oldJobNumber);
         expect(qw.startState).to.be.null;
         expect(qw.inProgressState).to.be.null;
         expect(qw.finishedState).to.be.null;
@@ -1453,9 +1453,9 @@ describe('QueueWorker', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
         qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
         qw.setJob(th.validBasicJobSpec);
-        var oldUUID = qw.uuid;
+        var oldJobNumber = qw.jobNumber;
         qw.setJob(invalidJobSpec);
-        expect(qw.uuid).to.not.equal(oldUUID);
+        expect(qw.jobNumber).to.not.equal(oldJobNumber);
         expect(qw.startState).to.be.null;
         expect(qw.inProgressState).to.be.null;
         expect(qw.finishedState).to.be.null;
@@ -1470,9 +1470,9 @@ describe('QueueWorker', function() {
       ['', 'foo', NaN, Infinity, true, false, null, undefined, 0, -1, 10, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(invalidJobSpec) {
         qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
         qw.setJob(th.validJobSpecWithEverything);
-        var oldUUID = qw.uuid;
+        var oldJobNumber = qw.jobNumber;
         qw.setJob(invalidJobSpec);
-        expect(qw.uuid).to.not.equal(oldUUID);
+        expect(qw.jobNumber).to.not.equal(oldJobNumber);
         expect(qw.startState).to.be.null;
         expect(qw.inProgressState).to.be.null;
         expect(qw.finishedState).to.be.null;
@@ -1485,9 +1485,9 @@ describe('QueueWorker', function() {
 
     it('should reset a worker when called with a basic valid job spec', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
-      var oldUUID = qw.uuid;
+      var oldJobNumber = qw.jobNumber;
       qw.setJob(th.validBasicJobSpec);
-      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.jobNumber).to.not.equal(oldJobNumber);
       expect(qw.startState).to.be.null;
       expect(qw.inProgressState).to.equal(th.validBasicJobSpec.inProgressState);
       expect(qw.finishedState).to.be.null;
@@ -1499,9 +1499,9 @@ describe('QueueWorker', function() {
 
     it('should reset a worker when called with a valid job spec with a startState', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
-      var oldUUID = qw.uuid;
+      var oldJobNumber = qw.jobNumber;
       qw.setJob(th.validJobSpecWithStartState);
-      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.jobNumber).to.not.equal(oldJobNumber);
       expect(qw.startState).to.equal(th.validJobSpecWithStartState.startState);
       expect(qw.inProgressState).to.equal(th.validJobSpecWithStartState.inProgressState);
       expect(qw.finishedState).to.be.null;
@@ -1513,9 +1513,9 @@ describe('QueueWorker', function() {
 
     it('should reset a worker when called with a valid job spec with a finishedState', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
-      var oldUUID = qw.uuid;
+      var oldJobNumber = qw.jobNumber;
       qw.setJob(th.validJobSpecWithFinishedState);
-      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.jobNumber).to.not.equal(oldJobNumber);
       expect(qw.startState).to.be.null;
       expect(qw.inProgressState).to.equal(th.validJobSpecWithFinishedState.inProgressState);
       expect(qw.finishedState).to.equal(th.validJobSpecWithFinishedState.finishedState);
@@ -1527,9 +1527,9 @@ describe('QueueWorker', function() {
 
     it('should reset a worker when called with a valid job spec with a timeout', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
-      var oldUUID = qw.uuid;
+      var oldJobNumber = qw.jobNumber;
       qw.setJob(th.validJobSpecWithTimeout);
-      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.jobNumber).to.not.equal(oldJobNumber);
       expect(qw.startState).to.be.null;
       expect(qw.inProgressState).to.equal(th.validJobSpecWithTimeout.inProgressState);
       expect(qw.finishedState).to.be.null;
@@ -1541,9 +1541,9 @@ describe('QueueWorker', function() {
 
     it('should reset a worker when called with a valid job spec with everything', function() {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(queueRef, '0', _.noop);
-      var oldUUID = qw.uuid;
+      var oldJobNumber = qw.jobNumber;
       qw.setJob(th.validJobSpecWithEverything);
-      expect(qw.uuid).to.not.equal(oldUUID);
+      expect(qw.jobNumber).to.not.equal(oldJobNumber);
       expect(qw.startState).to.equal(th.validJobSpecWithEverything.startState);
       expect(qw.inProgressState).to.equal(th.validJobSpecWithEverything.inProgressState);
       expect(qw.finishedState).to.equal(th.validJobSpecWithEverything.finishedState);
