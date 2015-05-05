@@ -88,7 +88,7 @@ ref.push({'foo':'bar'});
 
 A default job configuration is assumed if no jobs are specified in the `jobs` subtree in the Firebase. The default job has the following characteristics:
 
-```json
+```js
 {
   "default_job": {
     "start_state": null,
