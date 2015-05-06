@@ -35,7 +35,7 @@ var queue = new Queue(ref, function(data, progress, resolve, reject) {
 
   // Finish the job asynchronously
   setTimeout(function() {
-    resolve({ 'foo': 'baz' });
+    resolve();
   }, 1000);
 });
 ```
@@ -50,15 +50,17 @@ Multiple queue workers can be initialized on multiple machines and Firebase-Queu
 #### Queue Worker Options
 
 Queue workers can take an optional options object to specify:
-  - `jobId` - specifies the job type for this worker
+  - `jobId` - specifies the job type for this worker.
   - `numWorkers` - specifies the number of workers to run simultaneously for this node.js thread. Defaults to 1 worker.
+  - `sanitize` - specifies whether the `data` object passed to the processing function is sanitized of internal keys reserved for use by the queue. Defaults to `true`.
 
 ```js
 ...
 
 var options = {
   'jobId': 'job_1',
-  'numWorkers': 5
+  'numWorkers': 5,
+  'sanitize': false
 };
 var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
   ...
