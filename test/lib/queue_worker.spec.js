@@ -32,7 +32,7 @@ describe('QueueWorker', function() {
       }).to.throw('Invalid process ID provided.');
     });
 
-    it('should not create a QueueWorker with only a queueRef, process ID and sanotize option', function() {
+    it('should not create a QueueWorker with only a queueRef, process ID and sanitize option', function() {
       expect(function() {
         new th.QueueWorker(queueRef, '0', true);
       }).to.throw('No processing function provided.');
