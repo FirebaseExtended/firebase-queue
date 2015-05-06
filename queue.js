@@ -118,31 +118,34 @@ function Queue() {
       return resolve(self);
     } else {
       var initialized = false;
-      self.ref.child('jobs').child(self.jobId).on('value', function(jobSpecSnap) {
-        var jobSpec = {
-              startState: jobSpecSnap.child('start_state').val(),
-              inProgressState: jobSpecSnap.child('in_progress_state').val(),
-              finishedState: jobSpecSnap.child('finished_state').val(),
-              errorState: jobSpecSnap.child('error_state').val(),
-              timeout: jobSpecSnap.child('timeout').val()
-            };
+      self.ref.child('jobs').child(self.jobId).on(
+        'value',
+        function(jobSpecSnap) {
+          var jobSpec = {
+                startState: jobSpecSnap.child('start_state').val(),
+                inProgressState: jobSpecSnap.child('in_progress_state').val(),
+                finishedState: jobSpecSnap.child('finished_state').val(),
+                errorState: jobSpecSnap.child('error_state').val(),
+                timeout: jobSpecSnap.child('timeout').val()
+              };
 
-        for (var i = 0; i < self.numWorkers; i++) {
-          self.workers[i].setJob(jobSpec);
-        }
-        /* istanbul ignore else */
-        if (!initialized) {
-          initialized = true;
-          return resolve(self);
-        }
-      }, /* istanbul ignore next */ function(error) {
-        logger.error('Queue(): Error connecting to Firebase reference', error);
-        if (!initialized) {
-          initialized = true;
-          return reject(error.message || 'Error connectino to Firebase ' +
-            'Reference');
-        }
-      });
+          for (var i = 0; i < self.numWorkers; i++) {
+            self.workers[i].setJob(jobSpec);
+          }
+          /* istanbul ignore else */
+          if (!initialized) {
+            initialized = true;
+            return resolve(self);
+          }
+        }, /* istanbul ignore next */ function(error) {
+          logger.error('Queue(): Error connecting to Firebase reference',
+            error);
+          if (!initialized) {
+            initialized = true;
+            return reject(error.message || 'Error connectino to Firebase ' +
+              'Reference');
+          }
+        });
     }
   });
 }
