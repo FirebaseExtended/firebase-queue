@@ -6,6 +6,7 @@ var _ = require('lodash'),
     QueueWorker = require('./lib/queue_worker.js');
 
 var DEFAULT_NUM_WORKERS = 1,
+    DEFAULT_SANITIZE = true,
     DEFAULT_JOB_SPEC = {
       inProgressState: 'in_progress',
       timeout: 300000 // 5 minutes
@@ -44,6 +45,7 @@ function Queue() {
   return new RSVP.Promise(function(resolve, reject) {
     var error;
     self.numWorkers = DEFAULT_NUM_WORKERS;
+    self.sanitize = DEFAULT_SANITIZE;
 
     if (constructorArguments.length < 2) {
       error = 'Queue must at least have the queueRef and ' +
@@ -81,6 +83,15 @@ function Queue() {
           return reject(error);
         }
       }
+      if (!_.isUndefined(options.sanitize)) {
+        if (_.isBoolean(options.sanitize)) {
+          self.sanitize = options.sanitize;
+        } else {
+          error = 'options.sanitize must be a boolean.';
+          logger.error('Queue(): Error during initialization', error);
+          return reject(error);
+        }
+      }
       self.processingFunction = constructorArguments[2];
     } else {
       error = 'Queue can only take at most three arguments - queueRef, ' +
@@ -95,6 +106,7 @@ function Queue() {
       self.workers.push(new QueueWorker(
         self.ref.child('queue'),
         processId,
+        self.sanitize,
         self.processingFunction
       ));
     }

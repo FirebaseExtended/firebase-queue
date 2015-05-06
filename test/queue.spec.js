@@ -50,8 +50,14 @@ describe('Queue', function() {
   });
 
   _.forEach(['', 'foo', NaN, Infinity, true, false, 0, -1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop], function(nonPositiveIntigerObject) {
-    it('should not create a Queue with a non-positive intiger numWorkers specified', function() {
+    it('should not create a Queue with a non-positive integer numWorkers specified', function() {
       return new th.Queue(th.testRef, { numWorkers: nonPositiveIntigerObject }, _.noop).should.eventually.be.rejectedWith('options.numWorkers must be a positive integer.');
+    });
+  });
+
+  _.forEach([NaN, Infinity, '', 'foo', 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop], function(nonBooleanObject) {
+    it('should not create a Queue with a non-boolean sanitize option specified', function() {
+      return new th.Queue(th.testRef, { sanitize: nonBooleanObject }, _.noop).should.eventually.be.rejectedWith('options.sanitize must be a boolean.');
     });
   });
 
@@ -68,6 +74,14 @@ describe('Queue', function() {
     return new th.Queue(th.testRef, { jobId: jobId }, _.noop).then(function(q) {
       expect(q.jobId).to.equal(jobId);
     }).should.eventually.be.fulfilled;
+  });
+
+  [true, false].forEach(function(bool) {
+    it('should create a Queue with a ' + bool + ' sanitize option when specified', function() {
+      return new th.Queue(th.testRef, { sanitize: bool }, _.noop).then(function(q) {
+        expect(q.sanitize).to.equal(bool);
+      }).should.eventually.be.fulfilled;
+    });
   });
 
   it('should not create a Queue when initialized with 4 parameters', function() {
