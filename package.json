@@ -9,6 +9,7 @@
     "job",
     "pipeline"
   ],
+  "license" : "MIT",
   "author": "Firebase <support@firebase.com>",
   "contributors": [
     {
