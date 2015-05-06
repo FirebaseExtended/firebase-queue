@@ -26,7 +26,7 @@
     "firebase": "2.x",
     "lodash": "~3.7.0",
     "rsvp": "3.x",
-    "uuid": "2.x",
+    "node-uuid": "1.4.x",
     "winston": "1.x"
   },
   "devDependencies": {
