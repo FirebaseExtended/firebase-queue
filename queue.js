@@ -107,7 +107,7 @@ function Queue() {
     for (var i = 0; i < self.numWorkers; i++) {
       var processId = (self.taskId ? self.taskId + ':' : '') + i;
       self.workers.push(new QueueWorker(
-        self.ref.child('queue'),
+        self.ref.child('tasks'),
         processId,
         self.sanitize,
         self.processingFunction
