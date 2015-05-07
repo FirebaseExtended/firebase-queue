@@ -526,8 +526,8 @@ describe('QueueWorker', function() {
               expect(item['_state']).to.equal('error');
               expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(item['_progress']).to.equal(0);
-              expect(item['_error_details']).to.have.all.keys(['previousState']);
-              expect(item['_error_details'].previousState).to.equal(th.validBasicJobSpec.inProgressState);
+              expect(item['_error_details']).to.have.all.keys(['previous_state']);
+              expect(item['_error_details'].previous_state).to.equal(th.validBasicJobSpec.inProgressState);
               done();
             } catch (errorB) {
               done(errorB);
@@ -562,8 +562,8 @@ describe('QueueWorker', function() {
               expect(item['_state']).to.equal(th.validJobSpecWithErrorState.errorState);
               expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(item['_progress']).to.equal(0);
-              expect(item['_error_details']).to.have.all.keys(['previousState']);
-              expect(item['_error_details'].previousState).to.equal(th.validBasicJobSpec.inProgressState);
+              expect(item['_error_details']).to.have.all.keys(['previous_state']);
+              expect(item['_error_details'].previous_state).to.equal(th.validBasicJobSpec.inProgressState);
               done();
             } catch (errorB) {
               done(errorB);
@@ -599,8 +599,8 @@ describe('QueueWorker', function() {
                 expect(item['_state']).to.equal('error');
                 expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 expect(item['_progress']).to.equal(0);
-                expect(item['_error_details']).to.have.all.keys(['previousState']);
-                expect(item['_error_details'].previousState).to.equal(th.validBasicJobSpec.inProgressState);
+                expect(item['_error_details']).to.have.all.keys(['previous_state']);
+                expect(item['_error_details'].previous_state).to.equal(th.validBasicJobSpec.inProgressState);
                 done();
               } catch (errorB) {
                 done(errorB);
@@ -637,8 +637,8 @@ describe('QueueWorker', function() {
               expect(item['_state']).to.equal('error');
               expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(item['_progress']).to.equal(0);
-              expect(item['_error_details']).to.have.all.keys(['previousState', 'error']);
-              expect(item['_error_details'].previousState).to.equal(th.validBasicJobSpec.inProgressState);
+              expect(item['_error_details']).to.have.all.keys(['previous_state', 'error']);
+              expect(item['_error_details'].previous_state).to.equal(th.validBasicJobSpec.inProgressState);
               expect(item['_error_details'].error).to.equal(error);
               done();
             } catch (errorB) {

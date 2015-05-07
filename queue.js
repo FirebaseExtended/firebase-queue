@@ -7,7 +7,7 @@ var _ = require('lodash'),
 
 var DEFAULT_NUM_WORKERS = 1,
     DEFAULT_SANITIZE = true,
-    DEFAULT_JOB_SPEC = {
+    DEFAULT_TASK_SPEC = {
       inProgressState: 'in_progress',
       timeout: 300000 // 5 minutes
     };
@@ -16,14 +16,17 @@ var DEFAULT_NUM_WORKERS = 1,
  * @constructor
  * @param {Firebase} ref A Firebase reference to the queue.
  * @param {Object} options (optional) Object containing possible keys:
- *   - jobId: {String} the current job identifier.
+ *   - taskId: {String} the task specification ID for the workers.
  *   - numWorkers: {Number} The number of workers to create for this job.
+ *   - sanitize: {Boolean} Whether to sanitize the 'data' passed to the
+ *       processing function of internal queue keys.
  * @param {Function} processingFunction A function that is called each time to
- *   process the queue item. This function is passed three parameters:
+ *   process a task. This function is passed four parameters:
  *     - data {Object} The current data at the location.
  *     - progress {Function} A function to update the progress percent of the
  *         queue item for informational purposes. Pass it a number between
- *         0 and 100.
+ *         0 and 100. Returns a promise of whether the operation was completed
+ *         successfully.
  *     - resolve {Function} An asychronous callback function - call this
  *         function when the processingFunction completes successfully. This
  *         takes an optional Object parameter that, if passed, will overwrite
@@ -63,11 +66,11 @@ function Queue() {
         logger.error('Queue(): Error during initialization', error);
         return reject(error);
       }
-      if (!_.isUndefined(options.jobId)) {
-        if (_.isString(options.jobId)) {
-          self.jobId = options.jobId;
+      if (!_.isUndefined(options.taskId)) {
+        if (_.isString(options.taskId)) {
+          self.taskId = options.taskId;
         } else {
-          error = 'options.jobId must be a String.';
+          error = 'options.taskId must be a String.';
           logger.error('Queue(): Error during initialization', error);
           return reject(error);
         }
@@ -102,7 +105,7 @@ function Queue() {
 
     self.workers = [];
     for (var i = 0; i < self.numWorkers; i++) {
-      var processId = (self.jobId ? self.jobId + ':' : '') + i;
+      var processId = (self.taskId ? self.taskId + ':' : '') + i;
       self.workers.push(new QueueWorker(
         self.ref.child('queue'),
         processId,
@@ -111,26 +114,26 @@ function Queue() {
       ));
     }
 
-    if (_.isUndefined(self.jobId)) {
+    if (_.isUndefined(self.taskId)) {
       for (var j = 0; j < self.numWorkers; j++) {
-        self.workers[j].setJob(DEFAULT_JOB_SPEC);
+        self.workers[j].setJob(DEFAULT_TASK_SPEC);
       }
       return resolve(self);
     } else {
       var initialized = false;
-      self.ref.child('jobs').child(self.jobId).on(
+      self.ref.child('jobs').child(self.taskId).on(
         'value',
-        function(jobSpecSnap) {
-          var jobSpec = {
-                startState: jobSpecSnap.child('start_state').val(),
-                inProgressState: jobSpecSnap.child('in_progress_state').val(),
-                finishedState: jobSpecSnap.child('finished_state').val(),
-                errorState: jobSpecSnap.child('error_state').val(),
-                timeout: jobSpecSnap.child('timeout').val()
+        function(taskSpecSnap) {
+          var taskSpec = {
+                startState: taskSpecSnap.child('start_state').val(),
+                inProgressState: taskSpecSnap.child('in_progress_state').val(),
+                finishedState: taskSpecSnap.child('finished_state').val(),
+                errorState: taskSpecSnap.child('error_state').val(),
+                timeout: taskSpecSnap.child('timeout').val()
               };
 
           for (var i = 0; i < self.numWorkers; i++) {
-            self.workers[i].setJob(jobSpec);
+            self.workers[i].setJob(taskSpec);
           }
           /* istanbul ignore else */
           if (!initialized) {
