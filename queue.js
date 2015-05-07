@@ -116,7 +116,7 @@ function Queue() {
 
     if (_.isUndefined(self.taskId)) {
       for (var j = 0; j < self.numWorkers; j++) {
-        self.workers[j].setJob(DEFAULT_TASK_SPEC);
+        self.workers[j].setTaskSpec(DEFAULT_TASK_SPEC);
       }
       return resolve(self);
     } else {
@@ -133,7 +133,7 @@ function Queue() {
               };
 
           for (var i = 0; i < self.numWorkers; i++) {
-            self.workers[i].setJob(taskSpec);
+            self.workers[i].setTaskSpec(taskSpec);
           }
           /* istanbul ignore else */
           if (!initialized) {
