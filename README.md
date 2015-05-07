@@ -5,7 +5,7 @@ A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.
 
 ## The Queue in Firebase
 
-The queue relies on having a Firebase reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/location`. The queue will respond to items on a `queue` subtree and optionally read specifications from a `jobs` subtree
+The queue relies on having a Firebase reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/location`. The queue will respond to items pushed onto the `queue` subtree and optionally read specifications from a `jobs` subtree
 ```
 location
   -> jobs
@@ -86,7 +86,7 @@ ref.push({'foo':'bar'});
 
 ## The Processing Function
 
-When defining a worker a callback function to process a queue item must be provided. It should take the following four parameters
+When defining a queue worker, a callback function to process a queue item must be provided. It should take the following four parameters
 
 #### `data`
 
@@ -106,6 +106,7 @@ A callback function for reporting the progress of the job. `progress()` takes a 
 By catching when this call fails and cancelling the current job early, the worker can minimize the extra work it does and return to processing new queue items sooner:
 
 ```js
+...
 var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
   ...
   function stopProcessing() {
@@ -121,7 +122,8 @@ var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
     reject(error);
   });
   ...
-});```
+});
+```
 
 #### `resolve()`
 
