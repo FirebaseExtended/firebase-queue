@@ -972,11 +972,11 @@ describe('QueueWorker', function() {
             testRef.once('value', function(snapshot) {
               try {
                 var item = snapshot.val();
-                expect(item).to.have.all.keys(['_error_details', '_state', '_state_changed', '_queue_item']);
-                expect(item['_error_details']).to.have.all.keys(['error']);
-                expect(item['_error_details']['error']).to.equal('Queue item was malformed');
+                expect(item).to.have.all.keys(['_error_details', '_state', '_state_changed']);
+                expect(item['_error_details']).to.have.all.keys(['error', 'original_task']);
+                expect(item['_error_details']['error']).to.equal('Task was malformed');
+                expect(item['_error_details']['original_task']).to.equal('invalid');
                 expect(item['_state']).to.equal('error');
-                expect(item['_queue_item']).to.equal('invalid');
                 expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 done();
               } catch (errorB) {
