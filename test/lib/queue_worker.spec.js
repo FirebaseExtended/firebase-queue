@@ -90,7 +90,7 @@ describe('QueueWorker', function() {
       tasksRef.set(null, done);
     });
 
-    it('should reset an item that is currently in progress', function(done) {
+    it('should reset a task that is currently in progress', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validBasicTaskSpec);
       testRef = tasksRef.push({
@@ -110,9 +110,9 @@ describe('QueueWorker', function() {
             qw._resetTask(testRef);
           } else {
             try {
-              var item = snapshot.val();
-              expect(item).to.have.all.keys(['_state_changed']);
-              expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state_changed']);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               done();
             } catch (errorB) {
               done(errorB);
@@ -122,7 +122,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not reset an item that no longer exists', function(done) {
+    it('should not reset a task that no longer exists', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validBasicTaskSpec);
 
@@ -140,16 +140,16 @@ describe('QueueWorker', function() {
       }).catch(done);
     });
 
-    it('should not reset an item if it is has already changed state', function(done) {
+    it('should not reset a task if it is has already changed state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -157,7 +157,7 @@ describe('QueueWorker', function() {
         qw._resetTask(testRef).then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -167,15 +167,15 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not reset an item if it is has no state', function(done) {
+    it('should not reset a task if it is has no state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -183,7 +183,7 @@ describe('QueueWorker', function() {
         qw._resetTask(testRef).then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -203,7 +203,7 @@ describe('QueueWorker', function() {
       tasksRef.set(null, done);
     });
 
-    it('should resolve an item owned by the current worker and remove it when no finishedState is specified', function(done) {
+    it('should resolve a task owned by the current worker and remove it when no finishedState is specified', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validBasicTaskSpec);
       testRef = tasksRef.push({
@@ -233,7 +233,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should resolve an item owned by the current worker and change the state when a finishedState is specified and no object passed', function(done) {
+    it('should resolve a task owned by the current worker and change the state when a finishedState is specified and no object passed', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
       testRef = tasksRef.push({
@@ -253,11 +253,11 @@ describe('QueueWorker', function() {
             qw._resolve(qw.taskNumber)();
           } else {
             try {
-              var item = snapshot.val();
-              expect(item).to.have.all.keys(['_state', '_state_changed', '_progress']);
-              expect(item['_progress']).to.equal(100);
-              expect(item['_state']).to.equal(th.validTaskSpecWithFinishedState.finishedState);
-              expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_state_changed', '_progress']);
+              expect(task['_progress']).to.equal(100);
+              expect(task['_state']).to.equal(th.validTaskSpecWithFinishedState.finishedState);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               done();
             } catch (errorB) {
               done(errorB);
@@ -268,7 +268,7 @@ describe('QueueWorker', function() {
     });
 
     ['', 'foo', NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], null, _.noop].forEach(function(nonPlainObject) {
-      it('should resolve an item owned by the current worker and change the state when a finishedState is specified and an invalid object ' + nonPlainObject + ' passed', function(done) {
+      it('should resolve an task owned by the current worker and change the state when a finishedState is specified and an invalid object ' + nonPlainObject + ' passed', function(done) {
         qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
         qw.setTaskSpec(th.validTaskSpecWithFinishedState);
         testRef = tasksRef.push({
@@ -288,11 +288,11 @@ describe('QueueWorker', function() {
               qw._resolve(qw.taskNumber)(nonPlainObject);
             } else {
               try {
-                var item = snapshot.val();
-                expect(item).to.have.all.keys(['_state', '_state_changed', '_progress']);
-                expect(item['_progress']).to.equal(100);
-                expect(item['_state']).to.equal(th.validTaskSpecWithFinishedState.finishedState);
-                expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+                var task = snapshot.val();
+                expect(task).to.have.all.keys(['_state', '_state_changed', '_progress']);
+                expect(task['_progress']).to.equal(100);
+                expect(task['_state']).to.equal(th.validTaskSpecWithFinishedState.finishedState);
+                expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 done();
               } catch (errorB) {
                 done(errorB);
@@ -303,7 +303,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should resolve an item owned by the current worker and change the state when a finishedState is specified and a plain object passed', function(done) {
+    it('should resolve a task owned by the current worker and change the state when a finishedState is specified and a plain object passed', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
       testRef = tasksRef.push({
@@ -323,12 +323,12 @@ describe('QueueWorker', function() {
             qw._resolve(qw.taskNumber)({ foo: 'bar' });
           } else {
             try {
-              var item = snapshot.val();
-              expect(item).to.have.all.keys(['_state', '_state_changed', '_progress', 'foo']);
-              expect(item['_progress']).to.equal(100);
-              expect(item['_state']).to.equal(th.validTaskSpecWithFinishedState.finishedState);
-              expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
-              expect(item.foo).to.equal('bar');
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_state_changed', '_progress', 'foo']);
+              expect(task['_progress']).to.equal(100);
+              expect(task['_state']).to.equal(th.validTaskSpecWithFinishedState.finishedState);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task.foo).to.equal('bar');
               done();
             } catch (errorB) {
               done(errorB);
@@ -338,7 +338,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not resolve an item that no longer exists', function(done) {
+    it('should not resolve a task that no longer exists', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
 
@@ -356,16 +356,16 @@ describe('QueueWorker', function() {
       }).catch(done);
     });
 
-    it('should not resolve an item if it is no longer owned by the current worker', function(done) {
+    it('should not resolve a task if it is no longer owned by the current worker', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': 'other_worker',
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -373,7 +373,7 @@ describe('QueueWorker', function() {
         qw._resolve(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -383,16 +383,16 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not resolve an item if it is has already changed state', function(done) {
+    it('should not resolve a task if it is has already changed state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -400,7 +400,7 @@ describe('QueueWorker', function() {
         qw._resolve(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -410,15 +410,15 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not resolve an item if it is has no state', function(done) {
+    it('should not resolve a task if it is has no state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -426,7 +426,7 @@ describe('QueueWorker', function() {
         qw._resolve(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -436,23 +436,23 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not resolve an item if it is no longer being processed', function(done) {
+    it('should not resolve a task if it is no longer being processed', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId  + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
         qw._resolve(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -462,16 +462,16 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not resolve an item if a new task is being processed', function(done) {
+    it('should not resolve a task if a new task is being processed', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -481,7 +481,7 @@ describe('QueueWorker', function() {
         resolve().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -501,7 +501,7 @@ describe('QueueWorker', function() {
       tasksRef.set(null, done);
     });
 
-    it('should reject an item owned by the current worker', function(done) {
+    it('should reject a task owned by the current worker', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validBasicTaskSpec);
       testRef = tasksRef.push({
@@ -521,13 +521,13 @@ describe('QueueWorker', function() {
             qw._reject(qw.taskNumber)();
           } else {
             try {
-              var item = snapshot.val();
-              expect(item).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
-              expect(item['_state']).to.equal('error');
-              expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
-              expect(item['_progress']).to.equal(0);
-              expect(item['_error_details']).to.have.all.keys(['previous_state']);
-              expect(item['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+              expect(task['_state']).to.equal('error');
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task['_progress']).to.equal(0);
+              expect(task['_error_details']).to.have.all.keys(['previous_state']);
+              expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
               done();
             } catch (errorB) {
               done(errorB);
@@ -537,7 +537,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should reject an item owned by the current worker and a non-standard error state', function(done) {
+    it('should reject a task owned by the current worker and a non-standard error state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithErrorState);
       testRef = tasksRef.push({
@@ -557,13 +557,13 @@ describe('QueueWorker', function() {
             qw._reject(qw.taskNumber)();
           } else {
             try {
-              var item = snapshot.val();
-              expect(item).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
-              expect(item['_state']).to.equal(th.validTaskSpecWithErrorState.errorState);
-              expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
-              expect(item['_progress']).to.equal(0);
-              expect(item['_error_details']).to.have.all.keys(['previous_state']);
-              expect(item['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+              expect(task['_state']).to.equal(th.validTaskSpecWithErrorState.errorState);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task['_progress']).to.equal(0);
+              expect(task['_error_details']).to.have.all.keys(['previous_state']);
+              expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
               done();
             } catch (errorB) {
               done(errorB);
@@ -574,7 +574,7 @@ describe('QueueWorker', function() {
     });
 
     [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-      it('should reject an item owned by the current worker and not add report the error if not a string: ' + nonStringObject, function(done) {
+      it('should reject a task owned by the current worker and not add report the error if not a string: ' + nonStringObject, function(done) {
         qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
         qw.setTaskSpec(th.validBasicTaskSpec);
         testRef = tasksRef.push({
@@ -594,13 +594,13 @@ describe('QueueWorker', function() {
               qw._reject(qw.taskNumber)(nonStringObject);
             } else {
               try {
-                var item = snapshot.val();
-                expect(item).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
-                expect(item['_state']).to.equal('error');
-                expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
-                expect(item['_progress']).to.equal(0);
-                expect(item['_error_details']).to.have.all.keys(['previous_state']);
-                expect(item['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+                var task = snapshot.val();
+                expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+                expect(task['_state']).to.equal('error');
+                expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+                expect(task['_progress']).to.equal(0);
+                expect(task['_error_details']).to.have.all.keys(['previous_state']);
+                expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
                 done();
               } catch (errorB) {
                 done(errorB);
@@ -611,7 +611,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should reject an item owned by the current worker and append the error string to the _error_details', function(done) {
+    it('should reject a task owned by the current worker and append the error string to the _error_details', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       var error = 'My error message';
       qw.setTaskSpec(th.validBasicTaskSpec);
@@ -632,14 +632,14 @@ describe('QueueWorker', function() {
             qw._reject(qw.taskNumber)(error);
           } else {
             try {
-              var item = snapshot.val();
-              expect(item).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
-              expect(item['_state']).to.equal('error');
-              expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
-              expect(item['_progress']).to.equal(0);
-              expect(item['_error_details']).to.have.all.keys(['previous_state', 'error']);
-              expect(item['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
-              expect(item['_error_details'].error).to.equal(error);
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+              expect(task['_state']).to.equal('error');
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task['_progress']).to.equal(0);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'error']);
+              expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].error).to.equal(error);
               done();
             } catch (errorB) {
               done(errorB);
@@ -649,7 +649,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not reject an item that no longer exists', function(done) {
+    it('should not reject a task that no longer exists', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
       testRef = tasksRef.push();
@@ -666,16 +666,16 @@ describe('QueueWorker', function() {
       }).catch(done);
     });
 
-    it('should not reject an item if it is no longer owned by the current worker', function(done) {
+    it('should not reject a task if it is no longer owned by the current worker', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': 'other_worker',
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -683,7 +683,7 @@ describe('QueueWorker', function() {
         qw._reject(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -693,16 +693,16 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not reject an item if it is has already changed state', function(done) {
+    it('should not reject a task if it is has already changed state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.finishedState,
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -710,7 +710,7 @@ describe('QueueWorker', function() {
         qw._reject(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -720,15 +720,15 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not reject an item if it is has no state', function(done) {
+    it('should not reject a task if it is has no state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -736,7 +736,7 @@ describe('QueueWorker', function() {
         qw._reject(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -746,23 +746,23 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not reject an item if it is no longer being processed', function(done) {
+    it('should not reject a task if it is no longer being processed', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
         qw._reject(qw.taskNumber)().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -772,16 +772,16 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not reject an item if a new task is being processed', function(done) {
+    it('should not reject a task if a new task is being processed', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
-      var originalItem = {
+      var originalTask = {
         '_state': th.validTaskSpecWithFinishedState.inProgressState,
         '_state_changed': new Date().getTime(),
         '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 0
       };
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
-      testRef = tasksRef.push(originalItem, function(errorA) {
+      testRef = tasksRef.push(originalTask, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
@@ -791,7 +791,7 @@ describe('QueueWorker', function() {
         reject().then(function() {
           testRef.once('value', function(snapshot) {
             try {
-              expect(snapshot.val()).to.deep.equal(originalItem);
+              expect(snapshot.val()).to.deep.equal(originalTask);
               done();
             } catch (errorB) {
               done(errorB);
@@ -822,47 +822,47 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not update the progress of an item no longer owned by the current worker', function(done) {
+    it('should not update the progress of a task no longer owned by the current worker', function(done) {
       qw.setTaskSpec(th.validBasicTaskSpec);
       qw.currentTaskRef = tasksRef.push({ '_state': th.validBasicTaskSpec.inProgressState, '_owner': 'someone_else' }, function(error) {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current item no longer owned by this process').notify(done);
+        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current task no longer owned by this process').notify(done);
       });
     });
 
-    it('should not update the progress of an item if the worker is no longer processing it', function(done) {
+    it('should not update the progress of a task if the worker is no longer processing it', function(done) {
       qw.setTaskSpec(th.validBasicTaskSpec);
       tasksRef.push({ '_state': th.validBasicTaskSpec.inProgressState, '_owner': qw.processId + ':' + qw.taskNumber }, function(error) {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - no item currently being processed').notify(done);
+        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - no task currently being processed').notify(done);
       });
     });
 
-    it('should not update the progress of an item if the item is no longer in progress', function(done) {
+    it('should not update the progress of a task if the task is no longer in progress', function(done) {
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
       qw.currentTaskRef = tasksRef.push({ '_state': th.validTaskSpecWithFinishedState.finishedState, '_owner': qw.processId + ':' + qw.taskNumber }, function(error) {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current item no longer owned by this process').notify(done);
+        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current task no longer owned by this process').notify(done);
       });
     });
 
-    it('should not update the progress of an item if the item has no _state', function(done) {
+    it('should not update the progress of a task if the task has no _state', function(done) {
       qw.setTaskSpec(th.validBasicTaskSpec);
       qw.currentTaskRef = tasksRef.push({ '_owner': qw.processId + ':' + qw.taskNumber }, function(error) {
         if (error) {
           return done(error);
         }
-        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current item no longer owned by this process').notify(done);
+        qw._updateProgress(qw.taskNumber)(10).should.eventually.be.rejectedWith('Can\'t update progress - current task no longer owned by this process').notify(done);
       });
     });
 
-    it('should update the progress of the current item', function(done) {
+    it('should update the progress of the current task', function(done) {
       qw.setTaskSpec(th.validBasicTaskSpec);
       qw.currentTaskRef = tasksRef.push({ '_state': th.validBasicTaskSpec.inProgressState, '_owner': qw.processId + ':' + qw.taskNumber }, function(error) {
         if (error) {
@@ -872,7 +872,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not update the progress of an item if a new item is being processed', function(done) {
+    it('should not update the progress of a task if a new task is being processed', function(done) {
       qw.setTaskSpec(th.validBasicTaskSpec);
       qw.currentTaskRef = tasksRef.push({ '_owner': qw.processId + ':' + qw.taskNumber }, function(error) {
         if (error) {
@@ -880,7 +880,7 @@ describe('QueueWorker', function() {
         }
         var updateProgress = qw._updateProgress(qw.taskNumber);
         qw.taskNumber += 1;
-        updateProgress(10).should.eventually.be.rejectedWith('Can\'t update progress - no item currently being processed').notify(done);
+        updateProgress(10).should.eventually.be.rejectedWith('Can\'t update progress - no task currently being processed').notify(done);
       });
     });
   });
@@ -896,7 +896,7 @@ describe('QueueWorker', function() {
       qw.setTaskSpec();
     });
 
-    it('should not try and process an item if busy', function(done) {
+    it('should not try and process a task if busy', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       qw.busy = true;
@@ -917,7 +917,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should try and process an item if not busy', function(done) {
+    it('should try and process a task if not busy', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       var testRef = tasksRef.push({
@@ -938,7 +938,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should try and process an item without a _state if not busy', function(done) {
+    it('should try and process a task without a _state if not busy', function(done) {
       qw.startState = null;
       qw.inProgressState = th.validBasicTaskSpec.inProgressState;
       var testRef = tasksRef.push({
@@ -959,7 +959,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not try and process an item if not a plain object', function(done) {
+    it('should not try and process a task if not a plain object', function(done) {
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       var testRef = tasksRef.push('invalid', function(errorA) {
         if (errorA) {
@@ -971,13 +971,13 @@ describe('QueueWorker', function() {
             expect(qw.busy).to.be.false;
             testRef.once('value', function(snapshot) {
               try {
-                var item = snapshot.val();
-                expect(item).to.have.all.keys(['_error_details', '_state', '_state_changed']);
-                expect(item['_error_details']).to.have.all.keys(['error', 'original_task']);
-                expect(item['_error_details']['error']).to.equal('Task was malformed');
-                expect(item['_error_details']['original_task']).to.equal('invalid');
-                expect(item['_state']).to.equal('error');
-                expect(item['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+                var task = snapshot.val();
+                expect(task).to.have.all.keys(['_error_details', '_state', '_state_changed']);
+                expect(task['_error_details']).to.have.all.keys(['error', 'original_task']);
+                expect(task['_error_details']['error']).to.equal('Task was malformed');
+                expect(task['_error_details']['original_task']).to.equal('invalid');
+                expect(task['_state']).to.equal('error');
+                expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 done();
               } catch (errorB) {
                 done(errorB);
@@ -990,7 +990,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not try and process an item if no longer in correct startState', function(done) {
+    it('should not try and process a task if no longer in correct startState', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       var testRef = tasksRef.push({
@@ -1010,7 +1010,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should invalidate callbacks if another process times the item out', function(done) {
+    it('should invalidate callbacks if another process times the task out', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       var testRef = tasksRef.push({
@@ -1103,7 +1103,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not set up timeouts when an item not in progress is added and a task timeout is set', function(done) {
+    it('should not set up timeouts when a task not in progress is added and a task timeout is set', function(done) {
       qw.setTaskSpec(th.validTaskSpecWithTimeout);
       tasksRef.push({
         '_state': th.validTaskSpecWithFinishedState.finishedState,
@@ -1151,7 +1151,7 @@ describe('QueueWorker', function() {
       expect(qw.processingTaskRemovedListener).to.be.null;
     });
 
-    it('should set up a timeout when a task timeout is set and an item added', function(done) {
+    it('should set up a timeout when a task timeout is set and a task added', function(done) {
       var spy = sinon.spy(global, 'setTimeout');
       qw.setTaskSpec(th.validTaskSpecWithTimeout);
       var testRef = tasksRef.push({
@@ -1173,7 +1173,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should set up a timeout when a task timeout is set and an item owner changed', function(done) {
+    it('should set up a timeout when a task timeout is set and a task owner changed', function(done) {
       qw.setTaskSpec(th.validTaskSpecWithTimeout);
       var testRef = tasksRef.push({
         '_owner': qw.processId + ':0',
@@ -1209,7 +1209,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not set up a timeout when a task timeout is set and an item updated', function(done) {
+    it('should not set up a timeout when a task timeout is set and a task updated', function(done) {
       qw.setTaskSpec(th.validTaskSpecWithTimeout);
       var spy = sinon.spy(global, 'setTimeout');
       var testRef = tasksRef.push({
@@ -1245,7 +1245,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should set up a timeout when a task timeout is set and an item added without a _state_changed time', function(done) {
+    it('should set up a timeout when a task timeout is set and a task added without a _state_changed time', function(done) {
       var spy = sinon.spy(global, 'setTimeout');
       qw.setTaskSpec(th.validTaskSpecWithTimeout);
       var testRef = tasksRef.push({
@@ -1286,7 +1286,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should clear a timeout when an item is completed', function(done) {
+    it('should clear a timeout when a task is completed', function(done) {
       var spy = sinon.spy(qw, '_resetTask');
       var taskSpec = _.clone(th.validTaskSpecWithTimeout);
       taskSpec.finishedState = th.validTaskSpecWithFinishedState.finishedState;
@@ -1587,7 +1587,7 @@ describe('QueueWorker', function() {
       expect(qw.expiryTimeouts).to.deep.equal({});
     });
 
-    it('should not pick up items on the queue not for the current item', function(done) {
+    it('should not pick up tasks on the queue not for the current task', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validBasicTaskSpec);
       var spy = sinon.spy(qw, '_tryToProcess');
@@ -1608,7 +1608,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should pick up items on the queue with no "_state" when a task is specified without a startState', function(done) {
+    it('should pick up tasks on the queue with no "_state" when a task is specified without a startState', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validBasicTaskSpec);
       var spy = sinon.spy(qw, '_tryToProcess');
@@ -1626,7 +1626,7 @@ describe('QueueWorker', function() {
       ref.set({ 'foo': 'bar' });
     });
 
-    it('should pick up items on the queue with the corresponding "_state" when a task is specifies a startState', function(done) {
+    it('should pick up tasks on the queue with the corresponding "_state" when a task is specifies a startState', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithStartState);
       var spy = sinon.spy(qw, '_tryToProcess');
