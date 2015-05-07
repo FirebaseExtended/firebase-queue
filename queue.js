@@ -17,7 +17,7 @@ var DEFAULT_NUM_WORKERS = 1,
  * @param {Firebase} ref A Firebase reference to the queue.
  * @param {Object} options (optional) Object containing possible keys:
  *   - taskId: {String} the task specification ID for the workers.
- *   - numWorkers: {Number} The number of workers to create for this job.
+ *   - numWorkers: {Number} The number of workers to create for this task.
  *   - sanitize: {Boolean} Whether to sanitize the 'data' passed to the
  *       processing function of internal queue keys.
  * @param {Function} processingFunction A function that is called each time to
@@ -121,7 +121,7 @@ function Queue() {
       return resolve(self);
     } else {
       var initialized = false;
-      self.ref.child('jobs').child(self.taskId).on(
+      self.ref.child('specs').child(self.taskId).on(
         'value',
         function(taskSpecSnap) {
           var taskSpec = {

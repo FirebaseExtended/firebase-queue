@@ -26,26 +26,26 @@ module.exports = function() {
   util.inherits(this.QueueWorkerWithoutProcessing, this.QueueWorker);
   this.QueueWorkerWithoutProcessing.prototype._tryToProcess = _.noop;
 
-  this.validBasicJobSpec = {
+  this.validBasicTaskSpec = {
     inProgressState: 'in_progress'
   };
-  this.validJobSpecWithStartState = {
+  this.validTaskSpecWithStartState = {
     inProgressState: 'in_progress',
     startState: 'start_state'
   };
-  this.validJobSpecWithFinishedState = {
+  this.validTaskSpecWithFinishedState = {
     inProgressState: 'in_progress',
     finishedState: 'finished_state'
   };
-  this.validJobSpecWithErrorState = {
+  this.validTaskSpecWithErrorState = {
     inProgressState: 'in_progress',
     errorState: 'error_state'
   };
-  this.validJobSpecWithTimeout = {
+  this.validTaskSpecWithTimeout = {
     inProgressState: 'in_progress',
     timeout: 10
   };
-  this.validJobSpecWithEverything = {
+  this.validTaskSpecWithEverything = {
     inProgressState: 'in_progress',
     startState: 'start_state',
     finishedState: 'finished_state',
