@@ -81,7 +81,7 @@ describe('QueueWorker', function() {
     });
   });
 
-  describe('#_resetItem', function() {
+  describe('#_resetTask', function() {
     var qw, testRef;
 
     afterEach(function(done) {
@@ -107,7 +107,7 @@ describe('QueueWorker', function() {
         testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resetItem(testRef);
+            qw._resetTask(testRef);
           } else {
             try {
               var item = snapshot.val();
@@ -128,7 +128,7 @@ describe('QueueWorker', function() {
 
       testRef = tasksRef.push();
       qw.currentTaskRef = testRef;
-      qw._resetItem(testRef).then(function() {
+      qw._resetTask(testRef).then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -154,7 +154,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentTaskRef = testRef;
-        qw._resetItem(testRef).then(function() {
+        qw._resetTask(testRef).then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -180,7 +180,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentTaskRef = testRef;
-        qw._resetItem(testRef).then(function() {
+        qw._resetTask(testRef).then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalItem);
@@ -1287,7 +1287,7 @@ describe('QueueWorker', function() {
     });
 
     it('should clear a timeout when an item is completed', function(done) {
-      var spy = sinon.spy(qw, '_resetItem');
+      var spy = sinon.spy(qw, '_resetTask');
       var taskSpec = _.clone(th.validTaskSpecWithTimeout);
       taskSpec.finishedState = th.validTaskSpecWithFinishedState.finishedState;
       qw.setTaskSpec(taskSpec);
@@ -1309,7 +1309,7 @@ describe('QueueWorker', function() {
             }
             try {
               expect(qw.expiryTimeouts).to.deep.equal({});
-              expect(qw._resetItem).to.not.have.been.called;
+              expect(qw._resetTask).to.not.have.been.called;
               spy.restore();
               done();
             } catch (errorC) {
