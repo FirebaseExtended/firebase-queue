@@ -163,7 +163,7 @@ Securing your queue is an important step in securely processing events that come
         "$data": {
           ".write": "auth!=null",
           ".validate": "/* Insert custom data validation code here */"
-        },
+        }
       },
       "jobs" : {
         ".read": "auth.hasPrivilege",
