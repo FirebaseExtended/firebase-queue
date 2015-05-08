@@ -24,19 +24,19 @@ var DEFAULT_NUM_WORKERS = 1,
  *   process a task. This function is passed four parameters:
  *     - data {Object} The current data at the location.
  *     - progress {Function} A function to update the progress percent of the
- *         queue item for informational purposes. Pass it a number between
- *         0 and 100. Returns a promise of whether the operation was completed
+ *         task for informational purposes. Pass it a number between 0 and 100.
+ *         Returns a promise of whether the operation was completed
  *         successfully.
  *     - resolve {Function} An asychronous callback function - call this
  *         function when the processingFunction completes successfully. This
  *         takes an optional Object parameter that, if passed, will overwrite
- *         the data at the queue item location, and returns a promise of
- *         whether the operation was successful.
+ *         the data at the task location, and returns a promise of whether the
+ *         operation was successful.
  *     - reject {Function} An asynchronous callback function - call this
  *         function if the processingFunction encounters an error. This takes
  *         an optional String or Object parameter that will be stored in the
- *         '_error_details/error' location in the queue item and returns a
- *         promise of whether the operation was successful.
+ *         '_error_details/error' location in the task and returns a promise
+ *         of whether the operation was successful.
  * @returns {RSVP.Promise} A resolved promise if the Queue is initialized
  *   correctly, or a rejection if the parameters or Firebase reference are
  *   incorrect.
