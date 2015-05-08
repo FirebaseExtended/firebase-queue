@@ -133,6 +133,68 @@ A callback function for reporting that the current item has been completed and t
 
 A callback function for reporting that the current item failed and the worker is ready to process another item. Once this is called, the item will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this job's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string.
 
+## Queue Security
+
+Securing your queue is an important step in securely processing events that come in. Below is a sample set of security rules that can be tailored to your particular use case.
+
+```json
+{
+  "rules": {
+    "location": {
+      "queue": {
+        ".read": "auth.hasPrivilege",
+        ".write": "auth.hasPrivilege",
+        ".indexOn": "_state",
+        "_state": {
+          ".validate": "newData.isString()"
+        },
+        "_state_changed": {
+          ".validate": "newData.isNumber()"
+        },
+        "_owner": {
+          ".validate": "newData.isString()"
+        },
+        "_progress": {
+          ".validate": "newData.isNumber() && newData >= 0 && newData <= 100"
+        },
+        "_error_details": {
+          ".validate": "/* Insert custom error validation code here */"
+        },
+        "$data": {
+          ".write": "auth!=null",
+          ".validate": "/* Insert custom data validation code here */"
+        },
+      },
+      "jobs" : {
+        ".read": "auth.hasPrivilege",
+        ".write": "auth.hasPrivilege",
+        "$jobID": {
+          "start_state": {
+            ".validate": "newData.isString() || !newData.exists()"
+          },
+          "in_progress_state": {
+            ".validate": "newData.isString()"
+          },
+          "finished_state": {
+            ".validate": "newData.isString() || !newData.exists()"
+          },
+          "error_state": {
+            ".validate": "newData.isString() || !newData.exists()"
+          },
+          "timeout": {
+            ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+In this example, there are two categories of users, regularly authenticated users and privileged users (tokens with `hasPrivilege == true` in this case). Regular users can write data to the queue, while privileged users can process that work and create new job specifications. In most cases, privileged users should be running on trusted servers. One can add an additional level of privilege to make job viewing and creation only available to a different group.
 
 ## Defining Jobs (Optional)
 
