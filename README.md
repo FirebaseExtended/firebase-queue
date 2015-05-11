@@ -150,7 +150,7 @@ These don't have to use a custom token, for instance one could use `auth!=null` 
     "location": {
       "queue": {
         ".read": "auth.canProcessTasks",
-        ".write": "auth.canAddTasks",
+        ".write": "auth.canAddTasks || auth.canProcessTasks",
         ".indexOn": "_state",
         "$taskID": {
           ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) || (auth.canProcessTasks && newData.hasChildren(['_state', '_state_changed', '_owner', '_progress']))",
