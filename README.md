@@ -142,7 +142,7 @@ In this example, there are three categories of users, represented using fields o
 - `auth.canProcessTasks`: Users who can process tasks (usually on a secure server)
 - `auth.canAddSpecs`: Users who can create and view job specifications (usually on a secure server)
 
-These don't have to use a custom token, for instance one could use `auth!=null` in place of `auth.canAddTasks` if application users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
+These don't have to use a custom token, for instance one could use `auth!=null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
 
 ```json
 {
@@ -153,7 +153,7 @@ These don't have to use a custom token, for instance one could use `auth!=null` 
         ".write": "auth.canAddTasks || auth.canProcessTasks",
         ".indexOn": "_state",
         "$taskID": {
-          ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) || (auth.canProcessTasks && newData.hasChildren(['_state', '_state_changed', '_owner', '_progress']))",
+          ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) || (auth.canProcessTasks && newData.hasChildren(['_state', '_state_changed', '_progress']))",
           "_state": {
             ".validate": "newData.isString()"
           },
@@ -167,7 +167,6 @@ These don't have to use a custom token, for instance one could use `auth!=null` 
             ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
           },
           "_error_details": {
-            ".validate": "newData.hasChild('original_task')",
               "error": {
                 ".validate": "newData.isString()"
               },
@@ -175,7 +174,7 @@ These don't have to use a custom token, for instance one could use `auth!=null` 
                 ".validate": "newData.isString()"
               },
               "original_task": {
-                ".validate": "/* Insert custom data validation code here */"
+                ".validate": {}
               },
               "$other": {
                 ".validate": false
@@ -191,24 +190,24 @@ These don't have to use a custom token, for instance one could use `auth!=null` 
         }
       },
       "jobs" : {
-        ".read": "auth.canAddSpecs",
+        ".read": "auth.canAddSpecs || auth.canProcessTasks",
         ".write": "auth.canAddSpecs",
         "$jobID": {
           ".validate": "newData.hasChild('in_progress_state')",
           "start_state": {
-            ".validate": "newData.isString() || !newData.exists()"
+            ".validate": "newData.isString()"
           },
           "in_progress_state": {
             ".validate": "newData.isString()"
           },
           "finished_state": {
-            ".validate": "newData.isString() || !newData.exists()"
+            ".validate": "newData.isString()"
           },
           "error_state": {
-            ".validate": "newData.isString() || !newData.exists()"
+            ".validate": "newData.isString()"
           },
           "timeout": {
-            ".validate": "(newData.isNumber() && newData.val() > 0) || !newData.exists()"
+            ".validate": "newData.isNumber() && newData.val() > 0"
           },
           "$other": {
             ".validate": false
