@@ -137,38 +137,64 @@ A callback function for reporting that the current item failed and the worker is
 
 Securing your queue is an important step in securely processing events that come in. Below is a sample set of security rules that can be tailored to your particular use case.
 
+In this example, there are three categories of users, represented using fields of a [custom token](https://www.firebase.com/docs/rest/guide/user-auth.html):
+- `auth.canAddTasks`: Users who can add tasks to the queue (could be an authenticated client or a secure server)
+- `auth.canProcessTasks`: Users who can process tasks (usually on a secure server)
+- `auth.canAddSpecs`: Users who can create and view job specifications (usually on a secure server)
+
+These don't have to use a custom token, for instance one could use `auth!=null` in place of `auth.canAddTasks` if application users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
+
 ```json
 {
   "rules": {
     "location": {
       "queue": {
-        ".read": "auth.hasPrivilege",
-        ".write": "auth.hasPrivilege",
+        ".read": "auth.canProcessTasks",
+        ".write": "auth.canAddTasks",
         ".indexOn": "_state",
-        "_state": {
-          ".validate": "newData.isString()"
-        },
-        "_state_changed": {
-          ".validate": "newData.isNumber()"
-        },
-        "_owner": {
-          ".validate": "newData.isString()"
-        },
-        "_progress": {
-          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
-        },
-        "_error_details": {
-          ".validate": "/* Insert custom error validation code here */"
-        },
-        "$data": {
-          ".write": "auth!=null",
-          ".validate": "/* Insert custom data validation code here */"
+        "$taskID": {
+          ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) || (auth.canProcessTasks && newData.hasChildren(['_state', '_state_changed', '_owner', '_progress']))",
+          "_state": {
+            ".validate": "newData.isString()"
+          },
+          "_state_changed": {
+            ".validate": "newData.isNumber() && (newData.val() === now || data.val() === newData.val())"
+          },
+          "_owner": {
+            ".validate": "newData.isString()"
+          },
+          "_progress": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+          },
+          "_error_details": {
+            ".validate": "newData.hasChild('original_task')",
+              "error": {
+                ".validate": "newData.isString()"
+              },
+              "previous_state": {
+                ".validate": "newData.isString()"
+              },
+              "original_task": {
+                ".validate": "/* Insert custom data validation code here */"
+              },
+              "$other": {
+                ".validate": false
+              }
+          },
+          "property_1": {
+            ".validate": "/* Insert custom data validation code here */"
+          },
+          ...
+          "property_n": {
+            ".validate": "/* Insert custom data validation code here */"
+          }
         }
       },
       "jobs" : {
-        ".read": "auth.hasPrivilege",
-        ".write": "auth.hasPrivilege",
+        ".read": "auth.canAddSpecs",
+        ".write": "auth.canAddSpecs",
         "$jobID": {
+          ".validate": "newData.hasChild('in_progress_state')",
           "start_state": {
             ".validate": "newData.isString() || !newData.exists()"
           },
@@ -193,8 +219,6 @@ Securing your queue is an important step in securely processing events that come
   }
 }
 ```
-
-In this example, there are two categories of users, regularly authenticated users and privileged users (tokens with `hasPrivilege == true` in this case). Regular users can write data to the queue, while privileged users can process pushed tasks and create new job specifications. In most cases, privileged users should be running on trusted servers. One can add an additional level of privilege to make job viewing and creation only available to a different group.
 
 ## Defining Jobs (Optional)
 
