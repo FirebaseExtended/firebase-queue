@@ -174,7 +174,7 @@ These don't have to use a custom token, for instance one could use `auth!=null` 
                 ".validate": "newData.isString()"
               },
               "original_task": {
-                ".validate": {}
+                /* This space intentionally left blank, prevents $other from matching on malformed task */
               },
               "$other": {
                 ".validate": false
