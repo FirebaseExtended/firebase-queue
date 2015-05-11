@@ -155,7 +155,7 @@ Securing your queue is an important step in securely processing events that come
           ".validate": "newData.isString()"
         },
         "_progress": {
-          ".validate": "newData.isNumber() && newData >= 0 && newData <= 100"
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
         },
         "_error_details": {
           ".validate": "/* Insert custom error validation code here */"
@@ -194,7 +194,7 @@ Securing your queue is an important step in securely processing events that come
 }
 ```
 
-In this example, there are two categories of users, regularly authenticated users and privileged users (tokens with `hasPrivilege == true` in this case). Regular users can write data to the queue, while privileged users can process that work and create new job specifications. In most cases, privileged users should be running on trusted servers. One can add an additional level of privilege to make job viewing and creation only available to a different group.
+In this example, there are two categories of users, regularly authenticated users and privileged users (tokens with `hasPrivilege == true` in this case). Regular users can write data to the queue, while privileged users can process pushed tasks and create new job specifications. In most cases, privileged users should be running on trusted servers. One can add an additional level of privilege to make job viewing and creation only available to a different group.
 
 ## Defining Jobs (Optional)
 
