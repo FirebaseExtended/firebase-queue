@@ -129,7 +129,7 @@ The reserved keys are:
  - `_progress` - A number between 0 and 100, reset at the start of each task to 0.
  - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it will contain a `previous_state` string (or `null` if there was no prior state, in the case of malformed input) capturing the state the task was in when it errored, an optional `error` string from the `reject()` callback of the previous task, and an optional `attempts` field containing the number of attempts made to retry a task when the task fails.
 
- By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the ([queue options](#queue-worker-options)).
+ By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the ([queue options](#queue-worker-options-optional)).
 
 #### `progress()`
 
