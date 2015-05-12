@@ -21,7 +21,7 @@ Using Firebase Queue, you can create specs for each of these tasks, and then use
 
 ## The Queue in Firebase
 
-The queue relies on having a Firebase reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase, and you can have multiple queues as well. The queue will respond to items pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
+The queue relies on having a Firebase reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
 ```
 queue
   -> specs
@@ -43,7 +43,7 @@ var Queue = require('firebase-queue'),
 
 var ref = new Firebase('https://<your-firebase>.firebaseio.com/queue');
 var queue = new Queue(ref, function(data, progress, resolve, reject) {
-  // Read and process item data
+  // Read and process task data
   console.log(data);
 
   // Do some work
@@ -60,7 +60,7 @@ var queue = new Queue(ref, function(data, progress, resolve, reject) {
 node my_queue_worker.js
 ```
 
-Multiple queue workers can be initialized on multiple machines and Firebase-Queue will ensure that only one worker is processing a single queue item at a time.
+Multiple queue workers can be initialized on multiple machines and Firebase-Queue will ensure that only one worker is processing a single queue task at a time.
 
 
 #### Queue Worker Options (Optional)
@@ -125,9 +125,9 @@ A JavaScript object containing the claimed task's data, and can contain any keys
 The reserved keys are:
  - `_state` - The current state of the task. Will always be the task's `in_progress_state` when passed to the processing function.
  - `_state_changed` - The timestamp that the task changed into its current state. This will always be close to the time the processing function was called.
- - `_owner` - A unique ID for the worker and task number combination to ensure only one worker is responsible for the item at any time.
+ - `_owner` - A unique ID for the worker and task number combination to ensure only one worker is responsible for the task at any time.
  - `_progress` - A number between 0 and 100, reset at the start of each task to 0.
- - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it will contain a `previous_state` string (or `null` if there was no prior state, in the case of malformed input) capturing the state the task was in when it errored, an optional `error` string from the `reject()` callback of the previous task, and an optional `attempts` field containing the number of attempts made to retry a task when the task fails.
+ - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an optional `error` string from the `reject()` callback of the previous task, and an optional `attempts` field containing the number of attempts made to retry a task when the task fails.
 
  By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the [queue options](#queue-worker-options-optional).
 
@@ -135,7 +135,7 @@ The reserved keys are:
 
 A callback function for reporting the progress of the task. `progress()` takes a single parameter that must be a number between 0 and 100, and returns a [RSVP.Promise](https://github.com/tildeio/rsvp.js) that's fulfilled when successfully updated. If this promise is rejected, it's likely that the task is no longer owned by this process (perhaps it has timed out or the task specification has changed) or the worker has lost its connection to Firebase.
 
-By catching when this call fails and cancelling the current task early, the worker can minimize the extra work it does and return to processing new queue items sooner:
+By catching when this call fails and cancelling the current task early, the worker can minimize the extra work it does and return to processing new queue tasks sooner:
 
 ```js
 ...
@@ -147,10 +147,10 @@ var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
   ...
   // report current progress
   progress(currentProgress).catch(function(error) {
-    // we've lost the current queue item, so stop processing
+    // we've lost the current task, so stop processing
     stopProcessing();
 
-    // and reject the item so that we can pick up new items
+    // and reject the task so that we can pick up new tasks
     reject(error);
   });
   ...
@@ -159,11 +159,11 @@ var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
 
 #### `resolve()`
 
-A callback function for reporting that the current item has been completed and the worker is ready to process another item. If the current job specification has a `finished_state`, any plain JavaScript object passed into the `resolve()` function will be written to the queue item location and will be available to the next job if the jobs are chained.
+A callback function for reporting that the current task has been completed and the worker is ready to process another task. If the current job specification has a `finished_state`, any plain JavaScript object passed into the `resolve()` function will be written to the `tasks` location and will be available to the next job if the jobs are chained.
 
 #### `reject()`
 
-A callback function for reporting that the current item failed and the worker is ready to process another item. Once this is called, the item will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string.
+A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string.
 
 ## Queue Security
 
@@ -284,7 +284,7 @@ A default spec configuration is assumed if no specs are specified in the `specs`
 
 In order to use a job specification other than the default, the specification must be defined in the Firebase under the `specs` subtree. This allows us to coordinate job specification changes between workers and enforce expected behavior with Firebase security rules.
 
-In this example, we're chaining three specs to make a job. New items pushed onto the queue without a `_state` key will be picked up by "spec_1" and go into the `spec_1_in_progress` state. Once "spec_1" completes and the item goes into the `spec_1_finished` state, "spec_2" takes over and puts it into the `spec_2_in_progress` state. Again, once "spec_2" completes and the item goes into the `spec_2_finished` state, "spec_3" takes over and puts it into the `spec_3_in_progress` state. Finally, "spec_3" removes it once complete. If, during any stage in the process there's an error, the item will end up in an "error" state.
+In this example, we're chaining three specs to make a job. New tasks pushed onto the queue without a `_state` key will be picked up by "spec_1" and go into the `spec_1_in_progress` state. Once "spec_1" completes and the task goes into the `spec_1_finished` state, "spec_2" takes over and puts it into the `spec_2_in_progress` state. Again, once "spec_2" completes and the task goes into the `spec_2_finished` state, "spec_3" takes over and puts it into the `spec_3_in_progress` state. Finally, "spec_3" removes it once complete. If, during any stage in the process there's an error, the task will end up in an "error" state.
 
 ```
 queue
