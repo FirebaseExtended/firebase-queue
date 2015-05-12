@@ -133,6 +133,91 @@ A callback function for reporting that the current item has been completed and t
 
 A callback function for reporting that the current item failed and the worker is ready to process another item. Once this is called, the item will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this job's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string.
 
+## Queue Security
+
+Securing your queue is an important step in securely processing events that come in. Below is a sample set of security rules that can be tailored to your particular use case.
+
+In this example, there are three categories of users, represented using fields of a [custom token](https://www.firebase.com/docs/rest/guide/user-auth.html):
+- `auth.canAddTasks`: Users who can add tasks to the queue (could be an authenticated client or a secure server)
+- `auth.canProcessTasks`: Users who can process tasks (usually on a secure server)
+- `auth.canAddSpecs`: Users who can create and view job specifications (usually on a secure server)
+
+These don't have to use a custom token, for instance one could use `auth!=null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
+
+```json
+{
+  "rules": {
+    "location": {
+      "queue": {
+        ".read": "auth.canProcessTasks",
+        ".write": "auth.canAddTasks || auth.canProcessTasks",
+        ".indexOn": "_state",
+        "$taskID": {
+          ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) || (auth.canProcessTasks && newData.hasChildren(['_state', '_state_changed', '_progress']))",
+          "_state": {
+            ".validate": "newData.isString()"
+          },
+          "_state_changed": {
+            ".validate": "newData.isNumber() && (newData.val() === now || data.val() === newData.val())"
+          },
+          "_owner": {
+            ".validate": "newData.isString()"
+          },
+          "_progress": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+          },
+          "_error_details": {
+              "error": {
+                ".validate": "newData.isString()"
+              },
+              "previous_state": {
+                ".validate": "newData.isString()"
+              },
+              "original_task": {
+                /* This space intentionally left blank, prevents $other from matching on malformed task */
+              },
+              "$other": {
+                ".validate": false
+              }
+          },
+          "property_1": {
+            ".validate": "/* Insert custom data validation code here */"
+          },
+          ...
+          "property_n": {
+            ".validate": "/* Insert custom data validation code here */"
+          }
+        }
+      },
+      "jobs" : {
+        ".read": "auth.canAddSpecs || auth.canProcessTasks",
+        ".write": "auth.canAddSpecs",
+        "$jobID": {
+          ".validate": "newData.hasChild('in_progress_state')",
+          "start_state": {
+            ".validate": "newData.isString()"
+          },
+          "in_progress_state": {
+            ".validate": "newData.isString()"
+          },
+          "finished_state": {
+            ".validate": "newData.isString()"
+          },
+          "error_state": {
+            ".validate": "newData.isString()"
+          },
+          "timeout": {
+            ".validate": "newData.isNumber() && newData.val() > 0"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}
+```
 
 ## Defining Jobs (Optional)
 
