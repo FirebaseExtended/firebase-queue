@@ -5,8 +5,8 @@ A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.
 
 ## Purpose of a Queue
 
-Queue's in Firebase can be used to perform privileged background work on data stored in a Firebase like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to other locations in your Firebase. First, let's define a few terms we'll use when talking about a queue:
-  - `task` - a piece of work that a queue worker can process
+Queues in Firebase can be used to organize workers or perform background work on data stored in a Firebase like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to other locations in your Firebase. First, let's define a few terms we'll use when talking about a queue:
+  - `task` - a unit of work that a queue worker can process
   - `spec` - a definition of an operation that the queue will perform on matching tasks
   - `job` - one of more `spec`'s that specify a series of ordered operations to be performed
   - `worker` - an individual process that picks up tasks with a certain spec and processes them
@@ -98,7 +98,7 @@ or
 var Firebase = require('firebase');
 
 var ref = new Firebase('https://<your-firebase>.firebaseio.com/queue/tasks');
-ref.push({"foo": "bar"});
+ref.push({'foo': 'bar'});
 ```
 
 ### Starting Tasks in Specific States (Optional)
