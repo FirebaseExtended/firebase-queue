@@ -163,7 +163,7 @@ A callback function for reporting that the current task has been completed and t
 
 #### `reject()`
 
-A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string.
+A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string. Note that if retries are enabled and there are remaining attempts, the task will be restarted in it's `_start` state.
 
 ## Queue Security
 
@@ -174,7 +174,7 @@ In this example, there are three categories of users, represented using fields o
 - `auth.canProcessTasks`: Users who can process tasks (usually on a secure server)
 - `auth.canAddSpecs`: Users who can create and view job specifications (usually on a secure server)
 
-These don't have to use a custom token, for instance you could use `auth!=null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
+These don't have to use a custom token, for instance you could use `auth != null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
 
 ```json
 {
@@ -210,7 +210,7 @@ These don't have to use a custom token, for instance you could use `auth!=null` 
               },
               "attempts": {
                 ".validate": "newData.isNumber() && newData.val() > 0"
-              }
+              },
               "$other": {
                 ".validate": false
               }
@@ -278,7 +278,7 @@ A default spec configuration is assumed if no specs are specified in the `specs`
 - `finished_state` - The default spec has no `finished_state` so the worker will remove tasks from the queue upon successful completion. If `finished_state` is specified, then the task's `_state` value will be updated to the `finished_state` upon task completion. Setting this value to another spec's `start_state` is useful for chaining tasks together to create a job.
 - `error_state` - If the task gets rejected the `_state` will be updated to this value and an additional key `_error_details` will be populated with the `previousState` and an optional error message from the `reject()` callback. If this isn't specified, it defaults to "error". This can be useful for specifying different error states for different tasks, or chaining errors so that they can be logged.
 - `timeout` - The default timeout is 5 minutes. When a task has been claimed by a worker but has not completed within `timeout` milliseconds, the queue will report that task as timed out, and reset that task to be claimable once again. If this is not specified a task will be claimed at most once and never leave that state if the worker processing it fails during the process.
-- `retries` - The default spec doesn't retry failed tasks
+- `retries` - The default spec doesn't retry failed tasks. When a task fails, if there are any remaining attempts, the queue will restart the task by setting the task's `_state` to its spec's `start_state`.
 
 #### Creating Jobs using Custom Specs and Task Chaining
 
