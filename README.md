@@ -105,7 +105,7 @@ ref.push({'foo': 'bar'});
 
 When using a custom spec, you can pass a `_state` key in with your object, which will allow a custom spec's worker(s) to pick up your task further down the job pipeline, rather than starting at the starting spec.
 
-```json
+```js
 {
   "foo": "bar",
   "boo": "baz", 
@@ -176,7 +176,7 @@ In this example, there are three categories of users, represented using fields o
 
 These don't have to use a custom token, for instance you could use `auth != null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
 
-```json
+```js
 {
   "rules": {
     "queue": {
@@ -260,7 +260,7 @@ These don't have to use a custom token, for instance you could use `auth != null
 
 A default spec configuration is assumed if no specs are specified in the `specs` subtree of the queue. The default spec has the following characteristics:
 
-```json
+```js
 {
   "default_spec": {
     "start_state": null,
