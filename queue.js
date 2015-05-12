@@ -129,7 +129,8 @@ function Queue() {
                 inProgressState: taskSpecSnap.child('in_progress_state').val(),
                 finishedState: taskSpecSnap.child('finished_state').val(),
                 errorState: taskSpecSnap.child('error_state').val(),
-                timeout: taskSpecSnap.child('timeout').val()
+                timeout: taskSpecSnap.child('timeout').val(),
+                retries: taskSpecSnap.child('retries').val()
               };
 
           for (var i = 0; i < self.numWorkers; i++) {

@@ -45,12 +45,17 @@ module.exports = function() {
     inProgressState: 'in_progress',
     timeout: 10
   };
+  this.validTaskSpecWithRetries = {
+    inProgressState: 'in_progress',
+    retries: 4
+  };
   this.validTaskSpecWithEverything = {
     inProgressState: 'in_progress',
     startState: 'start_state',
     finishedState: 'finished_state',
     errorState: 'error_state',
-    timeout: 10
+    timeout: 10,
+    retries: 4
   };
 
   return this;
