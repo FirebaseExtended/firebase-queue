@@ -44,8 +44,8 @@ describe('Queue', function() {
   });
 
   _.forEach([NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop], function(nonStringObject) {
-    it('should not create a Queue with a non-string taskId specified', function() {
-      return new th.Queue(th.testRef, { taskId: nonStringObject }, _.noop).should.eventually.be.rejectedWith('options.taskId must be a String.');
+    it('should not create a Queue with a non-string specId specified', function() {
+      return new th.Queue(th.testRef, { specId: nonStringObject }, _.noop).should.eventually.be.rejectedWith('options.specId must be a String.');
     });
   });
 
@@ -69,10 +69,10 @@ describe('Queue', function() {
     });
   });
 
-  it('should create a Queue with a specific taskId when specified', function() {
-    var taskId = 'test_task';
-    return new th.Queue(th.testRef, { taskId: taskId }, _.noop).then(function(q) {
-      expect(q.taskId).to.equal(taskId);
+  it('should create a Queue with a specific specId when specified', function() {
+    var specId = 'test_task';
+    return new th.Queue(th.testRef, { specId: specId }, _.noop).then(function(q) {
+      expect(q.specId).to.equal(specId);
     }).should.eventually.be.fulfilled;
   });
 

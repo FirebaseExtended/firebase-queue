@@ -16,7 +16,7 @@ var DEFAULT_NUM_WORKERS = 1,
  * @constructor
  * @param {Firebase} ref A Firebase reference to the queue.
  * @param {Object} options (optional) Object containing possible keys:
- *   - taskId: {String} the task specification ID for the workers.
+ *   - specId: {String} the task specification ID for the workers.
  *   - numWorkers: {Number} The number of workers to create for this task.
  *   - sanitize: {Boolean} Whether to sanitize the 'data' passed to the
  *       processing function of internal queue keys.
@@ -66,11 +66,11 @@ function Queue() {
         logger.error('Queue(): Error during initialization', error);
         return reject(error);
       }
-      if (!_.isUndefined(options.taskId)) {
-        if (_.isString(options.taskId)) {
-          self.taskId = options.taskId;
+      if (!_.isUndefined(options.specId)) {
+        if (_.isString(options.specId)) {
+          self.specId = options.specId;
         } else {
-          error = 'options.taskId must be a String.';
+          error = 'options.specId must be a String.';
           logger.error('Queue(): Error during initialization', error);
           return reject(error);
         }
@@ -105,7 +105,7 @@ function Queue() {
 
     self.workers = [];
     for (var i = 0; i < self.numWorkers; i++) {
-      var processId = (self.taskId ? self.taskId + ':' : '') + i;
+      var processId = (self.specId ? self.specId + ':' : '') + i;
       self.workers.push(new QueueWorker(
         self.ref.child('tasks'),
         processId,
@@ -114,14 +114,14 @@ function Queue() {
       ));
     }
 
-    if (_.isUndefined(self.taskId)) {
+    if (_.isUndefined(self.specId)) {
       for (var j = 0; j < self.numWorkers; j++) {
         self.workers[j].setTaskSpec(DEFAULT_TASK_SPEC);
       }
       return resolve(self);
     } else {
       var initialized = false;
-      self.ref.child('specs').child(self.taskId).on(
+      self.ref.child('specs').child(self.specId).on(
         'value',
         function(taskSpecSnap) {
           var taskSpec = {
