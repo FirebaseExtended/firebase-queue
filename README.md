@@ -5,7 +5,7 @@ A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.
 
 ## Purpose of a Queue
 
-Queues in Firebase can be used to perform privileged background work on data stored in a Firebase: generating thumbnails of images, filtering message contents and censoring data, or fanning data out to other locations in your Firebase. First, let's define a few terms we'll use when talking about a queue:
+Queue's in Firebase can be used to perform privileged background work on data stored in a Firebase like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to other locations in your Firebase. First, let's define a few terms we'll use when talking about a queue:
   - `task` - a piece of work that a queue worker can process
   - `spec` - a definition of an operation that the queue will perform on matching tasks
   - `job` - one of more `spec`'s that specify a series of ordered operations to be performed
@@ -96,7 +96,7 @@ or
 var Firebase = require('firebase');
 
 var ref = new Firebase('https://<your-firebase>.firebaseio.com/queue/tasks');
-ref.push({'foo':'bar'});
+ref.push({"foo": "bar"});
 ```
 
 ### Starting Tasks in Specific States (Optional)
@@ -105,9 +105,9 @@ When using a custom spec, you can pass a `_state` key in with your object, which
 
 ```json
 {
-  'foo':'bar',
-  'boo':'baz', 
-  '_state':'spec_n_start'
+  "foo": "bar",
+  "boo": "baz", 
+  "_state": "spec_n_start"
 }
 ```
 
@@ -125,7 +125,7 @@ The reserved keys are:
  - `_state_changed` - The timestamp that the task changed into its current state. This will always be close to the time the processing function was called.
  - `_owner` - A unique ID for the worker and task number combination to ensure only one worker is responsible for the item at any time.
  - `_progress` - A number between 0 and 100, reset at the start of each task to 0.
- - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it will contain a `previous_state` string capturing the state the task was in when it errored, and an optional `error` string from the `reject()` callback of the previous task. TODO: attempts
+ - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it will contain a `previous_state` string (or `null` if there was no prior state, in the case of malformed input) capturing the state the task was in when it errored, an optional `error` string from the `reject()` callback of the previous task, and an optional `attempts` field containing the number of attempts made to retry a task when the task fails.
 
  By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the ([queue options](#queue-worker-options)).
 
