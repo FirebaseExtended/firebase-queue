@@ -15,7 +15,9 @@ Let's take a look at a simple example to see how this works. Imagine you wanted 
   1. Sanitize chat message input
   2. Fan data out to multiple rooms and users
 
-Using Firebase Queue, you can create specs for each of these tasks, and then use queue's to process the individual tasks to complete the job. We'll explore the queue, adding tasks, assigning workers, and creating custom specs to create full jobs, then revisit the example above.
+Since chat message sanitization can't happen purely on the client side, as that would allow a malicious client to circumvent client side restrictions, you'll have to run this process on a trusted server process.
+
+Using Firebase Queue, you can create specs for each of these tasks, and then use queues to process the individual tasks to complete the job. We'll explore the queue, adding tasks, assigning workers, and creating custom specs to create full jobs, then revisit the example above.
 
 ## The Queue in Firebase
 
