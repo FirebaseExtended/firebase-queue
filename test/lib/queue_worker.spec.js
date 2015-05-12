@@ -526,8 +526,49 @@ describe('QueueWorker', function() {
               expect(task['_state']).to.equal('error');
               expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(task['_progress']).to.equal(0);
-              expect(task['_error_details']).to.have.all.keys(['previous_state']);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'attempts']);
               expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].attempts).to.equal(1);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
+    it('should reject a task owned by the current worker and reset more retries are specified', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
+      qw.setTaskSpec(th.validTaskSpecWithRetries);
+      testRef = tasksRef.push({
+        '_state': th.validTaskSpecWithRetries.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0,
+        '_error_details': {
+          'previous_state': th.validTaskSpecWithRetries.inProgressState,
+          'attempts': 1
+        }
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._reject(qw.taskNumber)();
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_progress', '_state_changed', '_error_details']);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task['_progress']).to.equal(0);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'attempts']);
+              expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].attempts).to.equal(2);
               done();
             } catch (errorB) {
               done(errorB);
@@ -562,8 +603,9 @@ describe('QueueWorker', function() {
               expect(task['_state']).to.equal(th.validTaskSpecWithErrorState.errorState);
               expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(task['_progress']).to.equal(0);
-              expect(task['_error_details']).to.have.all.keys(['previous_state']);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'attempts']);
               expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].attempts).to.equal(1);
               done();
             } catch (errorB) {
               done(errorB);
@@ -599,8 +641,9 @@ describe('QueueWorker', function() {
                 expect(task['_state']).to.equal('error');
                 expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 expect(task['_progress']).to.equal(0);
-                expect(task['_error_details']).to.have.all.keys(['previous_state']);
+                expect(task['_error_details']).to.have.all.keys(['previous_state', 'attempts']);
                 expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+                expect(task['_error_details'].attempts).to.equal(1);
                 done();
               } catch (errorB) {
                 done(errorB);
@@ -637,8 +680,9 @@ describe('QueueWorker', function() {
               expect(task['_state']).to.equal('error');
               expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(task['_progress']).to.equal(0);
-              expect(task['_error_details']).to.have.all.keys(['previous_state', 'error']);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'error', 'attempts']);
               expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].attempts).to.equal(1);
               expect(task['_error_details'].error).to.equal(error);
               done();
             } catch (errorB) {
