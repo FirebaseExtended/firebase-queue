@@ -335,7 +335,7 @@ root
       /* null, no data */
 ```
 
-Let's imagine that you have some front end that allows your users to write their name and a message, and send that to your queue as it's `data`. Let's assume your user pushes something like the following:
+Let's imagine that you have some front end that allows your users to write their name and a message, and send that to your queue as it's `data`. Let's assume your user writes something like the following:
 
 ```js
 // chat_client.js
@@ -360,7 +360,7 @@ root
         name: "Chris"
 ```
 
-When your users push `data` like the above into the `tasks` subtree, all tasks will start in the `sanitize_message` spec, which can be specified using the following processing function:
+When your users push `data` like the above into the `tasks` subtree, tasks will initially start in the `sanitize_message` spec because it has no `start_state`. The associated queue can be specified using the following processing function:
 
 ```js
 // chat_message_sanitization.js
@@ -413,7 +413,7 @@ root
     tasks
       $taskID
         _state: "sanitize_message_finished"
-        _state_changed: 1431475215737
+        _state_changed: 1431475215918
         _owner: $workerUID
         _progress: 0
         message: "Hello Firebase ***** Users!"
@@ -447,6 +447,4 @@ While this example is a little contrived since you could perform the sanitizatio
 
 ## Wrap Up
 
-As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase, from sanitization to data fanout and more. We'd love to know how you're using Firebase-Queue in your project!
-
-Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [support@firebase.com](mailto:support@firebase.com).
+As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase, from sanitization to data fanout and more. We'd love to know how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), and [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [support@firebase.com](mailto:support@firebase.com).
