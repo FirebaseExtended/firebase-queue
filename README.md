@@ -17,7 +17,7 @@ Let's take a look at a simple example to see how this works. Imagine you wanted 
 
 Since chat message sanitization can't happen purely on the client side, as that would allow a malicious client to circumvent client side restrictions, you'll have to run this process on a trusted server process.
 
-Using Firebase Queue, you can create specs for each of these tasks, and then use workers to process the individual tasks to complete the job. We'll explore the queue, adding tasks, assigning workers, and creating custom specs to create full jobs, then revisit the example above.
+Using Firebase Queue, you can create specs for each of these tasks, and then use workers to process the individual tasks to complete the job. We'll explore the queue, adding tasks, assigning workers, and creating custom specs to create full jobs, then [revisit the example](#message-sanitization-revisited) above.
 
 ## The Queue in Firebase
 
@@ -124,10 +124,10 @@ A JavaScript object containing the claimed task's data, and can contain any keys
 
 The reserved keys are:
  - `_state` - The current state of the task. Will always be the task's `in_progress_state` when passed to the processing function.
- - `_state_changed` - The timestamp that the task changed into its current state. This will always be close to the time the processing function was called.
+ - `_state_changed` - The timestamp that the task changed into its current state. This will always be the server time when the processing function was called.
  - `_owner` - A unique ID for the worker and task number combination to ensure only one worker is responsible for the task at any time.
  - `_progress` - A number between 0 and 100, reset at the start of each task to 0.
- - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an optional `error` string from the `reject()` callback of the previous task, and an optional `attempts` field containing the number of retries attempted before failing a task.
+ - `_error_details` - An object containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an `error` string from the `reject()` callback of the previous task, and an `attempts` field containing the number of retries attempted before failing a task.
 
  By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the [queue options](#queue-worker-options-optional).
 
@@ -185,18 +185,23 @@ These don't have to use a custom token, for instance you could use `auth != null
         ".write": "auth.canAddTasks || auth.canProcessTasks",
         ".indexOn": "_state",
         "$taskId": {
-          ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) || (auth.canProcessTasks && newData.hasChildren(['_state', '_state_changed', '_progress']))",
+          ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) 
+                        || (auth.canProcessTasks 
+                        && newData.hasChildren(['_state', '_state_changed', '_progress']))",
           "_state": {
             ".validate": "newData.isString()"
           },
           "_state_changed": {
-            ".validate": "newData.isNumber() && (newData.val() === now || data.val() === newData.val())"
+            ".validate": "newData.isNumber() && (newData.val() === now 
+                          || data.val() === newData.val())"
           },
           "_owner": {
             ".validate": "newData.isString()"
           },
           "_progress": {
-            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+            ".validate": "newData.isNumber() 
+                          && newData.val() >= 0 
+                          && newData.val() <= 100"
           },
           "_error_details": {
               "error": {
@@ -206,7 +211,7 @@ These don't have to use a custom token, for instance you could use `auth != null
                 ".validate": "newData.isString()"
               },
               "original_task": {
-                /* This space intentionally left blank, prevents $other from matching on malformed task */
+                /* This space intentionally left blank, for malformed tasks */
               },
               "attempts": {
                 ".validate": "newData.isNumber() && newData.val() > 0"
