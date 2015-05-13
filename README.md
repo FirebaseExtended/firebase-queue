@@ -395,10 +395,10 @@ root
       /* same as above */
     tasks
       $taskID
-        _state: "sanitize_message_in_progress"
-        _state_changed: 1431475215737
         _owner: $workerUID
         _progress: 0
+        _state: "sanitize_message_in_progress"
+        _state_changed: 1431475215737
         message: "Hello Firebase Queue Users!"
         name: "Chris"
 ```
@@ -412,10 +412,10 @@ root
       /* same as above */
     tasks
       $taskID
-        _state: "sanitize_message_finished"
-        _state_changed: 1431475215918
         _owner: $workerUID
         _progress: 0
+        _state: "sanitize_message_finished"
+        _state_changed: 1431475215918
         message: "Hello Firebase ***** Users!"
         name: "Chris"
 ```
