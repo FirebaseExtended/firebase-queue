@@ -24,8 +24,8 @@ Using Firebase Queue, you can create specs for each of these tasks, and then use
 The queue relies on having a Firebase reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
 ```
 queue
-  -> specs
-  -> tasks
+  - specs
+  - tasks
 ```
 
 
@@ -108,7 +108,7 @@ When using a custom spec, you can pass a `_state` key in with your object, which
 ```js
 {
   "foo": "bar",
-  "boo": "baz", 
+  "boo": "baz",
   "_state": "spec_n_start"
 }
 ```
@@ -185,22 +185,22 @@ These don't have to use a custom token, for instance you could use `auth != null
         ".write": "auth.canAddTasks || auth.canProcessTasks",
         ".indexOn": "_state",
         "$taskId": {
-          ".validate": "newData.hasChildren(['property_1', ..., 'property_n']) 
-                        || (auth.canProcessTasks 
+          ".validate": "newData.hasChildren(['property_1', ..., 'property_n'])
+                        || (auth.canProcessTasks
                         && newData.hasChildren(['_state', '_state_changed', '_progress']))",
           "_state": {
             ".validate": "newData.isString()"
           },
           "_state_changed": {
-            ".validate": "newData.isNumber() && (newData.val() === now 
+            ".validate": "newData.isNumber() && (newData.val() === now
                           || data.val() === newData.val())"
           },
           "_owner": {
             ".validate": "newData.isString()"
           },
           "_progress": {
-            ".validate": "newData.isNumber() 
-                          && newData.val() >= 0 
+            ".validate": "newData.isNumber()
+                          && newData.val() >= 0
                           && newData.val() <= 100"
           },
           "_error_details": {
@@ -293,7 +293,7 @@ In this example, we're chaining three specs to make a job. New tasks pushed onto
 
 ```
 queue
-  -> specs
+  - specs
 ```
 ```json
 {
@@ -326,17 +326,17 @@ Together, these two actions form a job, and you can use custom specs, as shown a
 
 ```
 root
-  queue
-    specs
-      sanitize_message
-        in_progress_state: "sanitize_message_in_progress"
-        finished_state: "sanitize_message_finished"
-      fanout_message
-        start_state: "sanitize_message_finished"
-        in_progress_state: "fanout_message_in_progress"
-        error_state: "fanout_message_failed"
-        retries: 3
-    tasks
+  - queue
+    - specs
+      - sanitize_message
+        - in_progress_state: "sanitize_message_in_progress"
+        - finished_state: "sanitize_message_finished"
+      - fanout_message
+        - start_state: "sanitize_message_finished"
+        - in_progress_state: "fanout_message_in_progress"
+        - error_state: "fanout_message_failed"
+        - retries: 3
+    - tasks
       /* null, no data */
 ```
 
@@ -356,16 +356,16 @@ Your Firebase should now look like this:
 
 ```
 root
-  queue
-    specs
+  - queue
+    - specs
       /* same as above */
-    tasks
-      $taskID
-        message: "Hello Firebase Queue Users!"
-        name: "Chris"
+    - tasks
+      - $taskId
+        - message: "Hello Firebase Queue Users!"
+        - name: "Chris"
 ```
 
-When your users push `data` like the above into the `tasks` subtree, tasks will initially start in the `sanitize_message` spec because it has no `start_state`. The associated queue can be specified using the following processing function:
+When your users push `data` like the above into the `tasks` subtree, tasks will initially start in the `sanitize_message` spec because the task has no `start_state`. The associated queue can be specified using the following processing function:
 
 ```js
 // chat_message_sanitization.js
@@ -378,7 +378,7 @@ var tasksRef = ref.child('queue/tasks');
 var messagesRef = ref.child('messages');
 
 var options = {
-  'specId': 'sanitize_message',
+  'specId': 'sanitize_message'
 };
 var sanitizeQueue = new Queue(tasksRef, options, function(data, progress, resolve, reject) {
   // sanitize input message
@@ -395,34 +395,34 @@ The queue worker will take this task, begin to process it, and update the reserv
 
 ```
 root
-  queue
-    specs
+  - queue
+    - specs
       /* same as above */
-    tasks
-      $taskID
-        _owner: $workerUID
-        _progress: 0
-        _state: "sanitize_message_in_progress"
-        _state_changed: 1431475215737
-        message: "Hello Firebase Queue Users!"
-        name: "Chris"
+    - tasks
+      - $taskId
+        - _owner: $workerUID
+        - _progress: 0
+        - _state: "sanitize_message_in_progress"
+        - _state_changed: 1431475215737
+        - message: "Hello Firebase Queue Users!"
+        - name: "Chris"
 ```
 
 Once the message is sanitized, it will be resolved and both the reserved keys and the data will be updated in the task (imagine for a minute that queue is a blacklisted word):
 
 ```
 root
-  queue
-    specs
+  - queue
+    - specs
       /* same as above */
-    tasks
-      $taskID
-        _owner: null
-        _progress: 100
-        _state: "sanitize_message_finished"
-        _state_changed: 1431475215918
-        message: "Hello Firebase ***** Users!"
-        name: "Chris"
+    - tasks
+      - $taskId
+        - _owner: null
+        - _progress: 100
+        - _state: "sanitize_message_finished"
+        - _state_changed: 1431475215918
+        - message: "Hello Firebase ***** Users!"
+        - name: "Chris"
 ```
 
 Now, you want to fan the data out to the `messages` subtree of your firebase, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
