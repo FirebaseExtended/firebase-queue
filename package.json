@@ -19,6 +19,10 @@
     {
       "name": "Matthew Tse",
       "email": "matt@firebase.com"
+    },
+    {
+      "name": "Mike Mcdonald",
+      "email": "mcdonald@firebase.com"
     }
   ],
   "repository": "https://github.com/firebase/firebase-queue.git",

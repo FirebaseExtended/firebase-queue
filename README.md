@@ -400,7 +400,7 @@ root
       /* same as above */
     - tasks
       - $taskId
-        - _owner: $workerUID
+        - _owner: $workerUid
         - _progress: 0
         - _state: "sanitize_message_in_progress"
         - _state_changed: 1431475215737
