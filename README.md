@@ -103,7 +103,7 @@ ref.push({'foo': 'bar'});
 
 ### Starting Tasks in Specific States (Optional)
 
-When using a custom spec, you can pass a `_state` key in with your object, which will allow a custom spec's worker(s) to pick up your task further down the job pipeline, rather than starting at the starting spec.
+When using a custom spec, you can pass a `_state` key in with your object, which will allow a custom spec's worker(s) to pick up your task at a specific spec, rather than starting with the starting spec.
 
 ```js
 {
@@ -146,12 +146,12 @@ var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
   }
   ...
   // report current progress
-  progress(currentProgress).catch(function(error) {
+  progress(currentProgress).catch(function(errorMessage) {
     // we've lost the current task, so stop processing
     stopProcessing();
 
     // and reject the task so that we can pick up new tasks
-    reject(error);
+    reject(errorMessage);
   });
   ...
 });
@@ -159,7 +159,7 @@ var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
 
 #### `resolve()`
 
-A callback function for reporting that the current task has been completed and the worker is ready to process another task. If the current job specification has a `finished_state`, any plain JavaScript object passed into the `resolve()` function will be written to the `tasks` location and will be available to the next job if the jobs are chained.
+A callback function for reporting that the current task has been completed and the worker is ready to process another task. If the current task specification has a `finished_state`, any plain JavaScript object passed into the `resolve()` function will be written to the `tasks` location and will be available to the next task if the tasks are chained. When a task is resolved, the `_progress` field is updated to 100.
 
 #### `reject()`
 
@@ -172,9 +172,9 @@ Securing your queue is an important step in securely processing events that come
 In this example, there are three categories of users, represented using fields of a [custom token](https://www.firebase.com/docs/rest/guide/user-auth.html):
 - `auth.canAddTasks`: Users who can add tasks to the queue (could be an authenticated client or a secure server)
 - `auth.canProcessTasks`: Users who can process tasks (usually on a secure server)
-- `auth.canAddSpecs`: Users who can create and view job specifications (usually on a secure server)
+- `auth.canAddSpecs`: Users who can create and view task specifications (usually on a secure server)
 
-These don't have to use a custom token, for instance you could use `auth != null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform queue jobs.
+These don't have to use a custom token, for instance you could use `auth != null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform all queue functions.
 
 ```js
 {
@@ -345,8 +345,8 @@ Let's imagine that you have some front end that allows your users to write their
 ```js
 // chat_client.js
 
-var queueRef = new Firebase('https://<your-firebase>.firebaseio.com/queue');
-queueRef.push({
+var tasksRef = new Firebase('https://<your-firebase>.firebaseio.com/queue/tasks');
+tasksRef.push({
   'message': 'Hello Firebase Queue Users!',
   'name': 'Chris'
 });
@@ -374,13 +374,13 @@ var Queue = require('firebase-queue'),
     Firebase = require('firebase');
 
 var ref = new Firebase('https://<your-firebase>.firebaseio.com');
-var queueRef = ref.child('queue');
+var tasksRef = ref.child('queue/tasks');
 var messagesRef = ref.child('messages');
 
 var options = {
   'specId': 'sanitize_message',
 };
-var sanitizeQueue = new Queue(queueRef, options, function(data, progress, resolve, reject) {
+var sanitizeQueue = new Queue(tasksRef, options, function(data, progress, resolve, reject) {
   // sanitize input message
   data.message = sanitize(data.message);
 
@@ -408,7 +408,7 @@ root
         name: "Chris"
 ```
 
-Once the message is sanitized, it will be resolved and the data will be updated in the task (imagine for a minute that queue is a blacklisted word):
+Once the message is sanitized, it will be resolved and both the reserved keys and the data will be updated in the task (imagine for a minute that queue is a blacklisted word):
 
 ```
 root
@@ -417,8 +417,8 @@ root
       /* same as above */
     tasks
       $taskID
-        _owner: $workerUID
-        _progress: 0
+        _owner: null
+        _progress: 100
         _state: "sanitize_message_finished"
         _state_changed: 1431475215918
         message: "Hello Firebase ***** Users!"
@@ -434,7 +434,7 @@ var options = {
   'specId': 'fanout_message',
   'numWorkers': 5
 };
-var fanoutQueue = new Queue(queueRef, options, function(data, progress, resolve, reject) {
+var fanoutQueue = new Queue(tasksRef, options, function(data, progress, resolve, reject) {
   // fan data out to /messages, ensure that Firebase errors are caught and cause the task to fail
   messagesRef.push(data, function(error){
     if (error) {
