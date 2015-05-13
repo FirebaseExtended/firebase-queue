@@ -66,7 +66,7 @@ Multiple queue workers can be initialized on multiple machines and Firebase-Queu
 #### Queue Worker Options (Optional)
 
 Queue workers can take an optional options object to specify:
-  - `specId` - specifies the spec type for this worker. This is important when creating multiple specs. Defaults to `null`, or the default spec.
+  - `specId` - specifies the spec type for this worker. This is important when creating multiple specs. Defaults to `null` which uses the default spec.
   - `numWorkers` - specifies the number of workers to run simultaneously for this node.js thread. Defaults to 1 worker.
   - `sanitize` - specifies whether the `data` object passed to the processing function is sanitized of internal keys reserved for use by the queue. Defaults to `true`.
 
