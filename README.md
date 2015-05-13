@@ -31,7 +31,7 @@ queue
 
 ## Queue Workers
 
-The basic unit of the Queue is the queue worker: the process that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
+The basic unit of the queue is the queue worker: the process that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
 
 You can start a worker process by passing in a Firebase [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function ([described below](#the-processing-function)), as follows:
 
