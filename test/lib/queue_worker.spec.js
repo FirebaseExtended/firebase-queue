@@ -616,7 +616,7 @@ describe('QueueWorker', function() {
     });
 
     [NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop].forEach(function(nonStringObject) {
-      it('should reject a task owned by the current worker and not add report the error if not a string: ' + nonStringObject, function(done) {
+      it('should reject a task owned by the current worker and convert the error to a string if not a string: ' + nonStringObject, function(done) {
         qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
         qw.setTaskSpec(th.validBasicTaskSpec);
         testRef = tasksRef.push({
@@ -641,8 +641,9 @@ describe('QueueWorker', function() {
                 expect(task['_state']).to.equal('error');
                 expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 expect(task['_progress']).to.equal(0);
-                expect(task['_error_details']).to.have.all.keys(['previous_state', 'attempts']);
+                expect(task['_error_details']).to.have.all.keys(['previous_state', 'error', 'attempts']);
                 expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+                expect(task['_error_details'].error).to.equal(nonStringObject.toString());
                 expect(task['_error_details'].attempts).to.equal(1);
                 done();
               } catch (errorB) {
