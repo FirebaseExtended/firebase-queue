@@ -49,7 +49,7 @@ var queue = new Queue(ref, function(data, progress, resolve, reject) {
   // Do some work
   progress(50);
 
-  // Finish the job asynchronously
+  // Finish the task asynchronously
   setTimeout(function() {
     resolve();
   }, 1000);
@@ -74,7 +74,7 @@ Queue workers can take an optional options object to specify:
 ...
 
 var options = {
-  'jobId': 'job_1',
+  'specId': 'spec_1',
   'numWorkers': 5,
   'sanitize': false
 };
@@ -127,7 +127,7 @@ The reserved keys are:
  - `_state_changed` - The timestamp that the task changed into its current state. This will always be close to the time the processing function was called.
  - `_owner` - A unique ID for the worker and task number combination to ensure only one worker is responsible for the task at any time.
  - `_progress` - A number between 0 and 100, reset at the start of each task to 0.
- - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an optional `error` string from the `reject()` callback of the previous task, and an optional `attempts` field containing the number of attempts made to retry a task when the task fails.
+ - `_error_details` - An object optionally present, containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an optional `error` string from the `reject()` callback of the previous task, and an optional `attempts` field containing the number of retries attempted before failing a task.
 
  By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the [queue options](#queue-worker-options-optional).
 
@@ -163,7 +163,7 @@ A callback function for reporting that the current task has been completed and t
 
 #### `reject()`
 
-A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string. Note that if retries are enabled and there are remaining attempts, the task will be restarted in it's `_start` state.
+A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string. Note that if retries are enabled and there are remaining attempts, the task will be restarted in it's spec's `start_state`.
 
 ## Queue Security
 
@@ -276,8 +276,8 @@ A default spec configuration is assumed if no specs are specified in the `specs`
 - `start_state` - The default spec has no `start_state`, which means any task pushed into the `tasks` subtree without a `_state` key will be picked up by default spec workers. If `start_state` is specified, only tasks with that `_state` may be claimed by the worker.
 - `in_progress_state` - When a worker picks up a task and begins processing it, it will change the tasks's `_state` to the value of `in_progress_state`. This is the only required spec property, and it cannot equal the `start_state`, `finished_state`, or `error_state`.
 - `finished_state` - The default spec has no `finished_state` so the worker will remove tasks from the queue upon successful completion. If `finished_state` is specified, then the task's `_state` value will be updated to the `finished_state` upon task completion. Setting this value to another spec's `start_state` is useful for chaining tasks together to create a job.
-- `error_state` - If the task gets rejected the `_state` will be updated to this value and an additional key `_error_details` will be populated with the `previousState` and an optional error message from the `reject()` callback. If this isn't specified, it defaults to "error". This can be useful for specifying different error states for different tasks, or chaining errors so that they can be logged.
-- `timeout` - The default timeout is 5 minutes. When a task has been claimed by a worker but has not completed within `timeout` milliseconds, the queue will report that task as timed out, and reset that task to be claimable once again. If this is not specified a task will be claimed at most once and never leave that state if the worker processing it fails during the process.
+- `error_state` - If the task gets rejected the `_state` will be updated to this value and an additional key `_error_details` will be populated with the `previous_state` and an optional error message from the `reject()` callback. If this isn't specified, it defaults to "error". This can be useful for specifying different error states for different tasks, or chaining errors so that they can be logged.
+- `timeout` - The default timeout is 5 minutes. When a task has been claimed by a worker but has not completed within `timeout` milliseconds, the queue will report that task as timed out, and reset that task to be claimable once again. If this is not specified, a task claimed by a worker could be orphaned and left in an unclaimable state if the worker processing it dies before the task is resolved or rejected.
 - `retries` - The default spec doesn't retry failed tasks. When a task fails, if there are any remaining attempts, the queue will restart the task by setting the task's `_state` to its spec's `start_state`.
 
 #### Creating Jobs using Custom Specs and Task Chaining
@@ -313,32 +313,54 @@ queue
 
 ## Message Sanitization, Revisited
 
-In our example at the beginning, we wanted to perform several actions on our chat system:
+In our example at the beginning, you wanted to perform several actions on your chat system:
   1. Sanitize chat message input
   2. Fan data out to multiple rooms and users
 
-Together, these two actions form a job, and we can use custom specs to define the flow of tasks in our job:
+Together, these two actions form a job, and you can use custom specs, as shown above, to define the flow of tasks in this job. When you start, your Firebase should look like this:
 
 ```
-queue
-  -> specs
-```
-```json
-{
-  "sanitize_message": {
-    "in_progress_state": "sanitize_message_in_progress",
-    "finished_state": "sanitize_message_finished",
-  },
-  "fanout_message": {
-    "start_state": "sanitize_message_finished",
-    "in_progress_state": "fanout_message_in_progress",
-    "error_state": "fanout_message_failed",
-    "retries": 3
-  }
-}
+root
+  queue
+    specs
+      sanitize_message
+        in_progress_state: "sanitize_message_in_progress"
+        finished_state: "sanitize_message_finished"
+      fanout_message
+        start_state: "sanitize_message_finished"
+        in_progress_state: "fanout_message_in_progress"
+        error_state: "fanout_message_failed"
+        retries: 3
+    tasks
+      /* null, no data */
 ```
 
-When we push our `data` into the `tasks` subtree, all tasks will start in the `sanitize_message` spec, which we can specify using the following processing function:
+Let's imagine that you have some front end that allows your users to write their name and a message, and send that to your queue as it's `data`. Let's assume your user pushes something like the following:
+
+```js
+// chat_client.js
+
+var queueRef = new Firebase('https://<your-firebase>.firebaseio.com/queue');
+queueRef.push({
+  'message': 'Hello Firebase Queue Users!',
+  'name': 'Chris'
+});
+```
+
+Your Firebase should now look like this:
+
+```
+root
+  queue
+    specs
+      /* same as above */
+    tasks
+      $taskID
+        message: "Hello Firebase Queue Users!"
+        name: "Chris"
+```
+
+When your users push `data` like the above into the `tasks` subtree, all tasks will start in the `sanitize_message` spec, which can be specified using the following processing function:
 
 ```js
 // chat_message_sanitization.js
@@ -350,34 +372,78 @@ var ref = new Firebase('https://<your-firebase>.firebaseio.com');
 var queueRef = ref.child('queue');
 var messagesRef = ref.child('messages');
 
-var sanitizeQueue = new Queue(queueRef, function(data, progress, resolve, reject) {
-  // sanitize input data
-  var sanitizedData = sanitize(data);
+var options = {
+  'specId': 'sanitize_message',
+};
+var sanitizeQueue = new Queue(queueRef, options, function(data, progress, resolve, reject) {
+  // sanitize input message
+  data.message = sanitize(data.message);
 
-  // pass sanitized data along to be fanned out
-  resolve(sanitizedData);
+  // pass sanitized message and username along to be fanned out
+  resolve(data);
 });
 
 ...
 ```
 
-Once the message is sanitized, we want to fan the data out to the `messages` subtree of our firebase, using the spec, `fanout_message`:
+The queue worker will take this task, begin to process it, and update the reserved keys of the task:
+
+```
+root
+  queue
+    specs
+      /* same as above */
+    tasks
+      $taskID
+        _state: "sanitize_message_in_progress"
+        _state_changed: 1431475215737
+        _owner: $workerUID
+        _progress: 0
+        message: "Hello Firebase Queue Users!"
+        name: "Chris"
+```
+
+Once the message is sanitized, it will be resolved and the data will be updated in the task (imagine for a minute that queue is a blacklisted word):
+
+```
+root
+  queue
+    specs
+      /* same as above */
+    tasks
+      $taskID
+        _state: "sanitize_message_finished"
+        _state_changed: 1431475215737
+        _owner: $workerUID
+        _progress: 0
+        message: "Hello Firebase ***** Users!"
+        name: "Chris"
+```
+
+Now, you want to fan the data out to the `messages` subtree of your firebase, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
 
 ```js
 ...
 
-var options = {'specId':'sanitize_message_finished'}
+var options = {
+  'specId': 'fanout_message',
+  'numWorkers': 5
+};
 var fanoutQueue = new Queue(queueRef, options, function(data, progress, resolve, reject) {
   // fan data out to /messages, ensure that Firebase errors are caught and cause the task to fail
   messagesRef.push(data, function(error){
     if (error) {
-      reject(error);
+      reject(error.message);
     } else {
       resolve(data);
     }
   });
 });
 ```
+
+Since there is no `finished_state` in the `fanout_message` spec, the task will be purged from the queue after the data is fanned out to the messages node. If the `push` fails for some reason, the task will fail and retry, a maximum of three times (as specified in our spec).
+
+While this example is a little contrived, since you could perform the sanitization and fanout in a single task, splitting our tasks up allows us to do things like add selective retries to certain tasks more likely to fail, put additional workers on more expensive tasks, or add expressive error states.
 
 ## Wrap Up
 
