@@ -443,7 +443,7 @@ var fanoutQueue = new Queue(queueRef, options, function(data, progress, resolve,
 
 Since there is no `finished_state` in the `fanout_message` spec, the task will be purged from the queue after the data is fanned out to the messages node. If the `push` fails for some reason, the task will fail and retry, a maximum of three times (as specified in our spec).
 
-While this example is a little contrived, since you could perform the sanitization and fanout in a single task, splitting our tasks up allows us to do things like add selective retries to certain tasks more likely to fail, put additional workers on more expensive tasks, or add expressive error states.
+While this example is a little contrived since you could perform the sanitization and fanout in a single task, creating multiple specs for our tasks allows us to do things like add selective retries to certain tasks more likely to fail, put additional workers on more expensive tasks, or add expressive error states.
 
 ## Wrap Up
 
