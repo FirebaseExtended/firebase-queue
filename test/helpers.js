@@ -10,8 +10,8 @@ module.exports = function() {
   self.testRef.child('.info/serverTimeOffset').on('value', function(snapshot) {
     self.offset = snapshot.val();
   });
-  this.Queue = require('../queue.js');
-  this.QueueWorker = require('../lib/queue_worker.js');
+  this.Queue = require('../src/queue.js');
+  this.QueueWorker = require('../src/lib/queue_worker.js');
 
   this.QueueWorkerWithoutProcessingOrTimeouts = function() {
     self.QueueWorker.apply(this, arguments);
