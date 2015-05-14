@@ -61,10 +61,5 @@ gulp.task('test', function() {
     });
 });
 
-// Tasks to be run within Travis CI
-gulp.task('travis', function() {
-  gulp.start('build', 'test');
-});
-
 // Default task
 gulp.task('default', ['build', 'test']);

@@ -29,10 +29,10 @@
   ],
   "repository": "https://github.com/firebase/firebase-queue.git",
   "homepage": "https://github.com/firebase/firebase-queue",
-  "main": "queue.js",
+  "main": "dist/queue.js",
   "files": [
-    "lib/**",
-    "queue.js",
+    "dist/lib/**",
+    "dist/queue.js",
     "LICENSE",
     "README.md",
     "package.json"
@@ -58,7 +58,7 @@
     "sinon-chai": "2.7.0"
   },
   "scripts": {
-    "test": "gulp",
-    "travis": "gulp travis"
+    "test": "gulp test",
+    "travis": "gulp"
   }
 }
