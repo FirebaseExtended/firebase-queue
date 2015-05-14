@@ -1,3 +1,10 @@
+/*!
+ * Firebase Queue is a fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.
+ *
+ * Firebase Queue 0.0.0
+ * https://github.com/firebase/firebase-queue/
+ * License: MIT
+ */
 'use strict';
 
 var _ = require('lodash'),

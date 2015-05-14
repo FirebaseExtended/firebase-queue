@@ -1,15 +1,17 @@
 {
   "name": "firebase-queue",
   "version": "0.0.0",
-  "description": "A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.",
+  "description": "A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase",
   "keywords": [
-    "firebase",
+    "job",
+    "task",
     "queue",
     "worker",
-    "job",
+    "firebase",
+    "realtime",
     "pipeline"
   ],
-  "license" : "MIT",
+  "license": "MIT",
   "author": "Firebase <support@firebase.com>",
   "contributors": [
     {
@@ -21,12 +23,20 @@
       "email": "matt@firebase.com"
     },
     {
-      "name": "Mike Mcdonald",
+      "name": "Mike McDonald",
       "email": "mcdonald@firebase.com"
     }
   ],
   "repository": "https://github.com/firebase/firebase-queue.git",
   "homepage": "https://github.com/firebase/firebase-queue",
+  "main": "queue.js",
+  "files": [
+    "lib/**",
+    "queue.js",
+    "LICENSE",
+    "README.md",
+    "package.json"
+  ],
   "dependencies": {
     "firebase": "2.x",
     "lodash": "~3.7.0",
@@ -37,6 +47,7 @@
   "devDependencies": {
     "chai": "2.2.0",
     "chai-as-promised": "5.0.0",
+    "coveralls": "^2.11.2",
     "gulp": "3.8.11",
     "gulp-exit": "0.0.2",
     "gulp-istanbul": "0.8.1",
@@ -47,10 +58,7 @@
     "sinon-chai": "2.7.0"
   },
   "scripts": {
-    "test": "gulp"
-  },
-  "main": "queue.js",
-  "engines": {
-    "node": ">=0.10.0"
+    "test": "gulp",
+    "travis": "gulp travis"
   }
 }

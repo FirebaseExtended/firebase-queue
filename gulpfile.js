@@ -16,10 +16,12 @@ var istanbul = require('gulp-istanbul');
 /*  FILE PATHS  */
 /****************/
 var paths = {
-  js: [
-    'queue.js',
-    'lib/*.js'
-  ],
+  js: {
+    srcFiles: [
+      'src/**/*.js'
+    ],
+    destDir: 'dist'
+  },
 
   tests: [
     'test/queue.spec.js',
@@ -31,32 +33,38 @@ var paths = {
 /***********/
 /*  TASKS  */
 /***********/
-// Lints the JavaScript files
-gulp.task('lint', function() {
-  return gulp.src(paths.js)
+// Lints the JavaScript files and copies them to the destination directory
+gulp.task('build', function() {
+  return gulp.src(paths.js.srcFiles)
     .pipe(jshint())
     .pipe(jshint.reporter('jshint-stylish'))
     .pipe(jshint.reporter('fail'))
     .on('error', function(error) {
       throw error;
-    });
+    })
+    .pipe(gulp.dest(paths.js.destDir));
 });
 
 // Runs the Mocha test suite
 gulp.task('test', function() {
-  return gulp.src(paths.js)
+  return gulp.src(paths.js.srcFiles)
     .pipe(istanbul())
     .pipe(istanbul.hookRequire())
     .on('finish', function () {
       gulp.src(paths.tests)
         .pipe(mocha({
           reporter: 'spec',
-          timeout: 10000
+          timeout: 2000
         }))
         .pipe(istanbul.writeReports())
         .pipe(exit());
     });
 });
 
+// Tasks to be run within Travis CI
+gulp.task('travis', function() {
+  gulp.start('build', 'test');
+});
+
 // Default task
-gulp.task('default', ['lint', 'test']);
+gulp.task('default', ['build', 'test']);
