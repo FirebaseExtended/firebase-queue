@@ -8,7 +8,6 @@
 'use strict';
 
 var _ = require('lodash'),
-    RSVP = require('rsvp'),
     logger = require('winston'),
     QueueWorker = require('./lib/queue_worker.js');
 
@@ -44,121 +43,110 @@ var DEFAULT_NUM_WORKERS = 1,
  *         an optional String or Object parameter that will be stored in the
  *         '_error_details/error' location in the task and returns a promise
  *         of whether the operation was successful.
- * @returns {RSVP.Promise} A resolved promise if the Queue is initialized
- *   correctly, or a rejection if the parameters or Firebase reference are
- *   incorrect.
+ * @returns {Object} The new Queue object.
  */
 function Queue() {
   var self = this;
   var constructorArguments = arguments;
 
-  return new RSVP.Promise(function(resolve, reject) {
-    var error;
-    self.numWorkers = DEFAULT_NUM_WORKERS;
-    self.sanitize = DEFAULT_SANITIZE;
+  var error;
+  self.numWorkers = DEFAULT_NUM_WORKERS;
+  self.sanitize = DEFAULT_SANITIZE;
+  self.initialized = false;
 
-    if (constructorArguments.length < 2) {
-      error = 'Queue must at least have the queueRef and ' +
-        'processingFunction arguments.';
+  if (constructorArguments.length < 2) {
+    error = 'Queue must at least have the queueRef and ' +
+      'processingFunction arguments.';
+    logger.error('Queue(): Error during initialization', error);
+    throw new Error(error);
+  } else if (constructorArguments.length === 2) {
+    self.ref = constructorArguments[0];
+    self.processingFunction = constructorArguments[1];
+  } else if (constructorArguments.length === 3) {
+    self.ref = constructorArguments[0];
+    var options = constructorArguments[1];
+    if (!_.isPlainObject(options)) {
+      error = 'Options parameter must be a plain object.';
       logger.error('Queue(): Error during initialization', error);
-      return reject(error);
-    } else if (constructorArguments.length === 2) {
-      self.ref = constructorArguments[0];
-      self.processingFunction = constructorArguments[1];
-    } else if (constructorArguments.length === 3) {
-      self.ref = constructorArguments[0];
-      var options = constructorArguments[1];
-      if (!_.isPlainObject(options)) {
-        error = 'Options parameter must be a plain object.';
+      throw new Error(error);
+    }
+    if (!_.isUndefined(options.specId)) {
+      if (_.isString(options.specId)) {
+        self.specId = options.specId;
+      } else {
+        error = 'options.specId must be a String.';
         logger.error('Queue(): Error during initialization', error);
-        return reject(error);
+        throw new Error(error);
       }
-      if (!_.isUndefined(options.specId)) {
-        if (_.isString(options.specId)) {
-          self.specId = options.specId;
-        } else {
-          error = 'options.specId must be a String.';
-          logger.error('Queue(): Error during initialization', error);
-          return reject(error);
-        }
-      }
-      if (!_.isUndefined(options.numWorkers)) {
-        if (_.isNumber(options.numWorkers) &&
-            options.numWorkers > 0 &&
-            options.numWorkers % 1 === 0) {
-          self.numWorkers = options.numWorkers;
-        } else {
-          error = 'options.numWorkers must be a positive integer.';
-          logger.error('Queue(): Error during initialization', error);
-          return reject(error);
-        }
-      }
-      if (!_.isUndefined(options.sanitize)) {
-        if (_.isBoolean(options.sanitize)) {
-          self.sanitize = options.sanitize;
-        } else {
-          error = 'options.sanitize must be a boolean.';
-          logger.error('Queue(): Error during initialization', error);
-          return reject(error);
-        }
-      }
-      self.processingFunction = constructorArguments[2];
-    } else {
-      error = 'Queue can only take at most three arguments - queueRef, ' +
-        'options (optional), and processingFunction.';
-      logger.error('Queue(): Error during initialization', error);
-      return reject(error);
     }
-
-    self.workers = [];
-    for (var i = 0; i < self.numWorkers; i++) {
-      var processId = (self.specId ? self.specId + ':' : '') + i;
-      self.workers.push(new QueueWorker(
-        self.ref.child('tasks'),
-        processId,
-        self.sanitize,
-        self.processingFunction
-      ));
-    }
-
-    if (_.isUndefined(self.specId)) {
-      for (var j = 0; j < self.numWorkers; j++) {
-        self.workers[j].setTaskSpec(DEFAULT_TASK_SPEC);
+    if (!_.isUndefined(options.numWorkers)) {
+      if (_.isNumber(options.numWorkers) &&
+          options.numWorkers > 0 &&
+          options.numWorkers % 1 === 0) {
+        self.numWorkers = options.numWorkers;
+      } else {
+        error = 'options.numWorkers must be a positive integer.';
+        logger.error('Queue(): Error during initialization', error);
+        throw new Error(error);
       }
-      return resolve(self);
-    } else {
-      var initialized = false;
-      self.ref.child('specs').child(self.specId).on(
-        'value',
-        function(taskSpecSnap) {
-          var taskSpec = {
-                startState: taskSpecSnap.child('start_state').val(),
-                inProgressState: taskSpecSnap.child('in_progress_state').val(),
-                finishedState: taskSpecSnap.child('finished_state').val(),
-                errorState: taskSpecSnap.child('error_state').val(),
-                timeout: taskSpecSnap.child('timeout').val(),
-                retries: taskSpecSnap.child('retries').val()
-              };
-
-          for (var i = 0; i < self.numWorkers; i++) {
-            self.workers[i].setTaskSpec(taskSpec);
-          }
-          /* istanbul ignore else */
-          if (!initialized) {
-            initialized = true;
-            return resolve(self);
-          }
-        }, /* istanbul ignore next */ function(error) {
-          logger.error('Queue(): Error connecting to Firebase reference',
-            error);
-          if (!initialized) {
-            initialized = true;
-            return reject(error.message || 'Error connectino to Firebase ' +
-              'Reference');
-          }
-        });
     }
-  });
+    if (!_.isUndefined(options.sanitize)) {
+      if (_.isBoolean(options.sanitize)) {
+        self.sanitize = options.sanitize;
+      } else {
+        error = 'options.sanitize must be a boolean.';
+        logger.error('Queue(): Error during initialization', error);
+        throw new Error(error);
+      }
+    }
+    self.processingFunction = constructorArguments[2];
+  } else {
+    error = 'Queue can only take at most three arguments - queueRef, ' +
+      'options (optional), and processingFunction.';
+    logger.error('Queue(): Error during initialization', error);
+    throw new Error(error);
+  }
+
+  self.workers = [];
+  for (var i = 0; i < self.numWorkers; i++) {
+    var processId = (self.specId ? self.specId + ':' : '') + i;
+    self.workers.push(new QueueWorker(
+      self.ref.child('tasks'),
+      processId,
+      self.sanitize,
+      self.processingFunction
+    ));
+  }
+
+  if (_.isUndefined(self.specId)) {
+    for (var j = 0; j < self.numWorkers; j++) {
+      self.workers[j].setTaskSpec(DEFAULT_TASK_SPEC);
+    }
+    self.initialized = true;
+  } else {
+    self.ref.child('specs').child(self.specId).on(
+      'value',
+      function(taskSpecSnap) {
+        var taskSpec = {
+              startState: taskSpecSnap.child('start_state').val(),
+              inProgressState: taskSpecSnap.child('in_progress_state').val(),
+              finishedState: taskSpecSnap.child('finished_state').val(),
+              errorState: taskSpecSnap.child('error_state').val(),
+              timeout: taskSpecSnap.child('timeout').val(),
+              retries: taskSpecSnap.child('retries').val()
+            };
+
+        for (var i = 0; i < self.numWorkers; i++) {
+          self.workers[i].setTaskSpec(taskSpec);
+        }
+        self.initialized = true;
+      }, /* istanbul ignore next */ function(error) {
+        logger.error('Queue(): Error connecting to Firebase reference',
+          error.message);
+      });
+  }
+
+  return self;
 }
 
 module.exports = Queue;
