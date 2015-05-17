@@ -37,8 +37,10 @@
     "README.md",
     "package.json"
   ],
+  "peerDependencies": {
+    "firebase": "2.x"
+  },
   "dependencies": {
-    "firebase": "2.x",
     "lodash": "~3.7.0",
     "rsvp": "3.x",
     "node-uuid": "1.4.x",
