@@ -1708,4 +1708,52 @@ describe('QueueWorker', function() {
       ref.set({ '_state': th.validTaskSpecWithStartState.startState });
     });
   });
+
+  describe('#shutdown', function() {
+    var qw,
+        callbackStarted,
+        callbackComplete;
+
+    beforeEach(function() {
+      callbackStarted = false;
+      callbackComplete = false;
+      qw = new th.QueueWorker(tasksRef, '0', true, function(data, progress, resolve, reject) {
+        callbackStarted = true;
+        setTimeout(function() {
+          callbackComplete = true;
+          resolve();
+        }, 250);
+      });
+    });
+
+    afterEach(function() {
+      qw.setTaskSpec();
+    });
+
+    it('should shutdown a worker not processing any tasks', function() {
+      return qw.shutdown().should.eventually.be.fulfilled;
+    });
+
+    it('should shutdown a worker after the current task has finished', function(done) {
+      qw.setTaskSpec(th.validBasicTaskSpec);
+      tasksRef.push({
+        foo: 'bar'
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        setTimeout(function() {
+          try {
+            expect(callbackStarted).to.be.true;
+            expect(callbackComplete).to.be.false;
+            qw.shutdown().then(function() {
+              expect(callbackComplete).to.be.true;
+            }).should.eventually.be.fulfilled.notify(done);
+          } catch (errorB) {
+            done(errorB)
+          }
+        }, 0);
+      });
+    });
+  });
 });

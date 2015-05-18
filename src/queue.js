@@ -1,5 +1,6 @@
 /*!
- * Firebase Queue is a fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.
+ * Firebase Queue is a fault-tolerant, multi-worker, multi-stage job pipeline
+ * built on Firebase.
  *
  * Firebase Queue 0.0.0
  * https://github.com/firebase/firebase-queue/
@@ -8,6 +9,7 @@
 'use strict';
 
 var _ = require('lodash'),
+    RSVP = require('rsvp'),
     logger = require('winston'),
     QueueWorker = require('./lib/queue_worker.js');
 
@@ -17,6 +19,7 @@ var DEFAULT_NUM_WORKERS = 1,
       inProgressState: 'in_progress',
       timeout: 300000 // 5 minutes
     };
+
 
 /**
  * @constructor
@@ -53,6 +56,8 @@ function Queue() {
   self.numWorkers = DEFAULT_NUM_WORKERS;
   self.sanitize = DEFAULT_SANITIZE;
   self.initialized = false;
+
+  self.specChangeListener = null;
 
   if (constructorArguments.length < 2) {
     error = 'Queue must at least have the queueRef and ' +
@@ -124,7 +129,7 @@ function Queue() {
     }
     self.initialized = true;
   } else {
-    self.ref.child('specs').child(self.specId).on(
+    self.specChangeListener = self.ref.child('specs').child(self.specId).on(
       'value',
       function(taskSpecSnap) {
         var taskSpec = {
@@ -148,5 +153,26 @@ function Queue() {
 
   return self;
 }
+
+
+/**
+ * Gracefully shuts down a queue.
+ * @returns {RSVP.Promise} A promise fulfilled when all the worker processes
+ *   have finished their current tasks and are no longer listening for new ones.
+ */
+Queue.prototype.shutdown = function() {
+  var self = this;
+
+  logger.info('Queue: Shutting down');
+  if (!_.isNull(self.specChangeListener)) {
+    self.ref.child('specs').child(self.specId).off('value',
+      self.specChangeListener);
+    self.specChangeListener = null;
+  }
+
+  return RSVP.all(_.map(self.workers, function(worker) {
+    return worker.shutdown();
+  }));
+};
 
 module.exports = Queue;
