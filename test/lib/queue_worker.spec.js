@@ -1752,7 +1752,7 @@ describe('QueueWorker', function() {
           } catch (errorB) {
             done(errorB)
           }
-        }, 0);
+        }, 100);
       });
     });
   });
