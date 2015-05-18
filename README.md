@@ -429,7 +429,7 @@ root
         - name: "Chris"
 ```
 
-Now, you want to fan the data out to the `messages` subtree of your firebase, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
+Now, you want to fan the data out to the `messages` subtree of your firebase database, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
 
 ```js
 ...
