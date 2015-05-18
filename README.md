@@ -320,6 +320,27 @@ queue
 }
 ```
 
+## Graceful Shutdown
+
+Once initialized, a queue can be gracefully shutdown by calling its `shutdown()` function. This prevents workers from claiming new tasks, removes all Firebase listeners, and waits until all the current tasks have been completed before resolving the RSVP.Promise returned by the function.
+
+By intercepting for the `SIGINT` termination signal like this, you can ensure the queue shuts down gracefully so you don't have to rely on the jobs timing out and being picked up by another worker:
+
+```js
+...
+var queue = new Queue(ref, function(data, progress, resolve, reject) {
+  ...
+});
+
+process.on('SIGINT', function() {
+  console.log('Starting queue shutdown');
+  queue.shutdown().then(function() {
+    console.log('Finished queue shutdown');
+    process.exit(0);
+  });
+});
+```
+
 ## Message Sanitization, Revisited
 
 In our example at the beginning, you wanted to perform several actions on your chat system:
