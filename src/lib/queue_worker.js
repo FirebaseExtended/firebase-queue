@@ -22,22 +22,22 @@ function QueueWorker(tasksRef, processId, sanitize, processingFunction) {
       error;
   if (_.isUndefined(tasksRef)) {
     error = 'No tasks reference provided.';
-    logger.error('QueueWorker(): ' + error);
+    logger.debug('QueueWorker(): ' + error);
     throw new Error(error);
   }
   if (!_.isString(processId)) {
     error = 'Invalid process ID provided.';
-    logger.error('QueueWorker(): ' + error);
+    logger.debug('QueueWorker(): ' + error);
     throw new Error(error);
   }
   if (!_.isBoolean(sanitize)) {
     error = 'Invalid sanitize option.';
-    logger.error('QueueWorker(): ' + error);
+    logger.debug('QueueWorker(): ' + error);
     throw new Error(error);
   }
   if (!_.isFunction(processingFunction)) {
     error = 'No processing function provided.';
-    logger.error('QueueWorker(): ' + error);
+    logger.debug('QueueWorker(): ' + error);
     throw new Error(error);
   }
 
@@ -108,16 +108,16 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
     /* istanbul ignore if */
     if (error) {
       if (++retries < MAX_TRANSACTION_ATTEMPTS) {
-        logger.warn(self._getLogEntry('reset task errored, retrying'), error);
+        logger.debug(self._getLogEntry('reset task errored, retrying'), error);
         setImmediate(self._resetTask.bind(self), taskRef, deferred);
       } else {
         var errorMsg = 'reset task errored too many times, no longer retrying';
-        logger.error(self._getLogEntry(errorMsg), error);
+        logger.debug(self._getLogEntry(errorMsg), error);
         deferred.reject(errorMsg);
       }
     } else {
       if (committed && snapshot.exists()) {
-        logger.info(self._getLogEntry('reset ' + snapshot.key()));
+        logger.debug(self._getLogEntry('reset ' + snapshot.key()));
       }
       deferred.resolve();
     }
@@ -145,10 +145,10 @@ QueueWorker.prototype._resolve = function(taskNumber) {
 
     if ((taskNumber !== self.taskNumber) || _.isNull(self.currentTaskRef)) {
       if (_.isNull(self.currentTaskRef)) {
-        logger.warn(self._getLogEntry('Can\'t resolve task - no task ' +
+        logger.debug(self._getLogEntry('Can\'t resolve task - no task ' +
           'currently being processed'));
       } else {
-        logger.warn(self._getLogEntry('Can\'t resolve task - no longer ' +
+        logger.debug(self._getLogEntry('Can\'t resolve task - no longer ' +
           'processing current task'));
       }
       deferred.resolve();
@@ -184,21 +184,21 @@ QueueWorker.prototype._resolve = function(taskNumber) {
         /* istanbul ignore if */
         if (error) {
           if (++retries < MAX_TRANSACTION_ATTEMPTS) {
-            logger.warn(self._getLogEntry('resolve task errored, retrying'),
+            logger.debug(self._getLogEntry('resolve task errored, retrying'),
               error);
             setImmediate(resolve, newTask);
           } else {
             var errorMsg = 'resolve task errored too many times, no longer ' +
               'retrying';
-            logger.error(self._getLogEntry(errorMsg), error);
+            logger.debug(self._getLogEntry(errorMsg), error);
             deferred.reject(errorMsg);
           }
         } else {
           if (committed && existedBefore) {
-            logger.info(self._getLogEntry('completed ' + snapshot.key()));
+            logger.debug(self._getLogEntry('completed ' + snapshot.key()));
           } else {
-            logger.warn(self._getLogEntry('Can\'t resolve task - current task' +
-                ' no longer owned by this process'));
+            logger.debug(self._getLogEntry('Can\'t resolve task - current ' +
+              'task no longer owned by this process'));
           }
           deferred.resolve();
           self.busy = false;
@@ -234,10 +234,10 @@ QueueWorker.prototype._reject = function(taskNumber) {
 
     if ((taskNumber !== self.taskNumber) || _.isNull(self.currentTaskRef)) {
       if (_.isNull(self.currentTaskRef)) {
-        logger.warn(self._getLogEntry('Can\'t reject task - no task currently' +
-          ' being processed'));
+        logger.debug(self._getLogEntry('Can\'t reject task - no task ' +
+          'currently being processed'));
       } else {
-        logger.warn(self._getLogEntry('Can\'t reject task - no longer ' +
+        logger.debug(self._getLogEntry('Can\'t reject task - no longer ' +
           'processing current task'));
       }
       deferred.resolve();
@@ -278,22 +278,22 @@ QueueWorker.prototype._reject = function(taskNumber) {
         /* istanbul ignore if */
         if (error) {
           if (++retries < MAX_TRANSACTION_ATTEMPTS) {
-            logger.warn(self._getLogEntry('reject task errored, retrying'),
+            logger.debug(self._getLogEntry('reject task errored, retrying'),
               error);
             setImmediate(reject, error);
           } else {
             var errorMsg = 'reject task errored too many times, no longer ' +
               'retrying';
-            logger.error(self._getLogEntry(errorMsg), error);
+            logger.debug(self._getLogEntry(errorMsg), error);
             deferred.reject(errorMsg);
           }
         } else {
           if (committed && existedBefore) {
-            logger.error(self._getLogEntry('errored while attempting to ' +
+            logger.debug(self._getLogEntry('errored while attempting to ' +
               'complete ' + snapshot.key()));
           } else {
-            logger.warn(self._getLogEntry('Can\'t reject task - current task ' +
-              'no longer owned by this process'));
+            logger.debug(self._getLogEntry('Can\'t reject task - current task' +
+              ' no longer owned by this process'));
           }
           deferred.resolve();
           self.busy = false;
@@ -330,7 +330,7 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
     }
     if ((taskNumber !== self.taskNumber)  || _.isNull(self.currentTaskRef)) {
       errorMsg = 'Can\'t update progress - no task currently being processed';
-      logger.warn(self._getLogEntry(errorMsg));
+      logger.debug(self._getLogEntry(errorMsg));
       return RSVP.reject(errorMsg);
     }
     return new RSVP.Promise(function(resolve, reject) {
@@ -351,7 +351,7 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
         /* istanbul ignore if */
         if (error) {
           errorMsg = 'errored while attempting to update progress';
-          logger.error(self._getLogEntry(errorMsg), error);
+          logger.debug(self._getLogEntry(errorMsg), error);
           return reject(errorMsg);
         }
         if (committed && snapshot.exists()) {
@@ -359,7 +359,7 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
         } else {
           errorMsg = 'Can\'t update progress - current task no longer owned ' +
             'by this process';
-          logger.warn(self._getLogEntry(errorMsg));
+          logger.debug(self._getLogEntry(errorMsg));
           return reject(errorMsg);
         }
       }, false);
@@ -388,7 +388,7 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
     if (!_.isNull(self.shutdownDeffered)) {
       deferred.reject('Shutting down - can no longer process new tasks');
       self.setTaskSpec(null);
-      logger.info(self._getLogEntry('finished shutdown'));
+      logger.debug(self._getLogEntry('finished shutdown'));
       self.shutdownDeffered.resolve();
     } else {
       nextTaskRef.transaction(function(task) {
@@ -423,19 +423,19 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
         /* istanbul ignore if */
         if (error) {
           if (++retries < MAX_TRANSACTION_ATTEMPTS) {
-            logger.warn(self._getLogEntry('errored while attempting to claim ' +
-              'a new task, retrying'), error);
+            logger.debug(self._getLogEntry('errored while attempting to claim' +
+              ' a new task, retrying'), error);
             return setImmediate(self._tryToProcess.bind(self), nextTaskRef,
               deferred);
           } else {
             var errorMsg = 'errored while attempting to claim a new task too ' +
               'many times, no longer retrying';
-            logger.error(self._getLogEntry(errorMsg), error);
+            logger.debug(self._getLogEntry(errorMsg), error);
             return deferred.reject(errorMsg);
           }
         } else if (committed && snapshot.exists()) {
           if (malformed) {
-            logger.warn(self._getLogEntry('found malformed entry ' +
+            logger.debug(self._getLogEntry('found malformed entry ' +
               snapshot.key()));
           } else {
             /* istanbul ignore if */
@@ -446,7 +446,7 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
             } else {
               self.busy = true;
               self.taskNumber += 1;
-              logger.info(self._getLogEntry('claimed ' + snapshot.key()));
+              logger.debug(self._getLogEntry('claimed ' + snapshot.key()));
               self.currentTaskRef = snapshot.ref();
               self.currentTaskListener = self.currentTaskRef
                   .child('_owner').on('value', function(ownerSnapshot) {
@@ -541,7 +541,7 @@ QueueWorker.prototype._setUpTimeouts = function() {
     self.processingTaskAddedListener = self.processingTasksRef.on('child_added',
       setUpTimeout,
       /* istanbul ignore next */ function(error) {
-        logger.warn(self._getLogEntry('errored listening to Firebase'), error);
+        logger.debug(self._getLogEntry('errored listening to Firebase'), error);
       });
     self.processingTaskRemovedListener = self.processingTasksRef.on(
       'child_removed',
@@ -551,7 +551,7 @@ QueueWorker.prototype._setUpTimeouts = function() {
         delete self.expiryTimeouts[taskName];
         delete self.owners[taskName];
       }, /* istanbul ignore next */ function(error) {
-        logger.warn(self._getLogEntry('errored listening to Firebase'), error);
+        logger.debug(self._getLogEntry('errored listening to Firebase'), error);
       });
     self.processingTasksRef.on('child_changed', function(snapshot) {
       // This catches de-duped events from the server - if the task was removed
@@ -562,7 +562,7 @@ QueueWorker.prototype._setUpTimeouts = function() {
         setUpTimeout(snapshot);
       }
     }, /* istanbul ignore next */ function(error) {
-      logger.warn(self._getLogEntry('errored listening to Firebase'), error);
+      logger.debug(self._getLogEntry('errored listening to Firebase'), error);
     });
   } else {
     self.processingTasksRef = null;
@@ -664,17 +664,17 @@ QueueWorker.prototype.setTaskSpec = function(taskSpec) {
                           .orderByChild('_state')
                           .equalTo(self.startState)
                           .limitToFirst(1);
-    logger.info(self._getLogEntry('listening'));
+    logger.debug(self._getLogEntry('listening'));
     self.newTaskListener = self.newTaskRef.on(
       'child_added',
       function(snapshot) {
         self.nextTaskRef = snapshot.ref();
         self._tryToProcess(self.nextTaskRef);
       }, /* istanbul ignore next */ function(error) {
-        logger.warn(self._getLogEntry('errored listening to Firebase'), error);
+        logger.debug(self._getLogEntry('errored listening to Firebase'), error);
       });
   } else {
-    logger.error(self._getLogEntry('invalid task spec, not listening for new ' +
+    logger.debug(self._getLogEntry('invalid task spec, not listening for new ' +
       'tasks'));
     self.startState = null;
     self.inProgressState = null;
@@ -693,7 +693,7 @@ QueueWorker.prototype.setTaskSpec = function(taskSpec) {
 QueueWorker.prototype.shutdown = function() {
   var self = this;
 
-  logger.info(self._getLogEntry('shutting down'));
+  logger.debug(self._getLogEntry('shutting down'));
 
   // Set the global shutdown deferred promise, which signals we're shutting down
   self.shutdownDeffered = RSVP.defer();
@@ -701,7 +701,7 @@ QueueWorker.prototype.shutdown = function() {
   // We can report success immediately if we're not busy
   if (!self.busy) {
     self.setTaskSpec(null);
-    logger.info(self._getLogEntry('finished shutdown'));
+    logger.debug(self._getLogEntry('finished shutdown'));
     self.shutdownDeffered.resolve();
   }
 

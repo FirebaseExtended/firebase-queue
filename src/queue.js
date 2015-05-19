@@ -62,7 +62,7 @@ function Queue() {
   if (constructorArguments.length < 2) {
     error = 'Queue must at least have the queueRef and ' +
       'processingFunction arguments.';
-    logger.error('Queue(): Error during initialization', error);
+    logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   } else if (constructorArguments.length === 2) {
     self.ref = constructorArguments[0];
@@ -72,7 +72,7 @@ function Queue() {
     var options = constructorArguments[1];
     if (!_.isPlainObject(options)) {
       error = 'Options parameter must be a plain object.';
-      logger.error('Queue(): Error during initialization', error);
+      logger.debug('Queue(): Error during initialization', error);
       throw new Error(error);
     }
     if (!_.isUndefined(options.specId)) {
@@ -80,7 +80,7 @@ function Queue() {
         self.specId = options.specId;
       } else {
         error = 'options.specId must be a String.';
-        logger.error('Queue(): Error during initialization', error);
+        logger.debug('Queue(): Error during initialization', error);
         throw new Error(error);
       }
     }
@@ -91,7 +91,7 @@ function Queue() {
         self.numWorkers = options.numWorkers;
       } else {
         error = 'options.numWorkers must be a positive integer.';
-        logger.error('Queue(): Error during initialization', error);
+        logger.debug('Queue(): Error during initialization', error);
         throw new Error(error);
       }
     }
@@ -100,7 +100,7 @@ function Queue() {
         self.sanitize = options.sanitize;
       } else {
         error = 'options.sanitize must be a boolean.';
-        logger.error('Queue(): Error during initialization', error);
+        logger.debug('Queue(): Error during initialization', error);
         throw new Error(error);
       }
     }
@@ -108,7 +108,7 @@ function Queue() {
   } else {
     error = 'Queue can only take at most three arguments - queueRef, ' +
       'options (optional), and processingFunction.';
-    logger.error('Queue(): Error during initialization', error);
+    logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   }
 
@@ -146,7 +146,7 @@ function Queue() {
         }
         self.initialized = true;
       }, /* istanbul ignore next */ function(error) {
-        logger.error('Queue(): Error connecting to Firebase reference',
+        logger.debug('Queue(): Error connecting to Firebase reference',
           error.message);
       });
   }
@@ -163,7 +163,7 @@ function Queue() {
 Queue.prototype.shutdown = function() {
   var self = this;
 
-  logger.info('Queue: Shutting down');
+  logger.debug('Queue: Shutting down');
   if (!_.isNull(self.specChangeListener)) {
     self.ref.child('specs').child(self.specId).off('value',
       self.specChangeListener);
