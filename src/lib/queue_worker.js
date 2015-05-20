@@ -476,13 +476,17 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
                   }
                 });
               }
-              setImmediate(
-                self.processingFunction,
-                data,
-                self._updateProgress(self.taskNumber),
-                self._resolve(self.taskNumber),
-                self._reject(self.taskNumber)
-              );
+              var progress = self._updateProgress(self.taskNumber);
+              var resolve = self._resolve(self.taskNumber);
+              var reject = self._reject(self.taskNumber);
+              setImmediate(function() {
+                try {
+                  self.processingFunction.call(null, data, progress, resolve,
+                    reject);
+                } catch (error) {
+                  reject(error.message);
+                }
+              });
             }
           }
         }

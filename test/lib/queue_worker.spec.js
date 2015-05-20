@@ -983,6 +983,54 @@ describe('QueueWorker', function() {
       });
     });
 
+    it('should try and process a task if not busy, rejecting it if it throws', function(done) {
+      qw = new th.QueueWorker(tasksRef, '0', true, function(data, progress, resolve, reject) {
+        throw new Error('Error thrown in processingFunction');
+      });
+      qw.startState = th.validTaskSpecWithStartState.startState;
+      qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
+      qw.finishedState = th.validTaskSpecWithFinishedState.finishedState;
+      qw.taskRetries = 0;
+      var testRef = tasksRef.push({
+        '_state': th.validTaskSpecWithStartState.startState
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.nextTaskRef = testRef;
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentTaskRef).to.not.be.null;
+            expect(qw.busy).to.be.true;
+            var initial = true;
+            testRef.on('value', function(snapshot) {
+              if (initial) {
+                initial = false;
+              } else {
+                try {
+                  testRef.off();
+                  var task = snapshot.val();
+                  expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+                  expect(task['_state']).to.equal('error');
+                  expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+                  expect(task['_progress']).to.equal(0);
+                  expect(task['_error_details']).to.have.all.keys(['previous_state', 'attempts', 'error']);
+                  expect(task['_error_details'].previous_state).to.equal(th.validTaskSpecWithStartState.inProgressState);
+                  expect(task['_error_details'].attempts).to.equal(1);
+                  expect(task['_error_details'].error).to.equal('Error thrown in processingFunction');
+                  done();
+                } catch (errorC) {
+                  done(errorC);
+                }
+              }
+            });
+          } catch (errorB) {
+            done(errorB);
+          }
+        }).catch(done);
+      });
+    });
+
     it('should try and process a task without a _state if not busy', function(done) {
       qw.startState = null;
       qw.inProgressState = th.validBasicTaskSpec.inProgressState;
