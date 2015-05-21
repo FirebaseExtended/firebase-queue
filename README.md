@@ -4,12 +4,12 @@
 [![Coverage Status](https://img.shields.io/coveralls/firebase/firebase-queue.svg?branch=master&style=flat)](https://coveralls.io/r/firebase/firebase-queue)
 [![GitHub version](https://badge.fury.io/gh/firebase%2Ffirebase-queue.svg)](http://badge.fury.io/gh/firebase%2Ffirebase-queue)
 
-A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase.
+A fault-tolerant, multi-worker, multi-stage job pipeline built on the Firebase realtime database.
 
 
 ## Purpose of a Queue
 
-Queues in Firebase can be used to organize workers or perform background work on data stored in a Firebase like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to other locations in your Firebase. First, let's define a few terms we'll use when talking about a queue:
+Queues can be used in your Firebase app to organize workers or perform background work like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to multiple locations in your Firebase database. First, let's define a few terms we'll use when talking about a queue:
   - `task` - a unit of work that a queue worker can process
   - `spec` - a definition of an operation that the queue will perform on matching tasks
   - `job` - one of more `spec`'s that specify a series of ordered operations to be performed
@@ -23,9 +23,9 @@ Since chat message sanitization can't happen purely on the client side, as that 
 
 Using Firebase Queue, you can create specs for each of these tasks, and then use workers to process the individual tasks to complete the job. We'll explore the queue, adding tasks, assigning workers, and creating custom specs to create full jobs, then [revisit the example](#message-sanitization-revisited) above.
 
-## The Queue in Firebase
+## The Queue in Your Firebase Database
 
-The queue relies on having a Firebase reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
+The queue relies on having a Firebase database reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
 ```
 queue
   - specs
@@ -37,7 +37,7 @@ queue
 
 The basic unit of the queue is the queue worker: the process that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
 
-You can start a worker process by passing in a Firebase [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function ([described below](#the-processing-function)), as follows:
+You can start a worker process by passing in a Firebase database  [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function ([described below](#the-processing-function)), as follows:
 
 ```js
 // my_queue_worker.js
@@ -356,7 +356,7 @@ tasksRef.push({
 });
 ```
 
-Your Firebase should now look like this:
+Your Firebase database should now look like this:
 
 ```
 root
@@ -429,7 +429,7 @@ root
         - name: "Chris"
 ```
 
-Now, you want to fan the data out to the `messages` subtree of your firebase, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
+Now, you want to fan the data out to the `messages` subtree of your Firebase database, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
 
 ```js
 ...
@@ -439,7 +439,7 @@ var options = {
   'numWorkers': 5
 };
 var fanoutQueue = new Queue(tasksRef, options, function(data, progress, resolve, reject) {
-  // fan data out to /messages, ensure that Firebase errors are caught and cause the task to fail
+  // fan data out to /messages; ensure that errors are caught and cause the task to fail
   messagesRef.push(data, function(error){
     if (error) {
       reject(error.message);
@@ -456,4 +456,4 @@ While this example is a little contrived since you could perform the sanitizatio
 
 ## Wrap Up
 
-As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase, from sanitization to data fanout and more. We'd love to hear about how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), or [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [support@firebase.com](mailto:support@firebase.com).
+As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase data, from sanitization to data fanout and more. We'd love to hear about how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), or [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [support@firebase.com](mailto:support@firebase.com).
