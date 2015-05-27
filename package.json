@@ -37,6 +37,9 @@
     "README.md",
     "package.json"
   ],
+  "peerDependencies": {
+    "firebase": "2.x"
+  },
   "dependencies": {
     "firebase": "2.x",
     "lodash": "~3.7.0",

@@ -1,0 +1,4 @@
+changed - `Queue` constructor returns the instantiated queue instead of a promise
+feature - Graceful shutdown of a queue is now possible using the instantiated object's `shutdown()` method
+feature - Synchronously thrown errors in a `processingFunction` are now caught and passed to the `reject()` handler
+changed - All logging is now at Winston's `debug` level to reduce log pollution
