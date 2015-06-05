@@ -399,13 +399,13 @@ var Queue = require('firebase-queue'),
     Firebase = require('firebase');
 
 var ref = new Firebase('https://<your-firebase>.firebaseio.com');
-var tasksRef = ref.child('queue/tasks');
+var queueRef = ref.child('queue');
 var messagesRef = ref.child('messages');
 
 var options = {
   'specId': 'sanitize_message'
 };
-var sanitizeQueue = new Queue(tasksRef, options, function(data, progress, resolve, reject) {
+var sanitizeQueue = new Queue(queueRef, options, function(data, progress, resolve, reject) {
   // sanitize input message
   data.message = sanitize(data.message);
 
