@@ -113,7 +113,7 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
       } else {
         var errorMsg = 'reset task errored too many times, no longer retrying';
         logger.debug(self._getLogEntry(errorMsg), error);
-        deferred.reject(errorMsg);
+        deferred.reject(new Error(errorMsg));
       }
     } else {
       if (committed && snapshot.exists()) {
@@ -191,7 +191,7 @@ QueueWorker.prototype._resolve = function(taskNumber) {
             var errorMsg = 'resolve task errored too many times, no longer ' +
               'retrying';
             logger.debug(self._getLogEntry(errorMsg), error);
-            deferred.reject(errorMsg);
+            deferred.reject(new Error(errorMsg));
           }
         } else {
           if (committed && existedBefore) {
@@ -244,8 +244,11 @@ QueueWorker.prototype._reject = function(taskNumber) {
       self.busy = false;
       self._tryToProcess(self.nextTaskRef);
     } else {
+      if (!_.isUndefined(error) && !_.isError(error)) {
+        error = new Error(error);
+      }
       if (!_.isUndefined(error)) {
-        errorString = '' + error;
+        errorString = '' + error.message;
       }
       var existedBefore;
       self.currentTaskRef.transaction(function(task) {
@@ -268,6 +271,7 @@ QueueWorker.prototype._reject = function(taskNumber) {
           task._error_details = {
             previous_state: self.inProgressState,
             error: errorString,
+            error_stack: (error||{}).stack||null,
             attempts: attempts + 1
           };
           return task;
@@ -285,7 +289,7 @@ QueueWorker.prototype._reject = function(taskNumber) {
             var errorMsg = 'reject task errored too many times, no longer ' +
               'retrying';
             logger.debug(self._getLogEntry(errorMsg), error);
-            deferred.reject(errorMsg);
+            deferred.reject(new Error(errorMsg));
           }
         } else {
           if (committed && existedBefore) {
@@ -326,12 +330,12 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
         _.isNaN(progress) ||
         progress < 0 ||
         progress > 100) {
-      return RSVP.reject('Invalid progress');
+      return RSVP.reject(new Error('Invalid progress'));
     }
     if ((taskNumber !== self.taskNumber)  || _.isNull(self.currentTaskRef)) {
       errorMsg = 'Can\'t update progress - no task currently being processed';
       logger.debug(self._getLogEntry(errorMsg));
-      return RSVP.reject(errorMsg);
+      return RSVP.reject(new Error(errorMsg));
     }
     return new RSVP.Promise(function(resolve, reject) {
       self.currentTaskRef.transaction(function(task) {
@@ -352,7 +356,7 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
         if (error) {
           errorMsg = 'errored while attempting to update progress';
           logger.debug(self._getLogEntry(errorMsg), error);
-          return reject(errorMsg);
+          return reject(new Error(errorMsg));
         }
         if (committed && snapshot.exists()) {
           resolve();
@@ -360,7 +364,7 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
           errorMsg = 'Can\'t update progress - current task no longer owned ' +
             'by this process';
           logger.debug(self._getLogEntry(errorMsg));
-          return reject(errorMsg);
+          return reject(new Error(errorMsg));
         }
       }, false);
     });
@@ -386,7 +390,7 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
 
   if (!self.busy) {
     if (!_.isNull(self.shutdownDeffered)) {
-      deferred.reject('Shutting down - can no longer process new tasks');
+      deferred.reject(new Error('Shutting down - can no longer process new tasks'));
       self.setTaskSpec(null);
       logger.debug(self._getLogEntry('finished shutdown'));
       self.shutdownDeffered.resolve();
@@ -431,7 +435,7 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
             var errorMsg = 'errored while attempting to claim a new task too ' +
               'many times, no longer retrying';
             logger.debug(self._getLogEntry(errorMsg), error);
-            return deferred.reject(errorMsg);
+            return deferred.reject(new Error(errorMsg));
           }
         } else if (committed && snapshot.exists()) {
           if (malformed) {
@@ -484,7 +488,7 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
                   self.processingFunction.call(null, data, progress, resolve,
                     reject);
                 } catch (error) {
-                  reject(error.message);
+                  reject(error);
                 }
               });
             }
@@ -713,3 +717,4 @@ QueueWorker.prototype.shutdown = function() {
 };
 
 module.exports = QueueWorker;
+
