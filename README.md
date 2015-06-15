@@ -169,7 +169,7 @@ A callback function for reporting that the current task has been completed and t
 
 #### `reject()`
 
-A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string. If an error is passed into the `reject()` function, the `error` key will contain the `error.message` and the `error_stack` key will contain the `error.stack`, unless the `suppressStack` option has been specified for the queue. Note that if retries are enabled and there are remaining attempts, the task will be restarted in it's spec's `start_state`.
+A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string. If an Error is passed into the `reject()` function, the `error` key will contain the `error.message`, and if `suppressStack` option has not been specified the `error_stack` key will contain the `error.stack`. Note that if retries are enabled and there are remaining attempts, the task will be restarted in it's spec's `start_state`.
 
 ## Queue Security
 
