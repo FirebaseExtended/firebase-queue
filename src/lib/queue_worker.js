@@ -222,6 +222,7 @@ QueueWorker.prototype._reject = function(taskNumber) {
   var self = this,
       retries = 0,
       errorString = null,
+      errorStack = null,
       deferred = RSVP.defer();
 
   /**
@@ -244,12 +245,18 @@ QueueWorker.prototype._reject = function(taskNumber) {
       self.busy = false;
       self._tryToProcess(self.nextTaskRef);
     } else {
-      if (!_.isUndefined(error) && !_.isError(error)) {
-        error = new Error(error);
+      if (_.isError(error)) {
+        errorString = error.message;
+      } else if (_.isString(error)) {
+        errorString = error;
+      } else if (!_.isUndefined(error) && !_.isNull(error)) {
+        errorString = error.toString();
       }
-      if (!_.isUndefined(error)) {
-        errorString = '' + error.message;
+
+      if (!self.suppressStack) {
+        errorStack = _.get(error, 'stack', null);
       }
+
       var existedBefore;
       self.currentTaskRef.transaction(function(task) {
         existedBefore = true;
@@ -271,7 +278,7 @@ QueueWorker.prototype._reject = function(taskNumber) {
           task._error_details = {
             previous_state: self.inProgressState,
             error: errorString,
-            error_stack: (error||{}).stack||null,
+            error_stack: errorStack,
             attempts: attempts + 1
           };
           return task;
@@ -402,12 +409,18 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
         }
         if (!_.isPlainObject(task)) {
           malformed = true;
+          var error = new Error('Task was malformed');
+          var errorStack = null;
+          if (!self.suppressStack) {
+            errorStack = error.stack;
+          }
           return {
             _state: self.errorState,
             _state_changed: Firebase.ServerValue.TIMESTAMP,
             _error_details: {
-              error: 'Task was malformed',
-              original_task: task
+              error: error.message,
+              original_task: task,
+              error_stack: errorStack
             }
           };
         }

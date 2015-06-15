@@ -538,7 +538,7 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should reject a task owned by the current worker and reset more retries are specified', function(done) {
+    it('should reject a task owned by the current worker and reset if more retries are specified', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithRetries);
       testRef = tasksRef.push({
@@ -563,7 +563,6 @@ describe('QueueWorker', function() {
           } else {
             try {
               var task = snapshot.val();
-              console.log('$$', task);
               expect(task).to.have.all.keys(['_progress', '_state_changed', '_error_details']);
               expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(task['_progress']).to.equal(0);
@@ -642,7 +641,7 @@ describe('QueueWorker', function() {
                 expect(task['_state']).to.equal('error');
                 expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 expect(task['_progress']).to.equal(0);
-                expect(task['_error_details']).to.have.all.keys(['previous_state', 'error', 'attempts', 'error_stack']);
+                expect(task['_error_details']).to.have.all.keys(['previous_state', 'error', 'attempts']);
                 expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
                 expect(task['_error_details'].error).to.equal(nonStringObject.toString());
                 expect(task['_error_details'].attempts).to.equal(1);
@@ -657,6 +656,45 @@ describe('QueueWorker', function() {
     });
 
     it('should reject a task owned by the current worker and append the error string to the _error_details', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
+      var error = 'My error message';
+      qw.setTaskSpec(th.validBasicTaskSpec);
+      testRef = tasksRef.push({
+        '_state': th.validBasicTaskSpec.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._reject(qw.taskNumber)(error);
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+              expect(task['_state']).to.equal('error');
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task['_progress']).to.equal(0);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'error', 'attempts']);
+              expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].attempts).to.equal(1);
+              expect(task['_error_details'].error).to.equal(error);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
+    it('should reject a task owned by the current worker and append the error string and stack to the _error_details', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
       var error = new Error('My error message');
       qw.setTaskSpec(th.validBasicTaskSpec);
@@ -683,6 +721,47 @@ describe('QueueWorker', function() {
               expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
               expect(task['_progress']).to.equal(0);
               expect(task['_error_details']).to.have.all.keys(['previous_state', 'error', 'attempts', 'error_stack']);
+              expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].attempts).to.equal(1);
+              expect(task['_error_details'].error).to.equal(error.message);
+              expect(task['_error_details'].error_stack).to.be.a.string;
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
+    it('should reject a task owned by the current worker and append the error string to the _error_details', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, _.noop);
+      qw.suppressStack = true;
+      var error = new Error('My error message');
+      qw.setTaskSpec(th.validBasicTaskSpec);
+      testRef = tasksRef.push({
+        '_state': th.validBasicTaskSpec.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._reject(qw.taskNumber)(error);
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+              expect(task['_state']).to.equal('error');
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task['_progress']).to.equal(0);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'error', 'attempts']);
               expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
               expect(task['_error_details'].attempts).to.equal(1);
               expect(task['_error_details'].error).to.equal(error.message);
@@ -1019,6 +1098,7 @@ describe('QueueWorker', function() {
                   expect(task['_error_details'].previous_state).to.equal(th.validTaskSpecWithStartState.inProgressState);
                   expect(task['_error_details'].attempts).to.equal(1);
                   expect(task['_error_details'].error).to.equal('Error thrown in processingFunction');
+                  expect(task['_error_details'].error_stack).to.be.a.string;
                   done();
                 } catch (errorC) {
                   done(errorC);
@@ -1053,8 +1133,9 @@ describe('QueueWorker', function() {
       });
     });
 
-    it('should not try and process a task if not a plain object', function(done) {
+    it('should not try and process a task if not a plain object [1]', function(done) {
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
+      qw.suppressStack = true;
       var testRef = tasksRef.push('invalid', function(errorA) {
         if (errorA) {
           return done(errorA);
@@ -1070,6 +1151,38 @@ describe('QueueWorker', function() {
                 expect(task['_error_details']).to.have.all.keys(['error', 'original_task']);
                 expect(task['_error_details']['error']).to.equal('Task was malformed');
                 expect(task['_error_details']['original_task']).to.equal('invalid');
+                expect(task['_state']).to.equal('error');
+                expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+                done();
+              } catch (errorB) {
+                done(errorB);
+              }
+            });
+          } catch (errorC) {
+            done(errorC);
+          }
+        }).catch(done);
+      });
+    });
+
+    it('should not try and process a task if not a plain object [2]', function(done) {
+      qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
+      var testRef = tasksRef.push('invalid', function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw._tryToProcess(testRef).then(function() {
+          try {
+            expect(qw.currentTaskRef).to.be.null;
+            expect(qw.busy).to.be.false;
+            testRef.once('value', function(snapshot) {
+              try {
+                var task = snapshot.val();
+                expect(task).to.have.all.keys(['_error_details', '_state', '_state_changed']);
+                expect(task['_error_details']).to.have.all.keys(['error', 'original_task', 'error_stack']);
+                expect(task['_error_details'].error).to.equal('Task was malformed');
+                expect(task['_error_details'].original_task).to.equal('invalid');
+                expect(task['_error_details'].error_stack).to.be.a.string;
                 expect(task['_state']).to.equal('error');
                 expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                 done();
