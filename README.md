@@ -73,6 +73,7 @@ Queue workers can take an optional options object to specify:
   - `specId` - specifies the spec type for this worker. This is important when creating multiple specs. Defaults to `null` which uses the default spec.
   - `numWorkers` - specifies the number of workers to run simultaneously for this node.js thread. Defaults to 1 worker.
   - `sanitize` - specifies whether the `data` object passed to the processing function is sanitized of internal keys reserved for use by the queue. Defaults to `true`.
+  - `suppressStack` - specifies whether the queue will suppress error stack traces from being placed in the `_error_details` of the task if it's rejected with an Error.
 
 ```js
 ...
@@ -80,7 +81,8 @@ Queue workers can take an optional options object to specify:
 var options = {
   'specId': 'spec_1',
   'numWorkers': 5,
-  'sanitize': false
+  'sanitize': false,
+  'suppressStack': true
 };
 var queue = new Queue(ref, options, function(data, progress, resolve, reject) {
   ...
@@ -131,7 +133,7 @@ The reserved keys are:
  - `_state_changed` - The timestamp that the task changed into its current state. This will always be the server time when the processing function was called.
  - `_owner` - A unique ID for the worker and task number combination to ensure only one worker is responsible for the task at any time.
  - `_progress` - A number between 0 and 100, reset at the start of each task to 0.
- - `_error_details` - An object containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an `error` string from the `reject()` callback of the previous task, and an `attempts` field containing the number of retries attempted before failing a task.
+ - `_error_details` - An object containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an `error` string from the `reject()` callback of the previous task, and an `attempts` field containing the number of retries attempted before failing a task. If the `suppressStack` queue option is not set to `true`, there may also be a `error_stack` field containg a stack dump of any error passed into the `reject()` function.
 
  By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the [queue options](#queue-worker-options-optional).
 
@@ -167,7 +169,7 @@ A callback function for reporting that the current task has been completed and t
 
 #### `reject()`
 
-A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string. Note that if retries are enabled and there are remaining attempts, the task will be restarted in it's spec's `start_state`.
+A callback function for reporting that the current task failed and the worker is ready to process another task. Once this is called, the task will go into the `error_state` for the job with an additional `_error_details` object containing a `previous_state` key referencing this task's `in_progress_state`. If a string is passed into the `reject()` function, the `_error_details` will also contain an `error` key containing that string. If an error is passed into the `reject()` function, the `error` key will contain the `error.message` and the `error_stack` key will contain the `error.stack`, unless the `suppressStack` option has been specified for the queue. Note that if retries are enabled and there are remaining attempts, the task will be restarted in it's spec's `start_state`.
 
 ## Queue Security
 
