@@ -213,6 +213,9 @@ These don't have to use a custom token, for instance you could use `auth != null
               "error": {
                 ".validate": "newData.isString()"
               },
+              "error_stack": {
+                ".validate": "newData.isString()"
+              },
               "previous_state": {
                 ".validate": "newData.isString()"
               },
