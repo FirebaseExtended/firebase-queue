@@ -17,7 +17,7 @@ var MAX_TRANSACTION_ATTEMPTS = 10,
  *   task is claimed.
  * @return {Object}
  */
-function QueueWorker(tasksRef, processId, sanitize, processingFunction) {
+function QueueWorker(tasksRef, processId, sanitize, suppressStack, processingFunction) {
   var self = this,
       error;
   if (_.isUndefined(tasksRef)) {
@@ -32,6 +32,11 @@ function QueueWorker(tasksRef, processId, sanitize, processingFunction) {
   }
   if (!_.isBoolean(sanitize)) {
     error = 'Invalid sanitize option.';
+    logger.debug('QueueWorker(): ' + error);
+    throw new Error(error);
+  }
+  if (!_.isBoolean(suppressStack)) {
+    error = 'Invalid suppressStack option.';
     logger.debug('QueueWorker(): ' + error);
     throw new Error(error);
   }
@@ -62,6 +67,7 @@ function QueueWorker(tasksRef, processId, sanitize, processingFunction) {
   self.taskNumber = 0;
   self.errorState = DEFAULT_ERROR_STATE;
   self.sanitize = sanitize;
+  self.suppressStack = suppressStack;
 
   return self;
 }

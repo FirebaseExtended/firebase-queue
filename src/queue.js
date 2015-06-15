@@ -15,6 +15,7 @@ var _ = require('lodash'),
 
 var DEFAULT_NUM_WORKERS = 1,
     DEFAULT_SANITIZE = true,
+    DEFAULT_SUPPRESS_STACK = false,
     DEFAULT_TASK_SPEC = {
       inProgressState: 'in_progress',
       timeout: 300000 // 5 minutes
@@ -55,6 +56,7 @@ function Queue() {
   var error;
   self.numWorkers = DEFAULT_NUM_WORKERS;
   self.sanitize = DEFAULT_SANITIZE;
+  self.suppressStack = DEFAULT_SUPPRESS_STACK;
   self.initialized = false;
 
   self.specChangeListener = null;
@@ -104,6 +106,15 @@ function Queue() {
         throw new Error(error);
       }
     }
+    if (!_.isUndefined(options.suppressStack)) {
+      if (_.isBoolean(options.suppressStack)) {
+        self.suppressStack = options.suppressStack;
+      } else {
+        error = 'options.suppressStack must be a boolean.';
+        logger.debug('Queue(): Error during initialization', error);
+        throw new Error(error);
+      }
+    }
     self.processingFunction = constructorArguments[2];
   } else {
     error = 'Queue can only take at most three arguments - queueRef, ' +
@@ -119,6 +130,7 @@ function Queue() {
       self.ref.child('tasks'),
       processId,
       self.sanitize,
+      self.suppressStack,
       self.processingFunction
     ));
   }

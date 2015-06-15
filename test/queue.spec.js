@@ -76,6 +76,14 @@ describe('Queue', function() {
       });
     });
 
+    _.forEach([NaN, Infinity, '', 'foo', 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }, _.noop], function(nonBooleanObject) {
+      it('should not create a Queue with a non-boolean suppressStack option specified', function() {
+        expect(function() {
+          new th.Queue(th.testRef, { suppressStack: nonBooleanObject }, _.noop);
+        }).to.throw('options.suppressStack must be a boolean.');
+      });
+    });
+
     _.forEach(_.range(1, 20), function(numWorkers) {
       it('should create a Queue with ' + numWorkers + ' workers when specified in options.numWorkers', function() {
         var q = new th.Queue(th.testRef, { numWorkers: numWorkers }, _.noop);
@@ -105,6 +113,13 @@ describe('Queue', function() {
       it('should create a Queue with a ' + bool + ' sanitize option when specified', function() {
         var q = new th.Queue(th.testRef, { sanitize: bool }, _.noop)
         expect(q.sanitize).to.equal(bool);
+      });
+    });
+
+    [true, false].forEach(function(bool) {
+      it('should create a Queue with a ' + bool + ' suppressStack option when specified', function() {
+        var q = new th.Queue(th.testRef, { suppressStack: bool }, _.noop)
+        expect(q.suppressStack).to.equal(bool);
       });
     });
 
