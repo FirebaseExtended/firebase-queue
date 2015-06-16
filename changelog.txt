@@ -1,2 +1,0 @@
-feature - Better error handling, including the ability to handle Error objects in the `reject()` callback function
-feature - Reporting Error stacktraces in the `_error_details` of a task, unless the `suppressStack` queue option is specified
