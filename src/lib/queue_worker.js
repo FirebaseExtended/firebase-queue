@@ -273,7 +273,13 @@ QueueWorker.prototype._reject = function(taskNumber) {
         var id = self.processId + ':' + self.taskNumber;
         if (task._state === self.inProgressState &&
             task._owner === id) {
-          var attempts = _.get(task, '_error_details.attempts', 0);
+          var attempts = 0;
+          var currentAttempts = _.get(task, '_error_details.attempts', 0);
+          var currentPrevState = _.get(task, '_error_details.previous_state');
+          if (currentAttempts > 0 &&
+              currentPrevState === self.inProgressState) {
+            attempts = currentAttempts;
+          }
           if (attempts >= self.taskRetries) {
             task._state = self.errorState;
           } else {

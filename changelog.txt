@@ -1,0 +1,1 @@
+fixed - Number of attempts reported is now per task and no-longer carried over if chaining error tasks

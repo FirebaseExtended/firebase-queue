@@ -586,6 +586,46 @@ describe('QueueWorker', function() {
       });
     });
 
+    it('should reject a task owned by the current worker and reset the attempts count if chaning error handlers', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validTaskSpecWithRetries);
+      testRef = tasksRef.push({
+        '_state': th.validTaskSpecWithRetries.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0,
+        '_error_details': {
+          'previous_state': 'other_in_progress_state',
+          'attempts': 1
+        }
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._reject(qw.taskNumber)();
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_progress', '_state_changed', '_error_details']);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task['_progress']).to.equal(0);
+              expect(task['_error_details']).to.have.all.keys(['previous_state', 'attempts']);
+              expect(task['_error_details'].previous_state).to.equal(th.validBasicTaskSpec.inProgressState);
+              expect(task['_error_details'].attempts).to.equal(1);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
     it('should reject a task owned by the current worker and a non-standard error state', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithErrorState);
