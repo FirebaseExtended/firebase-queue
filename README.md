@@ -464,7 +464,7 @@ var options = {
   'specId': 'fanout_message',
   'numWorkers': 5
 };
-var fanoutQueue = new Queue(tasksRef, options, function(data, progress, resolve, reject) {
+var fanoutQueue = new Queue(queueRef, options, function(data, progress, resolve, reject) {
   // fan data out to /messages; ensure that errors are caught and cause the task to fail
   messagesRef.push(data, function(error){
     if (error) {
