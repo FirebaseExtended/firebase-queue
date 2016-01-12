@@ -67,10 +67,8 @@ function Queue() {
     logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   } else if (constructorArguments.length === 2) {
-    self.ref = constructorArguments[0];
     self.processingFunction = constructorArguments[1];
   } else if (constructorArguments.length === 3) {
-    self.ref = constructorArguments[0];
     var options = constructorArguments[1];
     if (!_.isPlainObject(options)) {
       error = 'Options parameter must be a plain object.';
@@ -122,12 +120,25 @@ function Queue() {
     logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   }
+  
+  if (_.isPlainObject(constructorArguments[0])) {
+    if (_.isUndefined(constructorArguments[0].tasksRef) || _.isUndefined(constructorArguments[0].specsRef)) {
+      error = 'When queueRef is an object then it must specify tasksRef and specsRef.';
+      logger.debug('Queue(): Error during initialization', error);
+      throw new Error(error);
+    }
+    self.tasksRef = constructorArguments[0].tasksRef;
+    self.specsRef = constructorArguments[0].specsRef;
+  } else {
+    self.tasksRef = constructorArguments[0].child('tasks');
+    self.specsRef = constructorArguments[0].child('specs');
+  }
 
   self.workers = [];
   for (var i = 0; i < self.numWorkers; i++) {
     var processId = (self.specId ? self.specId + ':' : '') + i;
     self.workers.push(new QueueWorker(
-      self.ref.child('tasks'),
+      self.tasksRef,
       processId,
       self.sanitize,
       self.suppressStack,
@@ -141,7 +152,7 @@ function Queue() {
     }
     self.initialized = true;
   } else {
-    self.specChangeListener = self.ref.child('specs').child(self.specId).on(
+    self.specChangeListener = self.specsRef.child(self.specId).on(
       'value',
       function(taskSpecSnap) {
         var taskSpec = {
@@ -177,7 +188,7 @@ Queue.prototype.shutdown = function() {
 
   logger.debug('Queue: Shutting down');
   if (!_.isNull(self.specChangeListener)) {
-    self.ref.child('specs').child(self.specId).off('value',
+    self.specsRef.child(self.specId).off('value',
       self.specChangeListener);
     self.specChangeListener = null;
   }
