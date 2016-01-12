@@ -121,14 +121,13 @@ function Queue() {
     throw new Error(error);
   }
   
-  if (_.isPlainObject(constructorArguments[0])) {
-    if (_.isUndefined(constructorArguments[0].tasksRef) || _.isUndefined(constructorArguments[0].specsRef)) {
-      error = 'When queueRef is an object then it must specify tasksRef and specsRef.';
-      logger.debug('Queue(): Error during initialization', error);
-      throw new Error(error);
-    }
+  if (_.has(constructorArguments[0], ['tasksRef', 'specsRef'])) {
     self.tasksRef = constructorArguments[0].tasksRef;
     self.specsRef = constructorArguments[0].specsRef;
+  } else if (_.isPlainObject(constructorArguments[0])) {
+    error = "When ref is an object it must contain both keys 'tasksRef' and 'specsRef'";
+    logger.debug('Queue(): Error during initialization', error);
+    throw new Error(error);
   } else {
     self.tasksRef = constructorArguments[0].child('tasks');
     self.specsRef = constructorArguments[0].child('specs');
