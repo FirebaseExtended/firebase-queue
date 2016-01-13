@@ -480,6 +480,30 @@ Since there is no `finished_state` in the `fanout_message` spec, the task will b
 
 While this example is a little contrived since you could perform the sanitization and fanout in a single task, creating multiple specs for our tasks allows us to do things like add selective retries to certain tasks more likely to fail, put additional workers on more expensive tasks, or add expressive error states.
 
+## Custom references to tasks and specs
+
+In order to use custom paths to tasks and specs, specify them explicitly. Instead of a single reference to the queue, use an object containing the keys `tasksRef` and `specsRef`.
+
+```js
+var Queue = require('firebase-queue'),
+    Firebase = require('firebase');
+
+var jobsRef = new Firebase('https://<your-firebase>.firebaseio.com/queue/jobs');
+var specsRef = new Firebase('https://<your-firebase>.firebaseio.com/queue/specs');
+var queue = new Queue({tasksRef: jobsRef, specsRef: specsRef}, function(data, progress, resolve, reject) {
+  // Read and process task data
+  console.log(data);
+
+  // Do some work
+  progress(50);
+
+  // Finish the task asynchronously
+  setTimeout(function() {
+    resolve();
+  }, 1000);
+});
+```
+
 ## Wrap Up
 
 As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase data, from sanitization to data fanout and more. We'd love to hear about how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), or [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [support@firebase.com](mailto:support@firebase.com).

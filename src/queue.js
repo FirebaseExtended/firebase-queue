@@ -24,7 +24,10 @@ var DEFAULT_NUM_WORKERS = 1,
 
 /**
  * @constructor
- * @param {Firebase} ref A Firebase reference to the queue.
+ * @param {(Firebase | Object)} ref A Firebase reference to the queue
+ *   or object containing both keys:
+ *     - tasksRef: {Firebase} A Firebase reference to tasks.
+ *     - specsRef: {Firebase} A Firebase reference to specs.
  * @param {Object} options (optional) Object containing possible keys:
  *   - specId: {String} the task specification ID for the workers.
  *   - numWorkers: {Number} The number of workers to create for this task.
@@ -125,7 +128,8 @@ function Queue() {
     self.tasksRef = constructorArguments[0].tasksRef;
     self.specsRef = constructorArguments[0].specsRef;
   } else if (_.isPlainObject(constructorArguments[0])) {
-    error = "When ref is an object it must contain both keys 'tasksRef' and 'specsRef'";
+    error = 'When ref is an object it must contain both keys ' +
+      '\'tasksRef\' and \'specsRef\'';
     logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   } else {
