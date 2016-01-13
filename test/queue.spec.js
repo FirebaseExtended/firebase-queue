@@ -29,10 +29,11 @@ describe('Queue', function() {
     });
     
     _.forEach([{}, { foo: 'bar' }, { tasksRef: th.testRef}, { specsRef: th.testRef }], function(invalidRefConfigurationObject) {
-    it('should not create a Queue with ref configuration object that contains keys: ' + _.keys(invalidRefConfigurationObject).join(", ") + '.', function() {
-      expect(function() {
-        new th.Queue(invalidPathsConfigurationObject);
-      }).to.throw('When ref is an object it must contain both keys \'tasksRef\' and \'specsRef\'');
+      it('should not create a Queue with ref configuration object that contains keys: {' + _.keys(invalidRefConfigurationObject).join(", ") + '}.', function() {
+        expect(function() {
+          new th.Queue(invalidRefConfigurationObject, _.noop);
+        }).to.throw('When ref is an object it must contain both keys \'tasksRef\' and \'specsRef\'');
+      });
     });
 
     _.forEach(['', 'foo', NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], { foo: 'bar' }, null, { foo: 'bar' }, { foo: { bar: { baz: true } } }], function(nonFunctionObject) {

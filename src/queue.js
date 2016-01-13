@@ -124,7 +124,7 @@ function Queue() {
     throw new Error(error);
   }
   
-  if (_.has(constructorArguments[0], ['tasksRef', 'specsRef'])) {
+  if (_.has(constructorArguments[0], 'tasksRef') && _.has(constructorArguments[0], 'specsRef')) {
     self.tasksRef = constructorArguments[0].tasksRef;
     self.specsRef = constructorArguments[0].specsRef;
   } else if (_.isPlainObject(constructorArguments[0])) {
