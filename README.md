@@ -488,19 +488,11 @@ In order to use custom paths to tasks and specs, specify them explicitly. Instea
 var Queue = require('firebase-queue'),
     Firebase = require('firebase');
 
-var jobsRef = new Firebase('https://<your-firebase>.firebaseio.com/queue/jobs');
-var specsRef = new Firebase('https://<your-firebase>.firebaseio.com/queue/specs');
-var queue = new Queue({tasksRef: jobsRef, specsRef: specsRef}, function(data, progress, resolve, reject) {
-  // Read and process task data
-  console.log(data);
+var jobsRef = new Firebase('https://<your-firebase>.firebaseio.com/jobs');
+var specsRef = new Firebase('https://<your-firebase>.firebaseio.com/specs');
 
-  // Do some work
-  progress(50);
-
-  // Finish the task asynchronously
-  setTimeout(function() {
-    resolve();
-  }, 1000);
+var queue = new Queue({ tasksRef: jobsRef, specsRef: specsRef }, function(data, progress, resolve, reject) {
+  // process task
 });
 ```
 
