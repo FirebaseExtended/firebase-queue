@@ -47,7 +47,7 @@ function QueueWorker(tasksRef, processId, sanitize, suppressStack, processingFun
   }
 
   self.processId = processId + ':' + uuid.v4();
-  self.shutdownDeffered = null;
+  self.shutdownDeferred = null;
 
   self.processingFunction = processingFunction;
   self.expiryTimeouts = {};
@@ -408,11 +408,11 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
   }
 
   if (!self.busy) {
-    if (!_.isNull(self.shutdownDeffered)) {
+    if (!_.isNull(self.shutdownDeferred)) {
       deferred.reject(new Error('Shutting down - can no longer process new tasks'));
       self.setTaskSpec(null);
       logger.debug(self._getLogEntry('finished shutdown'));
-      self.shutdownDeffered.resolve();
+      self.shutdownDeferred.resolve();
     } else {
       nextTaskRef.transaction(function(task) {
         /* istanbul ignore if */
@@ -729,16 +729,16 @@ QueueWorker.prototype.shutdown = function() {
   logger.debug(self._getLogEntry('shutting down'));
 
   // Set the global shutdown deferred promise, which signals we're shutting down
-  self.shutdownDeffered = RSVP.defer();
+  self.shutdownDeferred = RSVP.defer();
 
   // We can report success immediately if we're not busy
   if (!self.busy) {
     self.setTaskSpec(null);
     logger.debug(self._getLogEntry('finished shutdown'));
-    self.shutdownDeffered.resolve();
+    self.shutdownDeferred.resolve();
   }
 
-  return self.shutdownDeffered.promise;
+  return self.shutdownDeferred.promise;
 };
 
 module.exports = QueueWorker;
