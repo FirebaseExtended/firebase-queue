@@ -1065,21 +1065,23 @@ describe('QueueWorker', function() {
       qw = new th.QueueWorker(tasksRef, '0', true, false, _.noop);
     });
 
-    afterEach(function() {
+    afterEach(function(done) {
       qw.setTaskSpec();
+      tasksRef.set(null, done);
     });
 
     it('should not try and process a task if busy', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       qw.busy = true;
-      var testRef = tasksRef.push({
+      qw.newTaskRef = tasksRef;
+      tasksRef.push({
         '_state': th.validTaskSpecWithStartState.startState
       }, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.be.null;
             done();
@@ -1093,13 +1095,14 @@ describe('QueueWorker', function() {
     it('should try and process a task if not busy', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
-      var testRef = tasksRef.push({
+      qw.newTaskRef = tasksRef;
+      tasksRef.push({
         '_state': th.validTaskSpecWithStartState.startState
       }, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.not.be.null;
             expect(qw.busy).to.be.true;
@@ -1119,14 +1122,14 @@ describe('QueueWorker', function() {
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       qw.finishedState = th.validTaskSpecWithFinishedState.finishedState;
       qw.taskRetries = 0;
+      qw.newTaskRef = tasksRef;
       var testRef = tasksRef.push({
         '_state': th.validTaskSpecWithStartState.startState
       }, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw.nextTaskRef = testRef;
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.not.be.null;
             expect(qw.busy).to.be.true;
@@ -1163,13 +1166,14 @@ describe('QueueWorker', function() {
     it('should try and process a task without a _state if not busy', function(done) {
       qw.startState = null;
       qw.inProgressState = th.validBasicTaskSpec.inProgressState;
-      var testRef = tasksRef.push({
+      qw.newTaskRef = tasksRef;
+      tasksRef.push({
         foo: 'bar'
       }, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.not.be.null;
             expect(qw.busy).to.be.true;
@@ -1184,11 +1188,12 @@ describe('QueueWorker', function() {
     it('should not try and process a task if not a plain object [1]', function(done) {
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
       qw.suppressStack = true;
+      qw.newTaskRef = tasksRef;
       var testRef = tasksRef.push('invalid', function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.be.null;
             expect(qw.busy).to.be.false;
@@ -1215,11 +1220,12 @@ describe('QueueWorker', function() {
 
     it('should not try and process a task if not a plain object [2]', function(done) {
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
+      qw.newTaskRef = tasksRef;
       var testRef = tasksRef.push('invalid', function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.be.null;
             expect(qw.busy).to.be.false;
@@ -1248,13 +1254,14 @@ describe('QueueWorker', function() {
     it('should not try and process a task if no longer in correct startState', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
-      var testRef = tasksRef.push({
+      qw.newTaskRef = tasksRef;
+      tasksRef.push({
         '_state': th.validTaskSpecWithStartState.inProgressState
       }, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.be.null;
             done();
@@ -1265,16 +1272,31 @@ describe('QueueWorker', function() {
       });
     });
 
+    it('should not try and process a task if no task to process', function(done) {
+      qw.startState = th.validTaskSpecWithStartState.startState;
+      qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
+      qw.newTaskRef = tasksRef;
+      qw._tryToProcess().then(function() {
+        try {
+          expect(qw.currentTaskRef).to.be.null;
+          done();
+        } catch (errorB) {
+          done(errorB);
+        }
+      }).catch(done);
+    });
+
     it('should invalidate callbacks if another process times the task out', function(done) {
       qw.startState = th.validTaskSpecWithStartState.startState;
       qw.inProgressState = th.validTaskSpecWithStartState.inProgressState;
+      qw.newTaskRef = tasksRef;
       var testRef = tasksRef.push({
         '_state': th.validTaskSpecWithStartState.startState
       }, function(errorA) {
         if (errorA) {
           return done(errorA);
         }
-        qw._tryToProcess(testRef).then(function() {
+        qw._tryToProcess().then(function() {
           try {
             expect(qw.currentTaskRef).to.not.be.null;
             expect(qw.busy).to.be.true;
@@ -1889,7 +1911,7 @@ describe('QueueWorker', function() {
       var ref = tasksRef.push();
       tasksRef.once('child_added', function() {
         try {
-          expect(qw._tryToProcess).to.have.been.calledOnce.and.calledWith(ref);
+          expect(qw._tryToProcess).to.have.been.calledOnce;
           spy.restore();
           done();
         } catch (error) {
@@ -1907,7 +1929,7 @@ describe('QueueWorker', function() {
       var ref = tasksRef.push();
       tasksRef.once('child_added', function() {
         try {
-          expect(qw._tryToProcess).to.have.been.calledOnce.and.calledWith(ref);
+          expect(qw._tryToProcess).to.have.been.calledOnce;
           spy.restore();
           done();
         } catch (error) {
