@@ -455,6 +455,7 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
               task._progress = 0;
               return task;
             } else {
+              logger.debug(self._getLogEntry('task no longer in correct state: expected ' + self.startState + ', got ' + task._state))
               return;
             }
           }, function(error, committed, snapshot) {
