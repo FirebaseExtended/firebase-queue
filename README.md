@@ -185,7 +185,7 @@ In this example, there are three categories of users, represented using fields o
 
 These don't have to use a custom token, for instance you could use `auth != null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform all queue functions.
 
-```js
+```json
 {
   "rules": {
     "queue": {
