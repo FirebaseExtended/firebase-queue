@@ -54,7 +54,7 @@ gulp.task('test', function() {
       gulp.src(paths.tests)
         .pipe(mocha({
           reporter: 'spec',
-          timeout: 2000
+          timeout: 5000
         }))
         .pipe(istanbul.writeReports())
         .pipe(exit());

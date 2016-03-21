@@ -26,12 +26,14 @@ Using Firebase Queue, you can create specs for each of these tasks, and then use
 ## The Queue in Your Firebase Database
 
 The queue relies on having a Firebase database reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
+
 ```
 queue
   - specs
   - tasks
 ```
 
+See [Custom references to tasks and specs](#custom-references-to-tasks-and-specs) for defining the locations of these other than the default.
 
 ## Queue Workers
 
@@ -183,7 +185,7 @@ In this example, there are three categories of users, represented using fields o
 
 These don't have to use a custom token, for instance you could use `auth != null` in place of `auth.canAddTasks` if application's users can write directly to the queue. Similarly, `auth.canProcessTasks` and `auth.canAddSpecs` could be `auth.admin === true` if a single trusted server process was used to perform all queue functions.
 
-```js
+```json
 {
   "rules": {
     "queue": {
@@ -485,6 +487,22 @@ var fanoutQueue = new Queue(queueRef, options, function(data, progress, resolve,
 Since there is no `finished_state` in the `fanout_message` spec, the task will be purged from the queue after the data is fanned out to the messages node. If the `push` fails for some reason, the task will fail and retry, a maximum of three times (as specified in our spec).
 
 While this example is a little contrived since you could perform the sanitization and fanout in a single task, creating multiple specs for our tasks allows us to do things like add selective retries to certain tasks more likely to fail, put additional workers on more expensive tasks, or add expressive error states.
+
+## Custom references to tasks and specs
+
+It is possible to specify the locations the queue uses for tasks and the specs explicitly instead of using the defaults. To do this, simply pass an object to the Queue constructor in place of the Firebase reference; this object must contain the keys `tasksRef` and `specsRef`, and each value must be a Firebase reference.
+
+```js
+var Queue = require('firebase-queue'),
+    Firebase = require('firebase');
+
+var jobsRef = new Firebase('https://<your-firebase>.firebaseio.com/jobs');
+var specsRef = new Firebase('https://<your-firebase>.firebaseio.com/specs');
+
+var queue = new Queue({ tasksRef: jobsRef, specsRef: specsRef }, function(data, progress, resolve, reject) {
+  // process task
+});
+```
 
 ## Wrap Up
 
