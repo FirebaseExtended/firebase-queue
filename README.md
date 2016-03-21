@@ -134,6 +134,7 @@ The reserved keys are:
  - `_owner` - A unique ID for the worker and task number combination to ensure only one worker is responsible for the task at any time.
  - `_progress` - A number between 0 and 100, reset at the start of each task to 0.
  - `_error_details` - An object containing the error details from a previous task execution. If present, it may contain a `previous_state` string (or `null` if there was no previous state, in the case of malformed input) capturing the state the task was in when it errored, an `error` string from the `reject()` callback of the previous task, and an `attempts` field containing the number of retries attempted before failing a task. If the `suppressStack` queue option is not set to `true`, there may also be a `error_stack` field containg a stack dump of any error passed into the `reject()` function.
+ - `_id` - The Firebase key of the task.
 
  By default the data is sanitized of these keys, but you can disable this behavior by setting `'sanitize': false` in the [queue options](#queue-worker-options-optional).
 
@@ -228,6 +229,9 @@ These don't have to use a custom token, for instance you could use `auth != null
               "$other": {
                 ".validate": false
               }
+          },
+          "_id": {
+            ".validate": "newData.isString()"
           },
           "property_1": {
             ".validate": "/* Insert custom data validation code here */"
@@ -434,6 +438,7 @@ root
         - _progress: 0
         - _state: "sanitize_message_in_progress"
         - _state_changed: 1431475215737
+        - _id: $taskId
         - message: "Hello Firebase Queue Users!"
         - name: "Chris"
 ```
@@ -451,6 +456,7 @@ root
         - _progress: 100
         - _state: "sanitize_message_finished"
         - _state_changed: 1431475215918
+        - _id: $taskId
         - message: "Hello Firebase ***** Users!"
         - name: "Chris"
 ```

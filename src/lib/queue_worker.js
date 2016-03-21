@@ -436,6 +436,7 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
             }
           };
         }
+        task._id = nextTaskRef.key();
         if (_.isUndefined(task._state)) {
           task._state = null;
         }
@@ -498,7 +499,8 @@ QueueWorker.prototype._tryToProcess = function(nextTaskRef, deferred) {
                   '_state_changed',
                   '_owner',
                   '_progress',
-                  '_error_details'
+                  '_error_details',
+                  '_id'
                 ].forEach(function(reserved) {
                   if (snapshot.hasChild(reserved)) {
                     delete data[reserved];
