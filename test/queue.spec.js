@@ -27,9 +27,9 @@ describe('Queue', function() {
         }).to.throw;
       });
     });
-    
-    _.forEach([{}, { foo: 'bar' }, { tasksRef: th.testRef}, { specsRef: th.testRef }], function(invalidRefConfigurationObject) {
-      it('should not create a Queue with ref configuration object that contains keys: {' + _.keys(invalidRefConfigurationObject).join(", ") + '}.', function() {
+
+    _.forEach([{}, { foo: 'bar' }, { tasksRef: th.testRef }, { specsRef: th.testRef }], function(invalidRefConfigurationObject) {
+      it('should not create a Queue with a ref configuration object that contains keys: {' + _.keys(invalidRefConfigurationObject).join(', ') + '}', function() {
         expect(function() {
           new th.Queue(invalidRefConfigurationObject, _.noop);
         }).to.throw('When ref is an object it must contain both keys \'tasksRef\' and \'specsRef\'');
@@ -47,9 +47,9 @@ describe('Queue', function() {
     it('should create a default Queue with just a Firebase reference and a processing callback', function() {
       new th.Queue(th.testRef, _.noop);
     });
-    
+
     it('should create a default Queue with tasks and specs Firebase references and a processing callback', function() {
-      new th.Queue({tasksRef: th.testRef, specsRef: th.testRef}, _.noop);
+      new th.Queue({ tasksRef: th.testRef, specsRef: th.testRef }, _.noop);
     });
 
     _.forEach(['', 'foo', NaN, Infinity, true, false, 0, 1, ['foo', 'bar'], null, _.noop], function(nonPlainObject) {

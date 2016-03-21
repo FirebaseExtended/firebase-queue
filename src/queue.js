@@ -24,14 +24,14 @@ var DEFAULT_NUM_WORKERS = 1,
 
 /**
  * @constructor
- * @param {(Firebase | Object)} ref A Firebase reference to the queue
- *   or object containing both keys:
- *     - tasksRef: {Firebase} A Firebase reference to tasks.
- *     - specsRef: {Firebase} A Firebase reference to specs.
+ * @param {Firebase|Object} ref A Firebase reference to the queue or an object
+ *   containing both keys:
+ *     - tasksRef: {Firebase} A Firebase reference to the queue tasks location.
+ *     - specsRef: {Firebase} A Firebase reference to the queue specs location.
  * @param {Object} options (optional) Object containing possible keys:
- *   - specId: {String} the task specification ID for the workers.
- *   - numWorkers: {Number} The number of workers to create for this task.
- *   - sanitize: {Boolean} Whether to sanitize the 'data' passed to the
+ *     - specId: {String} the task specification ID for the workers.
+ *     - numWorkers: {Number} The number of workers to create for this task.
+ *     - sanitize: {Boolean} Whether to sanitize the 'data' passed to the
  *       processing function of internal queue keys.
  * @param {Function} processingFunction A function that is called each time to
  *   process a task. This function is passed four parameters:
@@ -123,13 +123,14 @@ function Queue() {
     logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   }
-  
-  if (_.has(constructorArguments[0], 'tasksRef') && _.has(constructorArguments[0], 'specsRef')) {
+
+  if (_.has(constructorArguments[0], 'tasksRef') &&
+      _.has(constructorArguments[0], 'specsRef')) {
     self.tasksRef = constructorArguments[0].tasksRef;
     self.specsRef = constructorArguments[0].specsRef;
   } else if (_.isPlainObject(constructorArguments[0])) {
-    error = 'When ref is an object it must contain both keys ' +
-      '\'tasksRef\' and \'specsRef\'';
+    error = 'When ref is an object it must contain both keys \'tasksRef\' ' +
+      'and \'specsRef\'';
     logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   } else {

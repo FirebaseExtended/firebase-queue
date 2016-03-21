@@ -26,12 +26,14 @@ Using Firebase Queue, you can create specs for each of these tasks, and then use
 ## The Queue in Your Firebase Database
 
 The queue relies on having a Firebase database reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
+
 ```
 queue
   - specs
   - tasks
 ```
 
+See [Custom references to tasks and specs](#custom-references-to-tasks-and-specs) for defining the locations of these other than the default.
 
 ## Queue Workers
 
@@ -488,7 +490,7 @@ While this example is a little contrived since you could perform the sanitizatio
 
 ## Custom references to tasks and specs
 
-In order to use custom paths to tasks and specs, specify them explicitly. Instead of a single reference to the queue, use an object containing the keys `tasksRef` and `specsRef`.
+It is possible to specify the locations the queue uses for tasks and the specs explicitly instead of using the defaults. To do this, simply pass an object to the Queue constructor in place of the Firebase reference; this object must contain the keys `tasksRef` and `specsRef`, and each value must be a Firebase reference.
 
 ```js
 var Queue = require('firebase-queue'),
