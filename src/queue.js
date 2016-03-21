@@ -24,7 +24,10 @@ var DEFAULT_NUM_WORKERS = 1,
 
 /**
  * @constructor
- * @param {Firebase} ref A Firebase reference to the queue.
+ * @param {(Firebase | Object)} ref A Firebase reference to the queue
+ *   or object containing both keys:
+ *     - tasksRef: {Firebase} A Firebase reference to tasks.
+ *     - specsRef: {Firebase} A Firebase reference to specs.
  * @param {Object} options (optional) Object containing possible keys:
  *   - specId: {String} the task specification ID for the workers.
  *   - numWorkers: {Number} The number of workers to create for this task.
@@ -67,10 +70,8 @@ function Queue() {
     logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   } else if (constructorArguments.length === 2) {
-    self.ref = constructorArguments[0];
     self.processingFunction = constructorArguments[1];
   } else if (constructorArguments.length === 3) {
-    self.ref = constructorArguments[0];
     var options = constructorArguments[1];
     if (!_.isPlainObject(options)) {
       error = 'Options parameter must be a plain object.';
@@ -122,12 +123,25 @@ function Queue() {
     logger.debug('Queue(): Error during initialization', error);
     throw new Error(error);
   }
+  
+  if (_.has(constructorArguments[0], 'tasksRef') && _.has(constructorArguments[0], 'specsRef')) {
+    self.tasksRef = constructorArguments[0].tasksRef;
+    self.specsRef = constructorArguments[0].specsRef;
+  } else if (_.isPlainObject(constructorArguments[0])) {
+    error = 'When ref is an object it must contain both keys ' +
+      '\'tasksRef\' and \'specsRef\'';
+    logger.debug('Queue(): Error during initialization', error);
+    throw new Error(error);
+  } else {
+    self.tasksRef = constructorArguments[0].child('tasks');
+    self.specsRef = constructorArguments[0].child('specs');
+  }
 
   self.workers = [];
   for (var i = 0; i < self.numWorkers; i++) {
     var processId = (self.specId ? self.specId + ':' : '') + i;
     self.workers.push(new QueueWorker(
-      self.ref.child('tasks'),
+      self.tasksRef,
       processId,
       self.sanitize,
       self.suppressStack,
@@ -141,7 +155,7 @@ function Queue() {
     }
     self.initialized = true;
   } else {
-    self.specChangeListener = self.ref.child('specs').child(self.specId).on(
+    self.specChangeListener = self.specsRef.child(self.specId).on(
       'value',
       function(taskSpecSnap) {
         var taskSpec = {
@@ -177,7 +191,7 @@ Queue.prototype.shutdown = function() {
 
   logger.debug('Queue: Shutting down');
   if (!_.isNull(self.specChangeListener)) {
-    self.ref.child('specs').child(self.specId).off('value',
+    self.specsRef.child(self.specId).off('value',
       self.specChangeListener);
     self.specChangeListener = null;
   }
