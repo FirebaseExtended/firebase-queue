@@ -174,15 +174,25 @@ QueueWorker.prototype._resolve = function(taskNumber) {
           if (_.isNull(self.finishedState)) {
             return null;
           }
-          if (!_.isPlainObject(newTask)) {
-            newTask = {};
+          var outputTask = _.clone(newTask);
+          if (!_.isPlainObject(outputTask)) {
+            outputTask = {};
           }
-          newTask._state = self.finishedState;
-          newTask._state_changed = Firebase.ServerValue.TIMESTAMP;
-          newTask._owner = null;
-          newTask._progress = 100;
-          newTask._error_details = null;
-          return newTask;
+          if (outputTask._new_state === false) {
+            return null;
+          }
+          if (_.isNull(outputTask._new_state) ||
+              _.isString(outputTask._new_state)) {
+            outputTask._state = outputTask._new_state;
+          } else {
+            outputTask._state = self.finishedState;
+          }
+          delete outputTask._new_state;
+          outputTask._state_changed = Firebase.ServerValue.TIMESTAMP;
+          outputTask._owner = null;
+          outputTask._progress = 100;
+          outputTask._error_details = null;
+          return outputTask;
         } else {
           return;
         }
@@ -744,4 +754,3 @@ QueueWorker.prototype.shutdown = function() {
 };
 
 module.exports = QueueWorker;
-

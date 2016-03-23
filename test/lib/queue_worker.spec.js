@@ -346,6 +346,155 @@ describe('QueueWorker', function() {
       });
     });
 
+    it('should resolve a task owned by the current worker and change the state to a provided valid string _new_state', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validTaskSpecWithFinishedState);
+      testRef = tasksRef.push({
+        '_state': th.validTaskSpecWithFinishedState.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._resolve(qw.taskNumber)({
+              foo: 'bar',
+              _new_state: 'valid_new_state'
+            });
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_state_changed', '_progress', 'foo']);
+              expect(task['_progress']).to.equal(100);
+              expect(task['_state']).to.equal('valid_new_state');
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task.foo).to.equal('bar');
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
+    it('should resolve a task owned by the current worker and change the state to a provided valid null _new_state', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validTaskSpecWithFinishedState);
+      testRef = tasksRef.push({
+        '_state': th.validTaskSpecWithFinishedState.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._resolve(qw.taskNumber)({
+              foo: 'bar',
+              _new_state: null
+            });
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state_changed', '_progress', 'foo']);
+              expect(task['_progress']).to.equal(100);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task.foo).to.equal('bar');
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
+    it('should resolve a task owned by the current worker and remove the task when provided _new_state = false', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validTaskSpecWithFinishedState);
+      testRef = tasksRef.push({
+        '_state': th.validTaskSpecWithFinishedState.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._resolve(qw.taskNumber)({
+              foo: 'bar',
+              _new_state: false
+            });
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(snapshot.val()).to.be.null;
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
+    it('should resolve a task owned by the current worker and change the state to finishedState when provided an invalid _new_state', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validTaskSpecWithFinishedState);
+      testRef = tasksRef.push({
+        '_state': th.validTaskSpecWithFinishedState.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 0
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._resolve(qw.taskNumber)({
+              foo: 'bar',
+              _new_state: {
+                state: 'object_is_an_invalid_new_state'
+              }
+            });
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state', '_state_changed', '_progress', 'foo']);
+              expect(task['_progress']).to.equal(100);
+              expect(task['_state']).to.equal(th.validTaskSpecWithFinishedState.finishedState);
+              expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              expect(task.foo).to.equal('bar');
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
     it('should not resolve a task that no longer exists', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
       qw.setTaskSpec(th.validTaskSpecWithFinishedState);
