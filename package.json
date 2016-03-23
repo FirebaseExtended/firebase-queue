@@ -41,24 +41,24 @@
     "firebase": "2.x"
   },
   "dependencies": {
-    "firebase": "2.x",
-    "lodash": "~3.7.0",
-    "rsvp": "3.x",
-    "node-uuid": "1.4.x",
-    "winston": "1.x"
+    "firebase": "^2.4.1",
+    "lodash": "^4.6.1",
+    "rsvp": "^3.2.1",
+    "node-uuid": "^1.4.7",
+    "winston": "^2.2.0"
   },
   "devDependencies": {
-    "chai": "2.2.0",
-    "chai-as-promised": "5.0.0",
-    "coveralls": "^2.11.2",
-    "gulp": "3.8.11",
-    "gulp-exit": "0.0.2",
-    "gulp-istanbul": "0.8.1",
-    "gulp-jshint": "1.10.0",
-    "gulp-mocha": "2.0.1",
-    "jshint-stylish": "1.0.1",
-    "sinon": "1.14.1",
-    "sinon-chai": "2.7.0"
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.3.0",
+    "coveralls": "^2.11.8",
+    "gulp": "^3.9.1",
+    "gulp-exit": "^0.0.2",
+    "gulp-istanbul": "^0.10.3",
+    "gulp-jshint": "^1.10.0",
+    "gulp-mocha": "^2.2.0",
+    "jshint-stylish": "^1.0.1",
+    "sinon": "^1.17.3",
+    "sinon-chai": "^2.8.0"
   },
   "scripts": {
     "test": "gulp test",
