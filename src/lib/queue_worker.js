@@ -171,18 +171,26 @@ QueueWorker.prototype._resolve = function(taskNumber) {
         var id = self.processId + ':' + self.taskNumber;
         if (task._state === self.inProgressState &&
             task._owner === id) {
-          if (_.isNull(self.finishedState)) {
-            return null;
+          var outputTask = _.clone(newTask);
+          if (!_.isPlainObject(outputTask)) {
+            outputTask = {};
           }
-          if (!_.isPlainObject(newTask)) {
-            newTask = {};
+          outputTask._state = _.get(outputTask, '_new_state');
+          delete outputTask._new_state;
+          if (!_.isNull(outputTask._state) && !_.isString(outputTask._state)) {
+            if (_.isNull(self.finishedState) || outputTask._state === false) {
+              // Remove the item if no `finished_state` set in the spec or
+              // _new_state is explicitly set to `false`.
+              return null;
+            } else {
+              outputTask._state = self.finishedState;
+            }
           }
-          newTask._state = self.finishedState;
-          newTask._state_changed = Firebase.ServerValue.TIMESTAMP;
-          newTask._owner = null;
-          newTask._progress = 100;
-          newTask._error_details = null;
-          return newTask;
+          outputTask._state_changed = Firebase.ServerValue.TIMESTAMP;
+          outputTask._owner = null;
+          outputTask._progress = 100;
+          outputTask._error_details = null;
+          return outputTask;
         } else {
           return;
         }
