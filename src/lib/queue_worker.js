@@ -179,6 +179,8 @@ QueueWorker.prototype._resolve = function(taskNumber) {
           delete outputTask._new_state;
           if (!_.isNull(outputTask._state) && !_.isString(outputTask._state)) {
             if (_.isNull(self.finishedState) || outputTask._state === false) {
+              // Remove the item if no `finished_state` set in the spec or
+              // _new_state is explicitly set to `false`.
               return null;
             } else {
               outputTask._state = self.finishedState;
