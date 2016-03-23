@@ -449,6 +449,7 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
               task._state = null;
             }
             if (task._state === self.startState) {
+              task._id = nextTaskRef.key();
               task._state = self.inProgressState;
               task._state_changed = Firebase.ServerValue.TIMESTAMP;
               task._owner = self.processId + ':' + (self.taskNumber + 1);
@@ -507,7 +508,8 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
                       '_state_changed',
                       '_owner',
                       '_progress',
-                      '_error_details'
+                      '_error_details',
+                      '_id'
                     ].forEach(function(reserved) {
                       if (snapshot.hasChild(reserved)) {
                         delete data[reserved];

@@ -1141,7 +1141,7 @@ describe('QueueWorker', function() {
                 try {
                   testRef.off();
                   var task = snapshot.val();
-                  expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
+                  expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details', '_id']);
                   expect(task['_state']).to.equal('error');
                   expect(task['_state_changed']).to.be.closeTo(new Date().getTime() + th.offset, 250);
                   expect(task['_progress']).to.equal(0);
@@ -1150,6 +1150,7 @@ describe('QueueWorker', function() {
                   expect(task['_error_details'].attempts).to.equal(1);
                   expect(task['_error_details'].error).to.equal('Error thrown in processingFunction');
                   expect(task['_error_details'].error_stack).to.be.a.string;
+                  expect(task['_id']).to.equal(snapshot.key());
                   done();
                 } catch (errorC) {
                   done(errorC);
@@ -1336,7 +1337,7 @@ describe('QueueWorker', function() {
     it('should not sanitize data passed to the processing function when specified', function(done) {
       qw = new th.QueueWorker(tasksRef, '0', false, false, function(data, progress, resolve, reject) {
         try {
-          expect(data).to.have.all.keys(['foo', '_owner', '_progress', '_state', '_state_changed']);
+          expect(data).to.have.all.keys(['foo', '_owner', '_progress', '_state', '_state_changed', '_id']);
           done();
         } catch (error) {
           done(error);
