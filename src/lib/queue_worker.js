@@ -171,15 +171,15 @@ QueueWorker.prototype._resolve = function(taskNumber) {
         var id = self.processId + ':' + self.taskNumber;
         if (task._state === self.inProgressState &&
             task._owner === id) {
-          if (_.isNull(self.finishedState)) {
+          if (_.isNull(self.finishedState) ||
+              _.get(newTask, '_new_state') === false) {
+            // Remove the task if the task's finished_state is `null` or the
+            // provided _new_state is `false`.
             return null;
           }
           var outputTask = _.clone(newTask);
           if (!_.isPlainObject(outputTask)) {
             outputTask = {};
-          }
-          if (outputTask._new_state === false) {
-            return null;
           }
           if (_.isNull(outputTask._new_state) ||
               _.isString(outputTask._new_state)) {
