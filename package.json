@@ -38,10 +38,10 @@
     "package.json"
   ],
   "peerDependencies": {
-    "firebase": "2.x"
+    "firebase": "^2.4.2"
   },
   "dependencies": {
-    "firebase": "^2.4.1",
+    "firebase": "^2.4.2",
     "lodash": "^4.6.1",
     "rsvp": "^3.2.1",
     "node-uuid": "^1.4.7",
