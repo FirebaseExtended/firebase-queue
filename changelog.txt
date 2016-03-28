@@ -1,0 +1,3 @@
+feature - Added ability for a task to override its own `finished_state` by passing `data._new_state` into the `resolve()` function.
+feature - Added a task's ID to the `_id` internal key (credit: @pdesgarets).
+feature - Added ability to configure paths to `specs` and `tasks` locations (credit: @rafalsobota).
