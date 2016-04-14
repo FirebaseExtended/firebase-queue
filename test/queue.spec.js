@@ -1,13 +1,16 @@
-var _ = require('lodash'),
-    Helpers = require('./helpers.js'),
-    chai = require('chai'),
-    should = chai.should(),
-    expect = chai.expect,
-    winston = require('winston'),
-    chaiAsPromised = require('chai-as-promised');
+/* eslint no-new: 0 */
+'use strict';
+
+var _ = require('lodash');
+var Helpers = require('./helpers.js');
+var chai = require('chai');
+var expect = chai.expect;
+var winston = require('winston');
+var chaiAsPromised = require('chai-as-promised');
 
 winston.level = 'none';
 
+chai.should();
 chai.use(chaiAsPromised);
 
 var th = new Helpers();
@@ -114,7 +117,7 @@ describe('Queue', function() {
             var specRegex = new RegExp('^' + specId + ':0:[a-f0-9\\-]{36}$');
             expect(q.workers[0].processId).to.match(specRegex);
             done();
-          } catch(error) {
+          } catch (error) {
             done(error);
           }
         }
@@ -123,14 +126,14 @@ describe('Queue', function() {
 
     [true, false].forEach(function(bool) {
       it('should create a Queue with a ' + bool + ' sanitize option when specified', function() {
-        var q = new th.Queue(th.testRef, { sanitize: bool }, _.noop)
+        var q = new th.Queue(th.testRef, { sanitize: bool }, _.noop);
         expect(q.sanitize).to.equal(bool);
       });
     });
 
     [true, false].forEach(function(bool) {
       it('should create a Queue with a ' + bool + ' suppressStack option when specified', function() {
-        var q = new th.Queue(th.testRef, { suppressStack: bool }, _.noop)
+        var q = new th.Queue(th.testRef, { suppressStack: bool }, _.noop);
         expect(q.suppressStack).to.equal(bool);
       });
     });

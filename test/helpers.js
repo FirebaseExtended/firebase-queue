@@ -1,6 +1,8 @@
-var _ = require('lodash'),
-    util = require('util'),
-    Firebase = require('firebase');
+'use strict';
+
+var _ = require('lodash');
+var util = require('util');
+var Firebase = require('firebase');
 
 module.exports = function() {
   var self = this;
@@ -59,4 +61,4 @@ module.exports = function() {
   };
 
   return this;
-}
+};
