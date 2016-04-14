@@ -1,4 +1,3 @@
-/* eslint no-new: 0 */
 'use strict';
 
 var _ = require('lodash');
