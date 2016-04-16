@@ -1,14 +1,14 @@
 'use strict';
 
-var Firebase = require('firebase'),
-    logger = require('winston'),
-    uuid = require('node-uuid'),
-    RSVP = require('rsvp'),
-    _ = require('lodash');
+var Firebase = require('firebase');
+var logger = require('winston');
+var uuid = require('node-uuid');
+var RSVP = require('rsvp');
+var _ = require('lodash');
 
-var MAX_TRANSACTION_ATTEMPTS = 10,
-    DEFAULT_ERROR_STATE = 'error',
-    DEFAULT_RETRIES = 0;
+var MAX_TRANSACTION_ATTEMPTS = 10;
+var DEFAULT_ERROR_STATE = 'error';
+var DEFAULT_RETRIES = 0;
 
 /**
  * @param {Firebase} tasksRef the Firebase reference for queue tasks.
@@ -18,8 +18,8 @@ var MAX_TRANSACTION_ATTEMPTS = 10,
  * @return {Object}
  */
 function QueueWorker(tasksRef, processId, sanitize, suppressStack, processingFunction) {
-  var self = this,
-      error;
+  var self = this;
+  var error;
   if (_.isUndefined(tasksRef)) {
     error = 'No tasks reference provided.';
     logger.debug('QueueWorker(): ' + error);
@@ -87,8 +87,8 @@ QueueWorker.prototype._getLogEntry = function(message) {
  * @returns {RSVP.Promise} Whether the task was able to be reset.
  */
 QueueWorker.prototype._resetTask = function(taskRef, deferred) {
-  var self = this,
-      retries = 0;
+  var self = this;
+  var retries = 0;
 
   /* istanbul ignore else */
   if (_.isUndefined(deferred)) {
@@ -107,9 +107,8 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
       task._progress = null;
       task._error_details = null;
       return task;
-    } else {
-      return;
     }
+    return undefined;
   }, function(error, committed, snapshot) {
     /* istanbul ignore if */
     if (error) {
@@ -138,9 +137,9 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
  * @returns {Function} the resolve callback function.
  */
 QueueWorker.prototype._resolve = function(taskNumber) {
-  var self = this,
-      retries = 0,
-      deferred = RSVP.defer();
+  var self = this;
+  var retries = 0;
+  var deferred = RSVP.defer();
 
   /*
    * Resolves the current task and changes the state to the finished state.
@@ -148,7 +147,6 @@ QueueWorker.prototype._resolve = function(taskNumber) {
    * @returns {RSVP.Promise} Whether the task was able to be resolved.
    */
   var resolve = function(newTask) {
-
     if ((taskNumber !== self.taskNumber) || _.isNull(self.currentTaskRef)) {
       if (_.isNull(self.currentTaskRef)) {
         logger.debug(self._getLogEntry('Can\'t resolve task - no task ' +
@@ -182,18 +180,16 @@ QueueWorker.prototype._resolve = function(taskNumber) {
               // Remove the item if no `finished_state` set in the spec or
               // _new_state is explicitly set to `false`.
               return null;
-            } else {
-              outputTask._state = self.finishedState;
             }
+            outputTask._state = self.finishedState;
           }
           outputTask._state_changed = Firebase.ServerValue.TIMESTAMP;
           outputTask._owner = null;
           outputTask._progress = 100;
           outputTask._error_details = null;
           return outputTask;
-        } else {
-          return;
         }
+        return undefined;
       }, function(error, committed, snapshot) {
         /* istanbul ignore if */
         if (error) {
@@ -233,11 +229,11 @@ QueueWorker.prototype._resolve = function(taskNumber) {
  * @returns {Function} the reject callback function.
  */
 QueueWorker.prototype._reject = function(taskNumber) {
-  var self = this,
-      retries = 0,
-      errorString = null,
-      errorStack = null,
-      deferred = RSVP.defer();
+  var self = this;
+  var retries = 0;
+  var errorString = null;
+  var errorStack = null;
+  var deferred = RSVP.defer();
 
   /**
    * Rejects the current task and changes the state to self.errorState,
@@ -246,7 +242,6 @@ QueueWorker.prototype._reject = function(taskNumber) {
    * @returns {RSVP.Promise} Whether the task was able to be rejected.
    */
   var reject = function(error) {
-
     if ((taskNumber !== self.taskNumber) || _.isNull(self.currentTaskRef)) {
       if (_.isNull(self.currentTaskRef)) {
         logger.debug(self._getLogEntry('Can\'t reject task - no task ' +
@@ -302,20 +297,19 @@ QueueWorker.prototype._reject = function(taskNumber) {
             attempts: attempts + 1
           };
           return task;
-        } else {
-          return;
         }
-      }, function(error, committed, snapshot) {
+        return undefined;
+      }, function(transactionError, committed, snapshot) {
         /* istanbul ignore if */
-        if (error) {
+        if (transactionError) {
           if (++retries < MAX_TRANSACTION_ATTEMPTS) {
             logger.debug(self._getLogEntry('reject task errored, retrying'),
-              error);
+              transactionError);
             setImmediate(reject, error);
           } else {
             var errorMsg = 'reject task errored too many times, no longer ' +
               'retrying';
-            logger.debug(self._getLogEntry(errorMsg), error);
+            logger.debug(self._getLogEntry(errorMsg), transactionError);
             deferred.reject(new Error(errorMsg));
           }
         } else {
@@ -344,8 +338,8 @@ QueueWorker.prototype._reject = function(taskNumber) {
  * @returns {Function} the update callback function.
  */
 QueueWorker.prototype._updateProgress = function(taskNumber) {
-  var self = this,
-      errorMsg;
+  var self = this;
+  var errorMsg;
 
   /**
    * Updates the progress state of the task.
@@ -375,24 +369,22 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
             task._owner === id) {
           task._progress = progress;
           return task;
-        } else {
-          return;
         }
-      }, function(error, committed, snapshot) {
+        return undefined;
+      }, function(transactionError, committed, snapshot) {
         /* istanbul ignore if */
-        if (error) {
+        if (transactionError) {
           errorMsg = 'errored while attempting to update progress';
-          logger.debug(self._getLogEntry(errorMsg), error);
+          logger.debug(self._getLogEntry(errorMsg), transactionError);
           return reject(new Error(errorMsg));
         }
         if (committed && snapshot.exists()) {
-          resolve();
-        } else {
-          errorMsg = 'Can\'t update progress - current task no longer owned ' +
-            'by this process';
-          logger.debug(self._getLogEntry(errorMsg));
-          return reject(new Error(errorMsg));
+          return resolve();
         }
+        errorMsg = 'Can\'t update progress - current task no longer owned ' +
+          'by this process';
+        logger.debug(self._getLogEntry(errorMsg));
+        return reject(new Error(errorMsg));
       }, false);
     });
   };
@@ -404,9 +396,9 @@ QueueWorker.prototype._updateProgress = function(taskNumber) {
  * Attempts to claim the next task in the queue.
  */
 QueueWorker.prototype._tryToProcess = function(deferred) {
-  var self = this,
-      retries = 0,
-      malformed = false;
+  var self = this;
+  var retries = 0;
+  var malformed = false;
 
   /* istanbul ignore else */
   if (_.isUndefined(deferred)) {
@@ -423,15 +415,15 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
       if (!self.newTaskRef) {
         deferred.resolve();
       } else {
-        self.newTaskRef.once('value', function(snapshot) {
-          if (!snapshot.exists()) {
+        self.newTaskRef.once('value', function(taskSnap) {
+          if (!taskSnap.exists()) {
             return deferred.resolve();
           }
           var nextTaskRef;
-          snapshot.forEach(function(childSnap) {
+          taskSnap.forEach(function(childSnap) {
             nextTaskRef = childSnap.ref();
           });
-          nextTaskRef.transaction(function(task) {
+          return nextTaskRef.transaction(function(task) {
             /* istanbul ignore if */
             if (_.isNull(task)) {
               return task;
@@ -463,10 +455,9 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
               task._owner = self.processId + ':' + (self.taskNumber + 1);
               task._progress = 0;
               return task;
-            } else {
-              logger.debug(self._getLogEntry('task no longer in correct state: expected ' + self.startState + ', got ' + task._state));
-              return;
             }
+            logger.debug(self._getLogEntry('task no longer in correct state: expected ' + self.startState + ', got ' + task._state));
+            return undefined;
           }, function(error, committed, snapshot) {
             /* istanbul ignore if */
             if (error) {
@@ -474,12 +465,11 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
                 logger.debug(self._getLogEntry('errored while attempting to claim' +
                   ' a new task, retrying'), error);
                 return setImmediate(self._tryToProcess.bind(self), deferred);
-              } else {
-                var errorMsg = 'errored while attempting to claim a new task too ' +
-                  'many times, no longer retrying';
-                logger.debug(self._getLogEntry(errorMsg), error);
-                return deferred.reject(new Error(errorMsg));
               }
+              var errorMsg = 'errored while attempting to claim a new task too ' +
+                'many times, no longer retrying';
+              logger.debug(self._getLogEntry(errorMsg), error);
+              return deferred.reject(new Error(errorMsg));
             } else if (committed && snapshot.exists()) {
               if (malformed) {
                 logger.debug(self._getLogEntry('found malformed entry ' +
@@ -497,18 +487,18 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
                   self.currentTaskRef = snapshot.ref();
                   self.currentTaskListener = self.currentTaskRef
                       .child('_owner').on('value', function(ownerSnapshot) {
-                    var id = self.processId + ':' + self.taskNumber;
-                    /* istanbul ignore else */
-                    if (ownerSnapshot.val() !== id &&
-                        !_.isNull(self.currentTaskRef) &&
-                        !_.isNull(self.currentTaskListener)) {
-                      self.currentTaskRef.child('_owner').off(
-                        'value',
-                        self.currentTaskListener);
-                      self.currentTaskRef = null;
-                      self.currentTaskListener = null;
-                    }
-                  });
+                        var id = self.processId + ':' + self.taskNumber;
+                        /* istanbul ignore else */
+                        if (ownerSnapshot.val() !== id &&
+                            !_.isNull(self.currentTaskRef) &&
+                            !_.isNull(self.currentTaskListener)) {
+                          self.currentTaskRef.child('_owner').off(
+                            'value',
+                            self.currentTaskListener);
+                          self.currentTaskRef = null;
+                          self.currentTaskListener = null;
+                        }
+                      });
                   var data = snapshot.val();
                   if (self.sanitize) {
                     [
@@ -531,14 +521,14 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
                     try {
                       self.processingFunction.call(null, data, progress, resolve,
                         reject);
-                    } catch (error) {
-                      reject(error);
+                    } catch (err) {
+                      reject(err);
                     }
                   });
                 }
               }
             }
-            deferred.resolve();
+            return deferred.resolve();
           }, false);
         });
       }

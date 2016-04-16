@@ -1,4 +1,4 @@
-/*!
+/*
  * Firebase Queue is a fault-tolerant, multi-worker, multi-stage job pipeline
  * built on Firebase.
  *
@@ -8,18 +8,18 @@
  */
 'use strict';
 
-var _ = require('lodash'),
-    RSVP = require('rsvp'),
-    logger = require('winston'),
-    QueueWorker = require('./lib/queue_worker.js');
+var _ = require('lodash');
+var RSVP = require('rsvp');
+var logger = require('winston');
+var QueueWorker = require('./lib/queue_worker.js');
 
-var DEFAULT_NUM_WORKERS = 1,
-    DEFAULT_SANITIZE = true,
-    DEFAULT_SUPPRESS_STACK = false,
-    DEFAULT_TASK_SPEC = {
-      inProgressState: 'in_progress',
-      timeout: 300000 // 5 minutes
-    };
+var DEFAULT_NUM_WORKERS = 1;
+var DEFAULT_SANITIZE = true;
+var DEFAULT_SUPPRESS_STACK = false;
+var DEFAULT_TASK_SPEC = {
+  inProgressState: 'in_progress',
+  timeout: 300000 // 5 minutes
+};
 
 
 /**
@@ -160,21 +160,21 @@ function Queue() {
       'value',
       function(taskSpecSnap) {
         var taskSpec = {
-              startState: taskSpecSnap.child('start_state').val(),
-              inProgressState: taskSpecSnap.child('in_progress_state').val(),
-              finishedState: taskSpecSnap.child('finished_state').val(),
-              errorState: taskSpecSnap.child('error_state').val(),
-              timeout: taskSpecSnap.child('timeout').val(),
-              retries: taskSpecSnap.child('retries').val()
-            };
+          startState: taskSpecSnap.child('start_state').val(),
+          inProgressState: taskSpecSnap.child('in_progress_state').val(),
+          finishedState: taskSpecSnap.child('finished_state').val(),
+          errorState: taskSpecSnap.child('error_state').val(),
+          timeout: taskSpecSnap.child('timeout').val(),
+          retries: taskSpecSnap.child('retries').val()
+        };
 
-        for (var i = 0; i < self.numWorkers; i++) {
-          self.workers[i].setTaskSpec(taskSpec);
+        for (var k = 0; k < self.numWorkers; k++) {
+          self.workers[k].setTaskSpec(taskSpec);
         }
         self.initialized = true;
-      }, /* istanbul ignore next */ function(error) {
+      }, /* istanbul ignore next */ function(err) {
         logger.debug('Queue(): Error connecting to Firebase reference',
-          error.message);
+          err.message);
       });
   }
 
