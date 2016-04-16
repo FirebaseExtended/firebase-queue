@@ -18,7 +18,7 @@ var DEFAULT_SANITIZE = true;
 var DEFAULT_SUPPRESS_STACK = false;
 var DEFAULT_TASK_SPEC = {
   inProgressState: 'in_progress',
-  timeout: 300000 // 5 minute;
+  timeout: 300000 // 5 minutes
 };
 
 
