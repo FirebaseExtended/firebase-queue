@@ -1,6 +1,6 @@
 {
   "name": "firebase-queue",
-  "version": "1.3.1",
+  "version": "0.0.0",
   "description": "A fault-tolerant, multi-worker, multi-stage job pipeline built on Firebase",
   "keywords": [
     "job",
