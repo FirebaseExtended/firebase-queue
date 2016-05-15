@@ -520,4 +520,19 @@ var queue = new Queue({ tasksRef: jobsRef, specsRef: specsRef }, function(data, 
 
 ## Wrap Up
 
-As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase data, from sanitization to data fanout and more. We'd love to hear about how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), or [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [support@firebase.com](mailto:support@firebase.com).
+As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase data, from sanitization to data fanout and more. We'd love to hear about how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), or [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [firebase-support@google.com](mailto:firebase-support@google.com).
+
+## Running the Tests
+
+To run the tests you first need to create a Firebase Realtime Database to test against in the [Firebase console](https://console.firebase.google.com), and create a [service account](https://console.firebase.google.com/iam-admin/serviceaccounts/project) for that project. The service account should have Editor permission on the project, and you'll need to furnish the account with JSON credentials. See [the documentation]() for detailed instructions on creating service accounts.
+
+Once you have created and downloaded the service account credentials, place them in a `key.json` file at the root of this repository (you should **never** check this file in, it should be ignored by a rule in the `.gitignore` file).
+
+Then, to run the tests, simply run these commands:
+
+```sh
+export FB_QUEUE_TEST_DB_URL=https://databaseName.firebaseio.com
+npm test
+```
+
+Where `databaseName` is the name of the Firebase Realtime Database you created for testing.
