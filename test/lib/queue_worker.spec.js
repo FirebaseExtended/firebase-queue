@@ -1292,7 +1292,7 @@ describe('QueueWorker', function() {
                 try {
                   testRef.off();
                   var task = snapshot.val();
-                  expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details', '_id']);
+                  expect(task).to.have.all.keys(['_state', '_progress', '_state_changed', '_error_details']);
                   expect(task._state).to.equal('error');
                   expect(task._state_changed).to.be.closeTo(new Date().getTime() + th.offset, 250);
                   expect(task._progress).to.equal(0);
@@ -1301,7 +1301,6 @@ describe('QueueWorker', function() {
                   expect(task._error_details.attempts).to.equal(1);
                   expect(task._error_details.error).to.equal('Error thrown in processingFunction');
                   expect(task._error_details.error_stack).to.be.a.string;
-                  expect(task._id).to.equal(snapshot.key());
                   done();
                 } catch (errorC) {
                   done(errorC);
@@ -1594,7 +1593,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         try {
-          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
           expect(setTimeout.getCall(0).args[1]).to.equal(th.validTaskSpecWithTimeout.timeout - 5);
           spy.restore();
           done();
@@ -1617,7 +1616,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         try {
-          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
           var spy = sinon.spy(global, 'setTimeout');
           testRef.update({
             '_owner': qw.processId + ':1',
@@ -1627,7 +1626,7 @@ describe('QueueWorker', function() {
               return done(errorB);
             }
             try {
-              expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+              expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
               expect(setTimeout.getCall(setTimeout.callCount - 1).args[1]).to.equal(th.validTaskSpecWithTimeout.timeout - 5);
               spy.restore();
               done();
@@ -1657,7 +1656,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         try {
-          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
           testRef.update({
             '_progress': 1
           }, function(errorB) {
@@ -1665,7 +1664,7 @@ describe('QueueWorker', function() {
               return done(errorB);
             }
             try {
-              expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+              expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
               expect(setTimeout.getCall(0).args[1]).to.equal(th.validTaskSpecWithTimeout.timeout - 5);
               spy.restore();
               done();
@@ -1692,7 +1691,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         try {
-          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
           expect(setTimeout.getCall(0).args[1]).to.equal(th.validTaskSpecWithTimeout.timeout);
           spy.restore();
           done();
@@ -1714,7 +1713,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         try {
-          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
           qw.setTaskSpec();
           expect(qw.expiryTimeouts).to.deep.equal({});
           done();
@@ -1739,7 +1738,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         try {
-          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key()]);
+          expect(qw.expiryTimeouts).to.have.all.keys([testRef.key]);
           testRef.update({
             '_state': taskSpec.finishedState
           }, function(errorB) {

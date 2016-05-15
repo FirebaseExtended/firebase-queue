@@ -24,15 +24,17 @@ var DEFAULT_TASK_SPEC = {
 
 /**
  * @constructor
- * @param {Firebase|Object} ref A Firebase reference to the queue or an object
- *   containing both keys:
- *     - tasksRef: {Firebase} A Firebase reference to the queue tasks location.
- *     - specsRef: {Firebase} A Firebase reference to the queue specs location.
+ * @param {firebase.database.Reference|Object} ref A Firebase Realtime Database
+ *  reference to the queue or an object containing both keys:
+ *     - tasksRef: {firebase.database.Reference} A Firebase Realtime Database
+ *         reference to the queue tasks location.
+ *     - specsRef: {firebase.database.Reference} A Firebase Realtime Database
+ *         reference to the queue specs location.
  * @param {Object} options (optional) Object containing possible keys:
  *     - specId: {String} the task specification ID for the workers.
  *     - numWorkers: {Number} The number of workers to create for this task.
  *     - sanitize: {Boolean} Whether to sanitize the 'data' passed to the
- *       processing function of internal queue keys.
+ *         processing function of internal queue keys.
  * @param {Function} processingFunction A function that is called each time to
  *   process a task. This function is passed four parameters:
  *     - data {Object} The current data at the location.

@@ -2,14 +2,19 @@
 
 var _ = require('lodash');
 var util = require('util');
-var Firebase = require('firebase');
+var firebase = require('firebase');
+
+firebase.initializeApp({
+  serviceAccount: 'key.json',
+  databaseURL: process.env.FB_QUEUE_TEST_DB_URL || 'https://fir-queue-test.firebaseio.com'
+});
 
 module.exports = function() {
   var self = this;
 
-  this.testRef = new Firebase('https://firebase-queue-test-' + _.random(1, 2 << 29) + '.firebaseio-demo.com');
+  this.testRef = firebase.database().ref(_.random(1, 2 << 29));
   this.offset = 0;
-  self.testRef.child('.info/serverTimeOffset').on('value', function(snapshot) {
+  self.testRef.root.child('.info/serverTimeOffset').on('value', function(snapshot) {
     self.offset = snapshot.val();
   });
   this.Queue = require('../src/queue.js');

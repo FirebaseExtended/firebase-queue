@@ -25,7 +25,7 @@ Using Firebase Queue, you can create specs for each of these tasks, and then use
 
 ## The Queue in Your Firebase Database
 
-The queue relies on having a Firebase database reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
+The queue relies on having a Firebase database reference to coordinate workers e.g. `https://databaseName.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
 
 ```
 queue
@@ -44,10 +44,15 @@ You can start a worker process by passing in a Firebase database  [`ref`](https:
 ```js
 // my_queue_worker.js
 
-var Queue = require('firebase-queue'),
-    Firebase = require('firebase');
+var Queue = require('firebase-queue');
+var firebase = require('firebase');
 
-var ref = new Firebase('https://<your-firebase>.firebaseio.com/queue');
+firebase.initializeApp({
+  serviceAccount: 'path/to/serviceAccountCredentials.json',
+  databaseURL: '<your-database-url>'
+});
+
+var ref = firebase.database().ref('queue');
 var queue = new Queue(ref, function(data, progress, resolve, reject) {
   // Read and process task data
   console.log(data);
@@ -98,14 +103,12 @@ Using any Firebase client or the REST API, push an object with some data to the 
 
 ```shell
 # Using curl in shell
-curl -X POST -d '{"foo": "bar"}' https://<your-firebase>.firebaseio.com/queue/tasks.json
+curl -X POST -d '{"foo": "bar"}' https://databaseName.firebaseio.com/queue/tasks.json
 ```
 or
 ```js
-// Firebase Javascript Client
-var Firebase = require('firebase');
-
-var ref = new Firebase('https://<your-firebase>.firebaseio.com/queue/tasks');
+// Using the web JavaScript client
+var ref = firebase.database().ref('queue/tasks');
 ref.push({'foo': 'bar'});
 ```
 
@@ -379,9 +382,8 @@ root
 Let's imagine that you have some front end that allows your users to write their name and a message, and send that to your queue as it's `data`. Let's assume your user writes something like the following:
 
 ```js
-// chat_client.js
-
-var tasksRef = new Firebase('https://<your-firebase>.firebaseio.com/queue/tasks');
+// Using the web JavaScript client
+var tasksRef = firebase.database().ref('queue/tasks');
 tasksRef.push({
   'message': 'Hello Firebase Queue Users!',
   'name': 'Chris'
@@ -406,12 +408,17 @@ When your users push `data` like the above into the `tasks` subtree, tasks will 
 ```js
 // chat_message_sanitization.js
 
-var Queue = require('firebase-queue'),
-    Firebase = require('firebase');
+var Queue = require('firebase-queue');
+var firebase = require('firebase');
 
-var ref = new Firebase('https://<your-firebase>.firebaseio.com');
-var queueRef = ref.child('queue');
-var messagesRef = ref.child('messages');
+firebase.initializeApp({
+  serviceAccount: 'path/to/serviceAccountCredentials.json',
+  databaseURL: '<your-database-url>'
+});
+
+var db = firebase.database();
+var queueRef = db.ref('queue');
+var messagesRef = db.ref('messages');
 
 var options = {
   'specId': 'sanitize_message'
@@ -493,11 +500,18 @@ While this example is a little contrived since you could perform the sanitizatio
 It is possible to specify the locations the queue uses for tasks and the specs explicitly instead of using the defaults. To do this, simply pass an object to the Queue constructor in place of the Firebase reference; this object must contain the keys `tasksRef` and `specsRef`, and each value must be a Firebase reference.
 
 ```js
-var Queue = require('firebase-queue'),
-    Firebase = require('firebase');
+var Queue = require('firebase-queue');
+var firebase = require('firebase');
 
-var jobsRef = new Firebase('https://<your-firebase>.firebaseio.com/jobs');
-var specsRef = new Firebase('https://<your-firebase>.firebaseio.com/specs');
+firebase.initializeApp({
+  serviceAccount: 'path/to/serviceAccountCredentials.json',
+  databaseURL: '<your-database-url>'
+});
+
+var db = firebase.database();
+
+var jobsRef = db.ref('jobs');
+var specsRef = db.ref('specs');
 
 var queue = new Queue({ tasksRef: jobsRef, specsRef: specsRef }, function(data, progress, resolve, reject) {
   // process task
