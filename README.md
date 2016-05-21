@@ -39,7 +39,7 @@ See [Custom references to tasks and specs](#custom-references-to-tasks-and-specs
 
 The basic unit of the queue is the queue worker: the process that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
 
-You can start a worker process by passing in a Firebase database  [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function ([described below](#the-processing-function)), as follows:
+You can start a worker process by passing in a Firebase database  [`ref`](https://firebase.google.com/docs/server/setup#initialize_the_sdk) along with a processing function ([described below](#the-processing-function)), as follows:
 
 ```js
 // my_queue_worker.js
@@ -181,7 +181,7 @@ A callback function for reporting that the current task failed and the worker is
 
 Securing your queue is an important step in securely processing events that come in. Below is a sample set of security rules that can be tailored to your particular use case.
 
-In this example, there are three categories of users, represented using fields of a [custom token](https://www.firebase.com/docs/rest/guide/user-auth.html):
+In this example, there are three categories of users, represented using fields of a [Database Auth Variable Override](https://firebase.google.com/docs/database/server/start#authenticate-with-limited-privileges):
 - `auth.canAddTasks`: Users who can add tasks to the queue (could be an authenticated client or a secure server)
 - `auth.canProcessTasks`: Users who can process tasks (usually on a secure server)
 - `auth.canAddSpecs`: Users who can create and view task specifications (usually on a secure server)
