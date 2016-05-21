@@ -524,7 +524,7 @@ As you can see, Firebase Queue is a powerful tool that allows you to securely an
 
 ## Running the Tests
 
-To run the tests you first need to create a Firebase Realtime Database to test against in the [Firebase console](https://console.firebase.google.com), and create a [service account](https://console.firebase.google.com/iam-admin/serviceaccounts/project) for that project. The service account should have Editor permission on the project, and you'll need to furnish the account with JSON credentials. See [the documentation]() for detailed instructions on creating service accounts.
+To run the tests you first need to create a Firebase Realtime Database to test against in the [Firebase console](https://console.firebase.google.com), and create a [service account](https://console.firebase.google.com/iam-admin/serviceaccounts/project) for that project. The service account should have Editor permission on the project, and you'll need to furnish the account with JSON credentials. See [the documentation](https://firebase.google.com/docs/server/setup#add_firebase_to_your_app) for detailed instructions on creating service accounts.
 
 Once you have created and downloaded the service account credentials, place them in a `key.json` file at the root of this repository (you should **never** check this file in, it should be ignored by a rule in the `.gitignore` file).
 
