@@ -1,6 +1,6 @@
 'use strict';
 
-var Firebase = require('firebase');
+var firebase = require('firebase');
 var logger = require('winston');
 var uuid = require('node-uuid');
 var RSVP = require('rsvp');
@@ -10,14 +10,26 @@ var MAX_TRANSACTION_ATTEMPTS = 10;
 var DEFAULT_ERROR_STATE = 'error';
 var DEFAULT_RETRIES = 0;
 
+var SERVER_TIMESTAMP = firebase.database.ServerValue.TIMESTAMP;
+
+function _getKey(snapshot) {
+  return _.isFunction(snapshot.key) ? snapshot.key() : snapshot.key;
+}
+
+function _getRef(snapshot) {
+  return _.isFunction(snapshot.ref) ? snapshot.ref() : snapshot.ref;
+}
+
 /**
- * @param {Firebase} tasksRef the Firebase reference for queue tasks.
+ * @param {firebase.database.Reference} tasksRef the Firebase Realtime Database
+ *   reference for queue tasks.
  * @param {String} processId the ID of the current worker process.
  * @param {Function} processingFunction the function to be called each time a
  *   task is claimed.
  * @return {Object}
  */
-function QueueWorker(tasksRef, processId, sanitize, suppressStack, processingFunction) {
+function QueueWorker(tasksRef, processId, sanitize, suppressStack,
+    processingFunction) {
   var self = this;
   var error;
   if (_.isUndefined(tasksRef)) {
@@ -82,8 +94,8 @@ QueueWorker.prototype._getLogEntry = function(message) {
 
 /**
  * Returns the state of a task to the start state.
- * @param {Firebase} taskRef Reference to the Firebase location of the task
- *   that's timed out.
+ * @param {firebase.database.Reference} taskRef Firebase Realtime Database
+ *   reference to the Firebase location of the task that's timed out.
  * @returns {RSVP.Promise} Whether the task was able to be reset.
  */
 QueueWorker.prototype._resetTask = function(taskRef, deferred) {
@@ -102,7 +114,7 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
     }
     if (task._state === self.inProgressState) {
       task._state = self.startState;
-      task._state_changed = Firebase.ServerValue.TIMESTAMP;
+      task._state_changed = SERVER_TIMESTAMP;
       task._owner = null;
       task._progress = null;
       task._error_details = null;
@@ -122,7 +134,7 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
       }
     } else {
       if (committed && snapshot.exists()) {
-        logger.debug(self._getLogEntry('reset ' + snapshot.key()));
+        logger.debug(self._getLogEntry('reset ' + _getKey(snapshot)));
       }
       deferred.resolve();
     }
@@ -183,7 +195,7 @@ QueueWorker.prototype._resolve = function(taskNumber) {
             }
             outputTask._state = self.finishedState;
           }
-          outputTask._state_changed = Firebase.ServerValue.TIMESTAMP;
+          outputTask._state_changed = SERVER_TIMESTAMP;
           outputTask._owner = null;
           outputTask._progress = 100;
           outputTask._error_details = null;
@@ -205,7 +217,7 @@ QueueWorker.prototype._resolve = function(taskNumber) {
           }
         } else {
           if (committed && existedBefore) {
-            logger.debug(self._getLogEntry('completed ' + snapshot.key()));
+            logger.debug(self._getLogEntry('completed ' + _getKey(snapshot)));
           } else {
             logger.debug(self._getLogEntry('Can\'t resolve task - current ' +
               'task no longer owned by this process'));
@@ -288,7 +300,7 @@ QueueWorker.prototype._reject = function(taskNumber) {
           } else {
             task._state = self.startState;
           }
-          task._state_changed = Firebase.ServerValue.TIMESTAMP;
+          task._state_changed = SERVER_TIMESTAMP;
           task._owner = null;
           task._error_details = {
             previous_state: self.inProgressState,
@@ -315,7 +327,7 @@ QueueWorker.prototype._reject = function(taskNumber) {
         } else {
           if (committed && existedBefore) {
             logger.debug(self._getLogEntry('errored while attempting to ' +
-              'complete ' + snapshot.key()));
+              'complete ' + _getKey(snapshot)));
           } else {
             logger.debug(self._getLogEntry('Can\'t reject task - current task' +
               ' no longer owned by this process'));
@@ -407,7 +419,8 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
 
   if (!self.busy) {
     if (!_.isNull(self.shutdownDeferred)) {
-      deferred.reject(new Error('Shutting down - can no longer process new tasks'));
+      deferred.reject(new Error('Shutting down - can no longer process new ' +
+        'tasks'));
       self.setTaskSpec(null);
       logger.debug(self._getLogEntry('finished shutdown'));
       self.shutdownDeferred.resolve();
@@ -421,7 +434,7 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
           }
           var nextTaskRef;
           taskSnap.forEach(function(childSnap) {
-            nextTaskRef = childSnap.ref();
+            nextTaskRef = _getRef(childSnap);
           });
           return nextTaskRef.transaction(function(task) {
             /* istanbul ignore if */
@@ -437,7 +450,7 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
               }
               return {
                 _state: self.errorState,
-                _state_changed: Firebase.ServerValue.TIMESTAMP,
+                _state_changed: SERVER_TIMESTAMP,
                 _error_details: {
                   error: error.message,
                   original_task: task,
@@ -449,42 +462,42 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
               task._state = null;
             }
             if (task._state === self.startState) {
-              task._id = nextTaskRef.key();
               task._state = self.inProgressState;
-              task._state_changed = Firebase.ServerValue.TIMESTAMP;
+              task._state_changed = SERVER_TIMESTAMP;
               task._owner = self.processId + ':' + (self.taskNumber + 1);
               task._progress = 0;
               return task;
             }
-            logger.debug(self._getLogEntry('task no longer in correct state: expected ' + self.startState + ', got ' + task._state));
+            logger.debug(self._getLogEntry('task no longer in correct state: ' +
+              'expected ' + self.startState + ', got ' + task._state));
             return undefined;
           }, function(error, committed, snapshot) {
             /* istanbul ignore if */
             if (error) {
               if (++retries < MAX_TRANSACTION_ATTEMPTS) {
-                logger.debug(self._getLogEntry('errored while attempting to claim' +
-                  ' a new task, retrying'), error);
+                logger.debug(self._getLogEntry('errored while attempting to ' +
+                  'claim a new task, retrying'), error);
                 return setImmediate(self._tryToProcess.bind(self), deferred);
               }
-              var errorMsg = 'errored while attempting to claim a new task too ' +
-                'many times, no longer retrying';
+              var errorMsg = 'errored while attempting to claim a new task ' +
+                'too many times, no longer retrying';
               logger.debug(self._getLogEntry(errorMsg), error);
               return deferred.reject(new Error(errorMsg));
             } else if (committed && snapshot.exists()) {
               if (malformed) {
                 logger.debug(self._getLogEntry('found malformed entry ' +
-                  snapshot.key()));
+                  _getKey(snapshot)));
               } else {
                 /* istanbul ignore if */
                 if (self.busy) {
-                  // Worker has become busy while the transaction was processing -
+                  // Worker has become busy while the transaction was processing
                   // so give up the task for now so another worker can claim it
                   self._resetTask(nextTaskRef);
                 } else {
                   self.busy = true;
                   self.taskNumber += 1;
-                  logger.debug(self._getLogEntry('claimed ' + snapshot.key()));
-                  self.currentTaskRef = snapshot.ref();
+                  logger.debug(self._getLogEntry('claimed ' + _getKey(snapshot)));
+                  self.currentTaskRef = _getRef(snapshot);
                   self.currentTaskListener = self.currentTaskRef
                       .child('_owner').on('value', function(ownerSnapshot) {
                         var id = self.processId + ':' + self.taskNumber;
@@ -506,21 +519,22 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
                       '_state_changed',
                       '_owner',
                       '_progress',
-                      '_error_details',
-                      '_id'
+                      '_error_details'
                     ].forEach(function(reserved) {
                       if (snapshot.hasChild(reserved)) {
                         delete data[reserved];
                       }
                     });
+                  } else {
+                    data._id = _getKey(snapshot);
                   }
                   var progress = self._updateProgress(self.taskNumber);
                   var resolve = self._resolve(self.taskNumber);
                   var reject = self._reject(self.taskNumber);
                   setImmediate(function() {
                     try {
-                      self.processingFunction.call(null, data, progress, resolve,
-                        reject);
+                      self.processingFunction.call(null, data, progress,
+                        resolve, reject);
                     } catch (err) {
                       reject(err);
                     }
@@ -570,11 +584,11 @@ QueueWorker.prototype._setUpTimeouts = function() {
       .equalTo(self.inProgressState);
 
     var setUpTimeout = function(snapshot) {
-      var taskName = snapshot.key();
+      var taskName = _getKey(snapshot);
       var now = new Date().getTime();
       var startTime = (snapshot.child('_state_changed').val() || now);
       var expires = Math.max(0, startTime - now + self.taskTimeout);
-      var ref = snapshot.ref();
+      var ref = _getRef(snapshot);
       self.owners[taskName] = snapshot.child('_owner').val();
       self.expiryTimeouts[taskName] = setTimeout(
         self._resetTask.bind(self),
@@ -590,7 +604,7 @@ QueueWorker.prototype._setUpTimeouts = function() {
     self.processingTaskRemovedListener = self.processingTasksRef.on(
       'child_removed',
       function(snapshot) {
-        var taskName = snapshot.key();
+        var taskName = _getKey(snapshot);
         clearTimeout(self.expiryTimeouts[taskName]);
         delete self.expiryTimeouts[taskName];
         delete self.owners[taskName];
@@ -601,7 +615,7 @@ QueueWorker.prototype._setUpTimeouts = function() {
       // This catches de-duped events from the server - if the task was removed
       // and added in quick succession, the server may squash them into a
       // single update
-      var taskName = snapshot.key();
+      var taskName = _getKey(snapshot);
       if (snapshot.child('_owner').val() !== self.owners[taskName]) {
         setUpTimeout(snapshot);
       }

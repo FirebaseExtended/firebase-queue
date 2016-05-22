@@ -5,3 +5,5 @@
 dist/
 coverage/
 node_modules/
+
+key.json

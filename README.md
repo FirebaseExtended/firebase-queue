@@ -25,7 +25,7 @@ Using Firebase Queue, you can create specs for each of these tasks, and then use
 
 ## The Queue in Your Firebase Database
 
-The queue relies on having a Firebase database reference to coordinate workers e.g. `https://<your-firebase>.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
+The queue relies on having a Firebase database reference to coordinate workers e.g. `https://databaseName.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
 
 ```
 queue
@@ -39,15 +39,20 @@ See [Custom references to tasks and specs](#custom-references-to-tasks-and-specs
 
 The basic unit of the queue is the queue worker: the process that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
 
-You can start a worker process by passing in a Firebase database  [`ref`](https://www.firebase.com/docs/web/guide/understanding-data.html#section-creating-references) along with a processing function ([described below](#the-processing-function)), as follows:
+You can start a worker process by passing in a Firebase database  [`ref`](https://firebase.google.com/docs/server/setup#initialize_the_sdk) along with a processing function ([described below](#the-processing-function)), as follows:
 
 ```js
 // my_queue_worker.js
 
-var Queue = require('firebase-queue'),
-    Firebase = require('firebase');
+var Queue = require('firebase-queue');
+var firebase = require('firebase');
 
-var ref = new Firebase('https://<your-firebase>.firebaseio.com/queue');
+firebase.initializeApp({
+  serviceAccount: 'path/to/serviceAccountCredentials.json',
+  databaseURL: '<your-database-url>'
+});
+
+var ref = firebase.database().ref('queue');
 var queue = new Queue(ref, function(data, progress, resolve, reject) {
   // Read and process task data
   console.log(data);
@@ -98,14 +103,12 @@ Using any Firebase client or the REST API, push an object with some data to the 
 
 ```shell
 # Using curl in shell
-curl -X POST -d '{"foo": "bar"}' https://<your-firebase>.firebaseio.com/queue/tasks.json
+curl -X POST -d '{"foo": "bar"}' https://databaseName.firebaseio.com/queue/tasks.json
 ```
 or
 ```js
-// Firebase Javascript Client
-var Firebase = require('firebase');
-
-var ref = new Firebase('https://<your-firebase>.firebaseio.com/queue/tasks');
+// Using the web JavaScript client
+var ref = firebase.database().ref('queue/tasks');
 ref.push({'foo': 'bar'});
 ```
 
@@ -178,7 +181,7 @@ A callback function for reporting that the current task failed and the worker is
 
 Securing your queue is an important step in securely processing events that come in. Below is a sample set of security rules that can be tailored to your particular use case.
 
-In this example, there are three categories of users, represented using fields of a [custom token](https://www.firebase.com/docs/rest/guide/user-auth.html):
+In this example, there are three categories of users, represented using fields of a [Database Auth Variable Override](https://firebase.google.com/docs/database/server/start#authenticate-with-limited-privileges):
 - `auth.canAddTasks`: Users who can add tasks to the queue (could be an authenticated client or a secure server)
 - `auth.canProcessTasks`: Users who can process tasks (usually on a secure server)
 - `auth.canAddSpecs`: Users who can create and view task specifications (usually on a secure server)
@@ -379,9 +382,8 @@ root
 Let's imagine that you have some front end that allows your users to write their name and a message, and send that to your queue as it's `data`. Let's assume your user writes something like the following:
 
 ```js
-// chat_client.js
-
-var tasksRef = new Firebase('https://<your-firebase>.firebaseio.com/queue/tasks');
+// Using the web JavaScript client
+var tasksRef = firebase.database().ref('queue/tasks');
 tasksRef.push({
   'message': 'Hello Firebase Queue Users!',
   'name': 'Chris'
@@ -406,12 +408,17 @@ When your users push `data` like the above into the `tasks` subtree, tasks will 
 ```js
 // chat_message_sanitization.js
 
-var Queue = require('firebase-queue'),
-    Firebase = require('firebase');
+var Queue = require('firebase-queue');
+var firebase = require('firebase');
 
-var ref = new Firebase('https://<your-firebase>.firebaseio.com');
-var queueRef = ref.child('queue');
-var messagesRef = ref.child('messages');
+firebase.initializeApp({
+  serviceAccount: 'path/to/serviceAccountCredentials.json',
+  databaseURL: '<your-database-url>'
+});
+
+var db = firebase.database();
+var queueRef = db.ref('queue');
+var messagesRef = db.ref('messages');
 
 var options = {
   'specId': 'sanitize_message'
@@ -493,11 +500,18 @@ While this example is a little contrived since you could perform the sanitizatio
 It is possible to specify the locations the queue uses for tasks and the specs explicitly instead of using the defaults. To do this, simply pass an object to the Queue constructor in place of the Firebase reference; this object must contain the keys `tasksRef` and `specsRef`, and each value must be a Firebase reference.
 
 ```js
-var Queue = require('firebase-queue'),
-    Firebase = require('firebase');
+var Queue = require('firebase-queue');
+var firebase = require('firebase');
 
-var jobsRef = new Firebase('https://<your-firebase>.firebaseio.com/jobs');
-var specsRef = new Firebase('https://<your-firebase>.firebaseio.com/specs');
+firebase.initializeApp({
+  serviceAccount: 'path/to/serviceAccountCredentials.json',
+  databaseURL: '<your-database-url>'
+});
+
+var db = firebase.database();
+
+var jobsRef = db.ref('jobs');
+var specsRef = db.ref('specs');
 
 var queue = new Queue({ tasksRef: jobsRef, specsRef: specsRef }, function(data, progress, resolve, reject) {
   // process task
@@ -506,4 +520,19 @@ var queue = new Queue({ tasksRef: jobsRef, specsRef: specsRef }, function(data, 
 
 ## Wrap Up
 
-As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase data, from sanitization to data fanout and more. We'd love to hear about how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), or [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [support@firebase.com](mailto:support@firebase.com).
+As you can see, Firebase Queue is a powerful tool that allows you to securely and robustly perform background work on your Firebase data, from sanitization to data fanout and more. We'd love to hear about how you're using Firebase-Queue in your project! Let us know on [Twitter](https://twitter.com/firebase), [Facebook](https://www.facebook.com/Firebase), or [G+](https://plus.google.com/115330003035930967645). If you have any questions, please direct them to our [Google Group](https://groups.google.com/forum/#!forum/firebase-talk) or [firebase-support@google.com](mailto:firebase-support@google.com).
+
+## Running the Tests
+
+To run the tests you first need to create a Firebase Realtime Database to test against in the [Firebase console](https://console.firebase.google.com), and create a [service account](https://console.firebase.google.com/iam-admin/serviceaccounts/project) for that project. The service account should have Editor permission on the project, and you'll need to furnish the account with JSON credentials. See [the documentation](https://firebase.google.com/docs/server/setup#add_firebase_to_your_app) for detailed instructions on creating service accounts.
+
+Once you have created and downloaded the service account credentials, place them in a `key.json` file at the root of this repository (you should **never** check this file in, it should be ignored by a rule in the `.gitignore` file).
+
+Then, to run the tests, simply run these commands:
+
+```sh
+export FB_QUEUE_TEST_DB_URL=https://databaseName.firebaseio.com
+npm test
+```
+
+Where `databaseName` is the name of the Firebase Realtime Database you created for testing.
