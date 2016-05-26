@@ -6,6 +6,8 @@ node_js:
 - '5'
 - stable
 sudo: false
+env:
+  FB_QUEUE_TEST_DB_URL=https://fir-queue-test.firebaseio.com
 install:
 - npm install
 script:

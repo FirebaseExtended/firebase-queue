@@ -1,12 +1,13 @@
 'use strict';
 
 var _ = require('lodash');
+var path = require('path');
 var util = require('util');
 var firebase = require('firebase');
 
 firebase.initializeApp({
-  serviceAccount: 'key.json',
-  databaseURL: process.env.FB_QUEUE_TEST_DB_URL || 'https://fir-queue-test.firebaseio.com'
+  serviceAccount: path.resolve(__dirname, './key.json'),
+  databaseURL: process.env.FB_QUEUE_TEST_DB_URL
 });
 
 module.exports = function() {
