@@ -7,7 +7,7 @@ Have a usage question?
 We get lots of those and we love helping you, but GitHub is not the best place for them and they
 will be closed.
 
-Start with the documentation: https://github.com/firebase/firebase-queue/blob/master/docs/quickstart.md
+Start with the guide: https://github.com/firebase/firebase-queue/blob/master/docs/guide.md
 
 If the official documentation doesn't help, try asking through our official support channels:
 

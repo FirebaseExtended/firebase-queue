@@ -12,15 +12,10 @@ Thank you for contributing to the Firebase community!
 ## <a name="question"></a>Have a usage question?
 
 We get lots of those and we love helping you, but GitHub is not the best place for them. Issues
-which just ask about usage will be closed. Here are some resources to get help:
+which just ask about usage will be closed.
 
-- Start with the [quickstart](../docs/quickstart.md)
-- Go through the [guide](../docs/guide.md)
-- Read the full [API reference](../docs/reference.md)
-- Try out some [examples](../examples/README.md)
-
-If the official documentation doesn't help, try asking a question through our
-[official support channels](https://firebase.google.com/support/).
+Start with the [guide](../docs/guide.md). If the official documentation doesn't help, try asking a
+question through our [official support channels](https://firebase.google.com/support/).
 
 **Please avoid double posting across multiple channels!**
 
