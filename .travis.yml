@@ -6,12 +6,14 @@ node_js:
 - '5'
 - stable
 sudo: false
+env:
+  FB_QUEUE_TEST_DB_URL=https://fir-queue-test.firebaseio.com
 install:
 - npm install
 script:
-- '[ -e key.json ] && npm run travis || false'
+- '[ -e test/key.json ] && npm run travis || false'
 after_script:
 - cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
 before_install:
 - openssl aes-256-cbc -K $encrypted_a237b3635f54_key -iv $encrypted_a237b3635f54_iv
-  -in key.json.enc -out key.json -d
+  -in test/key.json.enc -out test/key.json -d
