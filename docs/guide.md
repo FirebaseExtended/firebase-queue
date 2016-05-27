@@ -13,7 +13,6 @@
  * [Message Sanitization, Revisited](#message-sanitization-revisited)
  * [Custom references to tasks and specs](#custom-references-to-tasks-and-specs)
  * [Wrap Up](#wrap-up)
- * [Contributing](#contributing)
 
 
 ## Purpose of a Queue
