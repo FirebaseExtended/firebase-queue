@@ -173,6 +173,7 @@ function Queue() {
         for (var k = 0; k < self.numWorkers; k++) {
           self.workers[k].setTaskSpec(taskSpec);
         }
+        self.currentTaskSpec = taskSpec;
         self.initialized = true;
       }, /* istanbul ignore next */ function(err) {
         logger.debug('Queue(): Error connecting to Firebase reference',
@@ -182,7 +183,6 @@ function Queue() {
 
   return self;
 }
-
 
 /**
  * Gracefully shuts down a queue.
@@ -203,5 +203,51 @@ Queue.prototype.shutdown = function() {
     return worker.shutdown();
   }));
 };
+
+/**
+ * Gets queue worker count
+ */
+Queue.prototype.getWorkerCount = function() {
+  return this.workers.length;
+};
+
+/**
+ * Adds a queue worker
+ */
+Queue.prototype.addWorker = function() {
+  logger.debug('Queue: adding worker');
+  var processId = (this.specId ? this.specId + ':' : '') + this.workers.length;
+  var worker = new QueueWorker(
+    this.tasksRef,
+    processId,
+    this.sanitize,
+    this.suppressStack,
+    this.processingFunction
+  );
+  this.workers.push(worker);
+
+  if (_.isUndefined(this.specId)) {
+    worker.setTaskSpec(DEFAULT_TASK_SPEC);
+  // if the currentTaskSpec is not yet set it will be called once it's fetched
+  } else if (this.currentTaskSpec) {
+    worker.setTaskSpec(this.currentTaskSpec);
+  }
+  return worker;
+};
+
+/**
+ * Removes a queue worker if one exists
+ */
+Queue.prototype.shutdownWorker = function() {
+  logger.debug('Queue: removing worker');
+  var shutdownPromise;
+  var worker = this.workers.shift();
+
+  if (worker) {
+    shutdownPromise = worker.shutdown();
+  }
+  return shutdownPromise;
+};
+
 
 module.exports = Queue;
