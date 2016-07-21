@@ -2117,7 +2117,7 @@ describe('QueueWorker', function() {
         setTimeout(function() {
           callbackComplete = true;
           resolve();
-        }, 100);
+        }, 250);
       });
     });
 
