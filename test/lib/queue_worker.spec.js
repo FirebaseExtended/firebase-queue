@@ -2117,7 +2117,7 @@ describe('QueueWorker', function() {
         setTimeout(function() {
           callbackComplete = true;
           resolve();
-        }, 250);
+        }, 500);
       });
     });
 
@@ -2147,7 +2147,7 @@ describe('QueueWorker', function() {
           } catch (errorB) {
             done(errorB);
           }
-        }, 300);
+        }, 500);
       });
     });
 
