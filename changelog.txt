@@ -1,0 +1,1 @@
+feature - Added ability to dynamically manage workers using `q.getWorkerCount()`, `q.addWorker()`, and `q.shutdownWorker()` (thanks to @startswithaj)
