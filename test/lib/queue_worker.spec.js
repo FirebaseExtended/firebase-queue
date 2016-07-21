@@ -2147,7 +2147,7 @@ describe('QueueWorker', function() {
           } catch (errorB) {
             done(errorB);
           }
-        }, 100);
+        }, 300);
       });
     });
   });

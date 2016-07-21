@@ -173,6 +173,7 @@ function Queue() {
         for (var k = 0; k < self.numWorkers; k++) {
           self.workers[k].setTaskSpec(taskSpec);
         }
+        self.currentTaskSpec = taskSpec;
         self.initialized = true;
       }, /* istanbul ignore next */ function(err) {
         logger.debug('Queue(): Error connecting to Firebase reference',
@@ -182,7 +183,6 @@ function Queue() {
 
   return self;
 }
-
 
 /**
  * Gracefully shuts down a queue.
@@ -203,5 +203,60 @@ Queue.prototype.shutdown = function() {
     return worker.shutdown();
   }));
 };
+
+/**
+ * Gets queue worker count
+ * @returns {Number} Total number of workers for this queue
+ */
+Queue.prototype.getWorkerCount = function() {
+  return this.workers.length;
+};
+
+/**
+ * Adds a queue worker
+ * @returns {QueueWorker} the worker created
+ */
+Queue.prototype.addWorker = function() {
+  logger.debug('Queue: adding worker');
+  var processId = (this.specId ? this.specId + ':' : '') + this.workers.length;
+  var worker = new QueueWorker(
+    this.tasksRef,
+    processId,
+    this.sanitize,
+    this.suppressStack,
+    this.processingFunction
+  );
+  this.workers.push(worker);
+
+  if (_.isUndefined(this.specId)) {
+    worker.setTaskSpec(DEFAULT_TASK_SPEC);
+  // if the currentTaskSpec is not yet set it will be called once it's fetched
+  } else if (!_.isUndefined(this.currentTaskSpec)) {
+    worker.setTaskSpec(this.currentTaskSpec);
+  }
+  return worker;
+};
+
+/**
+ * Shutdowns a queue worker if one exists
+ * @returns {RSVP.Promise} A promise fulfilled once the worker is shutdown
+ *   or rejected if there is no worker to shutdown
+ */
+Queue.prototype.shutdownWorker = function() {
+  var self = this
+  return new RSVP.Promise(
+    function(resolve, reject) {
+      var worker = self.workers.pop();
+
+      if (!_.isUndefined(worker)) {
+        logger.debug('Queue: shutting down worker');
+        resolve(worker.shutdown());
+      } else {
+        reject(new Error('No workers to shutdown'));
+      }
+    }
+  );
+};
+
 
 module.exports = Queue;

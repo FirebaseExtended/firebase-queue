@@ -144,6 +144,56 @@ describe('Queue', function() {
     });
   });
 
+  describe('#getWorkerCount', function() {
+    it('should return worker count with options.numWorkers', function() {
+      var numWorkers = 10
+      var q = new th.Queue(th.testRef, { numWorkers: numWorkers }, _.noop);
+      expect(q.getWorkerCount()).to.equal(numWorkers);
+    });
+  });
+
+  describe('#addWorker', function() {
+    it('should add worker', function() {
+      var q = new th.Queue(th.testRef, _.noop);
+      expect(q.getWorkerCount()).to.equal(1);
+      var worker = q.addWorker()
+      expect(q.getWorkerCount()).to.equal(2);
+    });
+
+    it('should add worker with correct process id', function() {
+      var specId = 'test_task';
+      var q = new th.Queue(th.testRef,{ specId: specId }, _.noop);
+      var worker = q.addWorker()
+      var specRegex = new RegExp('^' + specId + ':1:[a-f0-9\\-]{36}$');
+      expect(worker.processId).to.match(specRegex);
+    });
+  });
+
+  describe('#shutdownWorker', function() {
+    it('should remove worker', function() {
+      var q = new th.Queue(th.testRef, _.noop);
+      expect(q.getWorkerCount()).to.equal(1);
+      var workerShutdownPromise = q.shutdownWorker()
+      expect(q.getWorkerCount()).to.equal(0);
+    });
+
+    it('should shutdown worker', function() {
+      var q = new th.Queue(th.testRef, _.noop);
+      expect(q.getWorkerCount()).to.equal(1);
+      var workerShutdownPromise = q.shutdownWorker()
+      return workerShutdownPromise
+    });
+
+    it('should reject when no workers remaining', function() {
+      var q = new th.Queue(th.testRef, _.noop);
+      expect(q.getWorkerCount()).to.equal(1);
+      q.shutdownWorker()
+      return q.shutdownWorker().catch(function(error) {
+        expect(error.message).to.equal('No workers to shutdown');
+      });
+    });
+  });
+
   describe('#shutdown', function() {
     var q;
 
