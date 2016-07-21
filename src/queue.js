@@ -206,6 +206,7 @@ Queue.prototype.shutdown = function() {
 
 /**
  * Gets queue worker count
+ * @returns {Number} Total number of workers for this queue
  */
 Queue.prototype.getWorkerCount = function() {
   return this.workers.length;
@@ -213,6 +214,7 @@ Queue.prototype.getWorkerCount = function() {
 
 /**
  * Adds a queue worker
+ * @returns {QueueWorker} the worker created
  */
 Queue.prototype.addWorker = function() {
   logger.debug('Queue: adding worker');
@@ -229,24 +231,31 @@ Queue.prototype.addWorker = function() {
   if (_.isUndefined(this.specId)) {
     worker.setTaskSpec(DEFAULT_TASK_SPEC);
   // if the currentTaskSpec is not yet set it will be called once it's fetched
-  } else if (this.currentTaskSpec) {
+  } else if (!_.isUndefined(this.currentTaskSpec)) {
     worker.setTaskSpec(this.currentTaskSpec);
   }
   return worker;
 };
 
 /**
- * Removes a queue worker if one exists
+ * Shutdowns a queue worker if one exists
+ * @returns {RSVP.Promise} A promise fulfilled once the worker is shutdown
+ *   or rejected if there is no worker to shutdown
  */
 Queue.prototype.shutdownWorker = function() {
-  logger.debug('Queue: removing worker');
-  var shutdownPromise;
-  var worker = this.workers.shift();
+  var self = this
+  return new RSVP.Promise(
+    function(resolve, reject) {
+      var worker = self.workers.pop();
 
-  if (worker) {
-    shutdownPromise = worker.shutdown();
-  }
-  return shutdownPromise;
+      if (!_.isUndefined(worker)) {
+        logger.debug('Queue: shutting down worker');
+        resolve(worker.shutdown());
+      } else {
+        reject(new Error('No workers to shutdown'));
+      }
+    }
+  );
 };
 
 

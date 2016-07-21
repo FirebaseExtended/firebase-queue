@@ -159,6 +159,7 @@ describe('Queue', function() {
       var worker = q.addWorker()
       expect(q.getWorkerCount()).to.equal(2);
     });
+
     it('should add worker with correct process id', function() {
       var specId = 'test_task';
       var q = new th.Queue(th.testRef,{ specId: specId }, _.noop);
@@ -175,18 +176,21 @@ describe('Queue', function() {
       var workerShutdownPromise = q.shutdownWorker()
       expect(q.getWorkerCount()).to.equal(0);
     });
+
     it('should shutdown worker', function() {
       var q = new th.Queue(th.testRef, _.noop);
       expect(q.getWorkerCount()).to.equal(1);
       var workerShutdownPromise = q.shutdownWorker()
       return workerShutdownPromise
     });
-    it('should return undefined when no workers remaining', function() {
+
+    it('should reject when no workers remaining', function() {
       var q = new th.Queue(th.testRef, _.noop);
       expect(q.getWorkerCount()).to.equal(1);
       q.shutdownWorker()
-      var workerShutdownPromise = q.shutdownWorker()
-      expect(workerShutdownPromise).to.be.undefined
+      return q.shutdownWorker().catch(function(error) {
+        expect(error.message).to.equal('No workers to shutdown');
+      });
     });
   });
 
