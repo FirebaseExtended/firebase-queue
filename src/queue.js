@@ -63,6 +63,7 @@ function Queue() {
   self.sanitize = DEFAULT_SANITIZE;
   self.suppressStack = DEFAULT_SUPPRESS_STACK;
   self.initialized = false;
+  self.shuttingDown = false;
 
   self.specChangeListener = null;
 
@@ -173,6 +174,7 @@ function Queue() {
         for (var k = 0; k < self.numWorkers; k++) {
           self.workers[k].setTaskSpec(taskSpec);
         }
+        self.currentTaskSpec = taskSpec;
         self.initialized = true;
       }, /* istanbul ignore next */ function(err) {
         logger.debug('Queue(): Error connecting to Firebase reference',
@@ -183,25 +185,81 @@ function Queue() {
   return self;
 }
 
-
 /**
  * Gracefully shuts down a queue.
  * @returns {RSVP.Promise} A promise fulfilled when all the worker processes
  *   have finished their current tasks and are no longer listening for new ones.
  */
 Queue.prototype.shutdown = function() {
-  var self = this;
-
+  this.shuttingDown = true;
   logger.debug('Queue: Shutting down');
-  if (!_.isNull(self.specChangeListener)) {
-    self.specsRef.child(self.specId).off('value',
-      self.specChangeListener);
-    self.specChangeListener = null;
+  if (!_.isNull(this.specChangeListener)) {
+    this.specsRef.child(this.specId).off('value',
+      this.specChangeListener);
+    this.specChangeListener = null;
   }
 
-  return RSVP.all(_.map(self.workers, function(worker) {
+  return RSVP.all(_.map(this.workers, function(worker) {
     return worker.shutdown();
   }));
 };
+
+/**
+ * Gets queue worker count.
+ * @returns {Number} Total number of workers for this queue.
+ */
+Queue.prototype.getWorkerCount = function() {
+  return this.workers.length;
+};
+
+/**
+ * Adds a queue worker.
+ * @returns {QueueWorker} the worker created.
+ */
+Queue.prototype.addWorker = function() {
+  if (this.shuttingDown) {
+    throw new Error('Cannot add worker while queue is shutting down');
+  }
+
+  logger.debug('Queue: adding worker');
+  var processId = (this.specId ? this.specId + ':' : '') + this.workers.length;
+  var worker = new QueueWorker(
+    this.tasksRef,
+    processId,
+    this.sanitize,
+    this.suppressStack,
+    this.processingFunction
+  );
+  this.workers.push(worker);
+
+  if (_.isUndefined(this.specId)) {
+    worker.setTaskSpec(DEFAULT_TASK_SPEC);
+  // if the currentTaskSpec is not yet set it will be called once it's fetched
+  } else if (!_.isUndefined(this.currentTaskSpec)) {
+    worker.setTaskSpec(this.currentTaskSpec);
+  }
+
+  return worker;
+};
+
+/**
+ * Shutdowns a queue worker if one exists.
+ * @returns {RSVP.Promise} A promise fulfilled once the worker is shutdown
+ *   or rejected if there are no workers left to shutdown.
+ */
+Queue.prototype.shutdownWorker = function() {
+  var worker = this.workers.pop();
+
+  var promise;
+  if (_.isUndefined(worker)) {
+    promise = RSVP.reject(new Error('No workers to shutdown'));
+  } else {
+    logger.debug('Queue: shutting down worker');
+    promise = worker.shutdown();
+  }
+
+  return promise;
+};
+
 
 module.exports = Queue;

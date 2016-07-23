@@ -750,6 +750,10 @@ QueueWorker.prototype.setTaskSpec = function(taskSpec) {
 QueueWorker.prototype.shutdown = function() {
   var self = this;
 
+  if (!_.isNull(self.shutdownDeferred)) {
+    return self.shutdownDeferred.promise;
+  }
+
   logger.debug(self._getLogEntry('shutting down'));
 
   // Set the global shutdown deferred promise, which signals we're shutting down

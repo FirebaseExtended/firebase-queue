@@ -2117,7 +2117,7 @@ describe('QueueWorker', function() {
         setTimeout(function() {
           callbackComplete = true;
           resolve();
-        }, 250);
+        }, 500);
       });
     });
 
@@ -2147,7 +2147,26 @@ describe('QueueWorker', function() {
           } catch (errorB) {
             done(errorB);
           }
-        }, 100);
+        }, 500);
+      });
+    });
+
+    it('should return the same shutdown promise if shutdown is called twice', function(done) {
+      qw.setTaskSpec(th.validBasicTaskSpec);
+      tasksRef.push({
+        foo: 'bar'
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        try {
+          var firstPromise = qw.shutdown();
+          var secondPromise = qw.shutdown();
+          expect(firstPromise).to.deep.equal(secondPromise);
+          return done();
+        } catch (errorB) {
+          return done(errorB);
+        }
       });
     });
   });
