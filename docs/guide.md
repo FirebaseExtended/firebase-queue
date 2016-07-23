@@ -10,6 +10,7 @@
  * [Queue Security](#queue-security)
  * [Defining Specs (Optional)](#defining-specs-optional)
  * [Graceful Shutdown](#graceful-shutdown)
+ * [Dynamic Worker Count](#dynamic-worker-count)
  * [Message Sanitization, Revisited](#message-sanitization-revisited)
  * [Custom references to tasks and specs](#custom-references-to-tasks-and-specs)
  * [Wrap Up](#wrap-up)
@@ -87,7 +88,7 @@ Multiple queue workers can be initialized on multiple machines and Firebase-Queu
 
 Queue workers can take an optional options object to specify:
   - `specId` - specifies the spec type for this worker. This is important when creating multiple specs. Defaults to `null` which uses the default spec.
-  - `numWorkers` - specifies the number of workers to run simultaneously for this node.js thread. Defaults to 1 worker.
+  - `numWorkers` - specifies the number of initial workers to run simultaneously for this node.js thread. Defaults to 1 worker, and can be updated once the queue has been initialized (see the [Dynamic Worker Count](#dynamic-worker-count) section).
   - `sanitize` - specifies whether the `data` object passed to the processing function is sanitized of internal keys reserved for use by the queue. Defaults to `true`.
   - `suppressStack` - specifies whether the queue will suppress error stack traces from being placed in the `_error_details` of the task if it's rejected with an Error.
 
@@ -366,6 +367,15 @@ process.on('SIGINT', function() {
   });
 });
 ```
+
+
+## Dynamic Worker Count
+
+The number of workers running simultaneously in the same node.js thread can be managed dynamically using the following three methods on the instantiated Queue object:
+
+- `getWorkerCount()` - This method returns the current number of workers on a queue.
+- `addWorker()` - This method instantiates a new worker with the queue's current specs.
+- `shutdownWorker()` - This method gracefully shuts down a worker and returns a promise fulfilled when shutdown. If there are no more workers to shutdown, the promise will be rejected.
 
 
 ## Message Sanitization, Revisited
