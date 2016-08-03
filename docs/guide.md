@@ -21,7 +21,7 @@
 Queues can be used in your Firebase app to organize workers or perform background work like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to multiple locations in your Firebase database. First, let's define a few terms we'll use when talking about a queue:
   - `task` - a unit of work that a queue worker can process
   - `spec` - a definition of an operation that the queue will perform on matching tasks
-  - `job` - one of more `spec`'s that specify a series of ordered operations to be performed
+  - `job` - one or more `spec`'s that specify a series of ordered operations to be performed
   - `worker` - an individual process that picks up tasks with a certain spec and processes them
 
 Let's take a look at a simple example to see how this works. Imagine you wanted to build a chat application that does two things:
