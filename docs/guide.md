@@ -47,7 +47,7 @@ See [Custom references to tasks and specs](#custom-references-to-tasks-and-specs
 
 ## Queue Workers
 
-The basic unit of the queue is the queue worker: the process that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
+The basic unit of the queue is the queue worker: the function that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
 
 You can start a worker process by passing in a Firebase database  [`ref`](https://firebase.google.com/docs/server/setup#initialize_the_sdk) along with a processing function ([described below](#the-processing-function)), as follows:
 
@@ -88,7 +88,7 @@ Multiple queue workers can be initialized on multiple machines and Firebase-Queu
 
 Queue workers can take an optional options object to specify:
   - `specId` - specifies the spec type for this worker. This is important when creating multiple specs. Defaults to `null` which uses the default spec.
-  - `numWorkers` - specifies the number of initial workers to run simultaneously for this node.js thread. Defaults to 1 worker, and can be updated once the queue has been initialized (see the [Dynamic Worker Count](#dynamic-worker-count) section).
+  - `numWorkers` - specifies the number of initial workers to run simultaneously on a single node.js thread. Defaults to 1 worker, and can be updated once the queue has been initialized (see the [Dynamic Worker Count](#dynamic-worker-count) section).
   - `sanitize` - specifies whether the `data` object passed to the processing function is sanitized of internal keys reserved for use by the queue. Defaults to `true`.
   - `suppressStack` - specifies whether the queue will suppress error stack traces from being placed in the `_error_details` of the task if it's rejected with an Error.
 
