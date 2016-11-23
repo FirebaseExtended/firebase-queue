@@ -3,17 +3,19 @@
 var _ = require('lodash');
 var path = require('path');
 var util = require('util');
-var firebase = require('firebase');
+var admin = require('firebase-admin');
 
-firebase.initializeApp({
-  serviceAccount: path.resolve(__dirname, './key.json'),
+var serviceAccount = require('./key.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
   databaseURL: process.env.FB_QUEUE_TEST_DB_URL
 });
 
 module.exports = function() {
   var self = this;
 
-  this.testRef = firebase.database().ref(_.random(1, 2 << 29));
+  this.testRef = admin.database().ref(_.random(1, 2 << 29));
   this.offset = 0;
   self.testRef.root.child('.info/serverTimeOffset').on('value', function(snapshot) {
     self.offset = snapshot.val();
