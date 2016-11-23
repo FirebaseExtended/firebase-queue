@@ -55,14 +55,14 @@ You can start a worker process by passing in a Firebase database  [`ref`](https:
 // my_queue_worker.js
 
 var Queue = require('firebase-queue');
-var firebase = require('firebase');
+var admin = require('firebase-admin');
 
-firebase.initializeApp({
-  serviceAccount: 'path/to/serviceAccountCredentials.json',
+admin.initializeApp({
+  credential: admin.credential.cert('path/to/serviceAccountCredentials.json'),
   databaseURL: '<your-database-url>'
 });
 
-var ref = firebase.database().ref('queue');
+var ref = admin.database().ref('queue');
 var queue = new Queue(ref, function(data, progress, resolve, reject) {
   // Read and process task data
   console.log(data);
@@ -432,14 +432,14 @@ When your users push `data` like the above into the `tasks` subtree, tasks will 
 // chat_message_sanitization.js
 
 var Queue = require('firebase-queue');
-var firebase = require('firebase');
+var admin = require('firebase-admin');
 
-firebase.initializeApp({
-  serviceAccount: 'path/to/serviceAccountCredentials.json',
+admin.initializeApp({
+  credential: admin.credential.cert('path/to/serviceAccountCredentials.json'),
   databaseURL: '<your-database-url>'
 });
 
-var db = firebase.database();
+var db = admin.database();
 var queueRef = db.ref('queue');
 var messagesRef = db.ref('messages');
 
@@ -525,14 +525,14 @@ It is possible to specify the locations the queue uses for tasks and the specs e
 
 ```js
 var Queue = require('firebase-queue');
-var firebase = require('firebase');
+var admin = require('firebase-admin');
 
-firebase.initializeApp({
-  serviceAccount: 'path/to/serviceAccountCredentials.json',
+admin.initializeApp({
+  credential: admin.credential.cert('path/to/serviceAccountCredentials.json'),
   databaseURL: '<your-database-url>'
 });
 
-var db = firebase.database();
+var db = admin.database();
 
 var jobsRef = db.ref('jobs');
 var specsRef = db.ref('specs');
