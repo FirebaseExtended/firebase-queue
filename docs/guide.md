@@ -44,6 +44,8 @@ queue
 
 See [Custom references to tasks and specs](#custom-references-to-tasks-and-specs) for defining the locations of these other than the default.
 
+Firebase Queue works with a Firebase database reference from either the [firebase-admin](https://www.npmjs.com/package/firebase-admin) (for admin access) or [firebase](https://www.npmjs.com/package/firebase) (for end-user access) NPM module, though it is mainly intended to perform administrative actions. Check out [this blog post](https://firebase.googleblog.com/2016/11/bringing-firebase-to-your-server.html) for an introduction to firebase-admin.
+
 
 ## Queue Workers
 
