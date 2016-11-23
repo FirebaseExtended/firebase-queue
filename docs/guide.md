@@ -18,7 +18,7 @@
 
 ## Purpose of a Queue
 
-Queues can be used in your Firebase app to organize workers or perform background work like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to multiple locations in your Firebase database. First, let's define a few terms we'll use when talking about a queue:
+Queues can be used in your Firebase app to organize workers or perform background work like generating thumbnails of images, filtering message contents and censoring data, or fanning data out to multiple locations in your Firebase Database. First, let's define a few terms we'll use when talking about a queue:
   - `task` - a unit of work that a queue worker can process
   - `spec` - a definition of an operation that the queue will perform on matching tasks
   - `job` - one or more `spec`'s that specify a series of ordered operations to be performed
@@ -34,7 +34,7 @@ Using Firebase Queue, you can create specs for each of these tasks, and then use
 
 ## The Queue in Your Firebase Database
 
-The queue relies on having a Firebase database reference to coordinate workers e.g. `https://databaseName.firebaseio.com/queue`. This queue can be stored at any path in your Firebase database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
+The queue relies on having a Firebase Database reference to coordinate workers e.g. `https://databaseName.firebaseio.com/queue`. This queue can be stored at any path in your Firebase Database, and you can have multiple queues as well. The queue will respond to tasks pushed onto the `tasks` subtree and optionally read specifications from a `specs` subtree.
 
 ```
 queue
@@ -44,14 +44,14 @@ queue
 
 See [Custom references to tasks and specs](#custom-references-to-tasks-and-specs) for defining the locations of these other than the default.
 
-Firebase Queue works with a Firebase database reference from either the [firebase-admin](https://www.npmjs.com/package/firebase-admin) (for admin access) or [firebase](https://www.npmjs.com/package/firebase) (for end-user access) NPM module, though it is mainly intended to perform administrative actions. Check out [this blog post](https://firebase.googleblog.com/2016/11/bringing-firebase-to-your-server.html) for an introduction to firebase-admin.
+Firebase Queue works with a Firebase Database reference from either the [`firebase-admin`](https://www.npmjs.com/package/firebase-admin) (for admin access) or [`firebase`](https://www.npmjs.com/package/firebase) (for end-user access) npm package, though it is mainly intended to perform administrative actions. Check out [this blog post](https://firebase.googleblog.com/2016/11/bringing-firebase-to-your-server.html) for an introduction to `firebase-admin`.
 
 
 ## Queue Workers
 
 The basic unit of the queue is the queue worker: the function that claims a task, performs the appropriate processing on the data, and either returns the transformed data, or an appropriate error.
 
-You can start a worker process by passing in a Firebase database  [`ref`](https://firebase.google.com/docs/server/setup#initialize_the_sdk) along with a processing function ([described below](#the-processing-function)), as follows:
+You can start a worker process by passing in a Firebase Database  [`ref`](https://firebase.google.com/docs/server/setup#initialize_the_sdk) along with a processing function ([described below](#the-processing-function)), as follows:
 
 ```js
 // my_queue_worker.js
@@ -59,8 +59,9 @@ You can start a worker process by passing in a Firebase database  [`ref`](https:
 var Queue = require('firebase-queue');
 var admin = require('firebase-admin');
 
+var serviceAccount = require('path/to/serviceAccountCredentials.json')
 admin.initializeApp({
-  credential: admin.credential.cert('path/to/serviceAccountCredentials.json'),
+  credential: admin.credential.cert(serviceAccount),
   databaseURL: '<your-database-url>'
 });
 
@@ -415,7 +416,7 @@ tasksRef.push({
 });
 ```
 
-Your Firebase database should now look like this:
+Your Firebase Database should now look like this:
 
 ```
 root
@@ -436,8 +437,9 @@ When your users push `data` like the above into the `tasks` subtree, tasks will 
 var Queue = require('firebase-queue');
 var admin = require('firebase-admin');
 
+var serviceAccount = require('path/to/serviceAccountCredentials.json')
 admin.initializeApp({
-  credential: admin.credential.cert('path/to/serviceAccountCredentials.json'),
+  credential: admin.credential.cert(serviceAccount),
   databaseURL: '<your-database-url>'
 });
 
@@ -495,7 +497,7 @@ root
         - name: "Chris"
 ```
 
-Now, you want to fan the data out to the `messages` subtree of your Firebase database, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
+Now, you want to fan the data out to the `messages` subtree of your Firebase Database, using the spec, `fanout_message`, so you can set up a second processing function to find tasks whose `_state` is `sanitize_message_finished`:
 
 ```js
 ...
@@ -529,8 +531,9 @@ It is possible to specify the locations the queue uses for tasks and the specs e
 var Queue = require('firebase-queue');
 var admin = require('firebase-admin');
 
+var serviceAccount = require('path/to/serviceAccountCredentials.json')
 admin.initializeApp({
-  credential: admin.credential.cert('path/to/serviceAccountCredentials.json'),
+  credential: admin.credential.cert(serviceAccount),
   databaseURL: '<your-database-url>'
 });
 
