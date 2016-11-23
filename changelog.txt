@@ -1,0 +1,3 @@
+changed - `firebase` is no longer a direct dependency.
+fixed - Updated test suite to use `firebase-admin` instead of `firebase`.
+fixed - Updated dependencies.
