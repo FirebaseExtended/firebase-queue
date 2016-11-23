@@ -59,7 +59,7 @@ You can start a worker process by passing in a Firebase Database  [`ref`](https:
 var Queue = require('firebase-queue');
 var admin = require('firebase-admin');
 
-var serviceAccount = require('path/to/serviceAccountCredentials.json')
+var serviceAccount = require('path/to/serviceAccountCredentials.json');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: '<your-database-url>'
@@ -437,7 +437,7 @@ When your users push `data` like the above into the `tasks` subtree, tasks will 
 var Queue = require('firebase-queue');
 var admin = require('firebase-admin');
 
-var serviceAccount = require('path/to/serviceAccountCredentials.json')
+var serviceAccount = require('path/to/serviceAccountCredentials.json');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: '<your-database-url>'
@@ -531,7 +531,7 @@ It is possible to specify the locations the queue uses for tasks and the specs e
 var Queue = require('firebase-queue');
 var admin = require('firebase-admin');
 
-var serviceAccount = require('path/to/serviceAccountCredentials.json')
+var serviceAccount = require('path/to/serviceAccountCredentials.json');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: '<your-database-url>'
