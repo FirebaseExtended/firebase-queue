@@ -17,9 +17,8 @@
     "email": "firebase-support@google.com",
     "url": "https://firebase.google.com/"
   },
-  "homepage": "https://firebase.google.com/",
-  "repository": "https://github.com/firebase/firebase-queue.git",
   "homepage": "https://github.com/firebase/firebase-queue",
+  "repository": "https://github.com/firebase/firebase-queue.git",
   "main": "dist/queue.js",
   "files": [
     "dist/lib/**",
@@ -34,8 +33,8 @@
   "dependencies": {
     "firebase": "^3.0.0",
     "lodash": "^4.6.1",
-    "node-uuid": "^1.4.7",
     "rsvp": "^3.2.1",
+    "uuid": "^3.0.0",
     "winston": "^2.2.0"
   },
   "devDependencies": {
