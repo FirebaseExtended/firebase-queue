@@ -1,6 +1,5 @@
 'use strict';
 
-var firebase = require('firebase');
 var logger = require('winston');
 var uuid = require('uuid');
 var RSVP = require('rsvp');
@@ -10,7 +9,7 @@ var MAX_TRANSACTION_ATTEMPTS = 10;
 var DEFAULT_ERROR_STATE = 'error';
 var DEFAULT_RETRIES = 0;
 
-var SERVER_TIMESTAMP = firebase.database.ServerValue.TIMESTAMP;
+var SERVER_TIMESTAMP = {'.sv': 'timestamp'};
 
 function _getKey(snapshot) {
   return _.isFunction(snapshot.key) ? snapshot.key() : snapshot.key;

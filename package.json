@@ -27,11 +27,7 @@
     "README.md",
     "package.json"
   ],
-  "peerDependencies": {
-    "firebase": "^2.4.2 || ^3.0.0"
-  },
   "dependencies": {
-    "firebase": "^3.0.0",
     "lodash": "^4.6.1",
     "rsvp": "^3.2.1",
     "uuid": "^3.0.0",
@@ -39,13 +35,14 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "chai-as-promised": "^5.3.0",
+    "chai-as-promised": "^6.0.0",
     "coveralls": "^2.11.8",
+    "firebase-admin": "^4.0.3",
     "gulp": "^3.9.1",
-    "gulp-eslint": "^2.0.0",
+    "gulp-eslint": "^3.0.1",
     "gulp-exit": "^0.0.2",
-    "gulp-istanbul": "^0.10.3",
-    "gulp-mocha": "^2.2.0",
+    "gulp-istanbul": "^1.1.1",
+    "gulp-mocha": "^3.0.1",
     "sinon": "^1.17.3",
     "sinon-chai": "^2.8.0"
   },
