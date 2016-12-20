@@ -95,6 +95,9 @@ QueueWorker.prototype._getLogEntry = function(message) {
  * Returns the state of a task to the start state.
  * @param {firebase.database.Reference} taskRef Firebase Realtime Database
  *   reference to the Firebase location of the task that's timed out.
+ * @param {Boolean} immediate Whether this is an immediate update to a task we
+ *   expect this worker to own, or whether it's a timeout reset that we don't
+ *   necessarily expect this worker to own.
  * @returns {RSVP.Promise} Whether the task was able to be reset.
  */
 QueueWorker.prototype._resetTask = function(taskRef, immediate, deferred) {
