@@ -105,7 +105,7 @@ describe('QueueWorker', function() {
       testRef = tasksRef.push({
         '_state': th.validBasicTaskSpec.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': 'someone',
+        '_owner': qw.processId + ':' + qw.taskNumber,
         '_progress': 10
       }, function(errorA) {
         if (errorA) {
@@ -131,13 +131,40 @@ describe('QueueWorker', function() {
       });
     });
 
+    it('should not reset a task if immediate set but no longer owned by current worker', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validBasicTaskSpec);
+      var originalTask = {
+        '_state': th.validBasicTaskSpec.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': 'someone-else',
+        '_progress': 0
+      };
+      testRef = tasksRef.push(originalTask, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        return qw._resetTask(testRef, true).then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalTask);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          });
+        }).catch(done);
+      });
+    });
+
     it('should not reset a task if immediate not set and it is has changed state recently', function(done) {
       qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
       qw.setTaskSpec(th.validBasicTaskSpec);
       var originalTask = {
         '_state': th.validBasicTaskSpec.inProgressState,
         '_state_changed': new Date().getTime(),
-        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_owner': 'someone',
         '_progress': 0
       };
       testRef = tasksRef.push(originalTask, function(errorA) {

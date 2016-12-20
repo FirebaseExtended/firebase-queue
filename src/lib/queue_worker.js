@@ -111,9 +111,12 @@ QueueWorker.prototype._resetTask = function(taskRef, immediate, deferred) {
     if (_.isNull(task)) {
       return task;
     }
+    var id = self.processId + ':' + self.taskNumber;
     var correctState = (task._state === self.inProgressState);
-    var timedOut = self.taskTimeout && (Date.now() - task._state_changed > self.taskTimeout);
-    if (correctState && (immediate || timedOut)) {
+    var correctOwner = (task._owner === id || !immediate);
+    var timeSinceUpdate = Date.now() - _.get(task, '_state_changed', 0);
+    var timedOut = ((self.taskTimeout && timeSinceUpdate > self.taskTimeout) || immediate);
+    if (correctState && correctOwner && timedOut) {
       task._state = self.startState;
       task._state_changed = SERVER_TIMESTAMP;
       task._owner = null;
