@@ -105,6 +105,92 @@ describe('QueueWorker', function() {
       testRef = tasksRef.push({
         '_state': th.validBasicTaskSpec.inProgressState,
         '_state_changed': new Date().getTime(),
+        '_owner': qw.processId + ':' + qw.taskNumber,
+        '_progress': 10
+      }, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        var initial = true;
+        return testRef.on('value', function(snapshot) {
+          if (initial) {
+            initial = false;
+            qw._resetTask(testRef, true);
+          } else {
+            try {
+              var task = snapshot.val();
+              expect(task).to.have.all.keys(['_state_changed']);
+              expect(task._state_changed).to.be.closeTo(new Date().getTime() + th.offset, 250);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          }
+        });
+      });
+    });
+
+    it('should not reset a task if immediate set but no longer owned by current worker', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validBasicTaskSpec);
+      var originalTask = {
+        '_state': th.validBasicTaskSpec.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': 'someone-else',
+        '_progress': 0
+      };
+      testRef = tasksRef.push(originalTask, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        return qw._resetTask(testRef, true).then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalTask);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          });
+        }).catch(done);
+      });
+    });
+
+    it('should not reset a task if immediate not set and it is has changed state recently', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validBasicTaskSpec);
+      var originalTask = {
+        '_state': th.validBasicTaskSpec.inProgressState,
+        '_state_changed': new Date().getTime(),
+        '_owner': 'someone',
+        '_progress': 0
+      };
+      testRef = tasksRef.push(originalTask, function(errorA) {
+        if (errorA) {
+          return done(errorA);
+        }
+        qw.currentTaskRef = testRef;
+        return qw._resetTask(testRef, false).then(function() {
+          testRef.once('value', function(snapshot) {
+            try {
+              expect(snapshot.val()).to.deep.equal(originalTask);
+              done();
+            } catch (errorB) {
+              done(errorB);
+            }
+          });
+        }).catch(done);
+      });
+    });
+
+    it('should reset a task that is currently in progress that has timed out', function(done) {
+      qw = new th.QueueWorkerWithoutProcessingOrTimeouts(tasksRef, '0', true, false, _.noop);
+      qw.setTaskSpec(th.validTaskSpecWithTimeout);
+      testRef = tasksRef.push({
+        '_state': th.validBasicTaskSpec.inProgressState,
+        '_state_changed': new Date().getTime() - th.validTaskSpecWithTimeout.timeout,
         '_owner': 'someone',
         '_progress': 10
       }, function(errorA) {
@@ -116,7 +202,7 @@ describe('QueueWorker', function() {
         return testRef.on('value', function(snapshot) {
           if (initial) {
             initial = false;
-            qw._resetTask(testRef);
+            qw._resetTask(testRef, false);
           } else {
             try {
               var task = snapshot.val();
@@ -137,7 +223,7 @@ describe('QueueWorker', function() {
 
       testRef = tasksRef.push();
       qw.currentTaskRef = testRef;
-      qw._resetTask(testRef).then(function() {
+      qw._resetTask(testRef, true).then(function() {
         testRef.once('value', function(snapshot) {
           try {
             expect(snapshot.val()).to.be.null;
@@ -163,7 +249,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentTaskRef = testRef;
-        return qw._resetTask(testRef).then(function() {
+        return qw._resetTask(testRef, true).then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalTask);
@@ -189,7 +275,7 @@ describe('QueueWorker', function() {
           return done(errorA);
         }
         qw.currentTaskRef = testRef;
-        return qw._resetTask(testRef).then(function() {
+        return qw._resetTask(testRef, true).then(function() {
           testRef.once('value', function(snapshot) {
             try {
               expect(snapshot.val()).to.deep.equal(originalTask);

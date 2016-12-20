@@ -95,9 +95,12 @@ QueueWorker.prototype._getLogEntry = function(message) {
  * Returns the state of a task to the start state.
  * @param {firebase.database.Reference} taskRef Firebase Realtime Database
  *   reference to the Firebase location of the task that's timed out.
+ * @param {Boolean} immediate Whether this is an immediate update to a task we
+ *   expect this worker to own, or whether it's a timeout reset that we don't
+ *   necessarily expect this worker to own.
  * @returns {RSVP.Promise} Whether the task was able to be reset.
  */
-QueueWorker.prototype._resetTask = function(taskRef, deferred) {
+QueueWorker.prototype._resetTask = function(taskRef, immediate, deferred) {
   var self = this;
   var retries = 0;
 
@@ -111,7 +114,12 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
     if (_.isNull(task)) {
       return task;
     }
-    if (task._state === self.inProgressState) {
+    var id = self.processId + ':' + self.taskNumber;
+    var correctState = (task._state === self.inProgressState);
+    var correctOwner = (task._owner === id || !immediate);
+    var timeSinceUpdate = Date.now() - _.get(task, '_state_changed', 0);
+    var timedOut = ((self.taskTimeout && timeSinceUpdate > self.taskTimeout) || immediate);
+    if (correctState && correctOwner && timedOut) {
       task._state = self.startState;
       task._state_changed = SERVER_TIMESTAMP;
       task._owner = null;
@@ -125,7 +133,7 @@ QueueWorker.prototype._resetTask = function(taskRef, deferred) {
     if (error) {
       if (++retries < MAX_TRANSACTION_ATTEMPTS) {
         logger.debug(self._getLogEntry('reset task errored, retrying'), error);
-        setImmediate(self._resetTask.bind(self), taskRef, deferred);
+        setImmediate(self._resetTask.bind(self), taskRef, immediate, deferred);
       } else {
         var errorMsg = 'reset task errored too many times, no longer retrying';
         logger.debug(self._getLogEntry(errorMsg), error);
@@ -491,7 +499,7 @@ QueueWorker.prototype._tryToProcess = function(deferred) {
                 if (self.busy) {
                   // Worker has become busy while the transaction was processing
                   // so give up the task for now so another worker can claim it
-                  self._resetTask(nextTaskRef);
+                  self._resetTask(nextTaskRef, true);
                 } else {
                   self.busy = true;
                   self.taskNumber += 1;
@@ -592,7 +600,7 @@ QueueWorker.prototype._setUpTimeouts = function() {
       self.expiryTimeouts[taskName] = setTimeout(
         self._resetTask.bind(self),
         expires,
-        ref);
+        ref, false);
     };
 
     self.processingTaskAddedListener = self.processingTasksRef.on('child_added',
@@ -704,7 +712,7 @@ QueueWorker.prototype.setTaskSpec = function(taskSpec) {
     self.currentTaskRef.child('_owner').off(
       'value',
       self.currentTaskListener);
-    self._resetTask(self.currentTaskRef);
+    self._resetTask(self.currentTaskRef, true);
     self.currentTaskRef = null;
     self.currentTaskListener = null;
   }
