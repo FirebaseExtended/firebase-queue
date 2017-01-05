@@ -281,6 +281,9 @@ These don't have to use a custom token, for instance you could use `auth != null
           "timeout": {
             ".validate": "newData.isNumber() && newData.val() > 0"
           },
+          "retries": {
+            ".validate": "newData.isNumber() && newData.val() >= 0"
+          },
           "$other": {
             ".validate": false
           }
