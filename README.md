@@ -1,8 +1,11 @@
+## Important: Google Cloud Functions for Firebase
+
+There may continue to be specific use-cases for firebase-queue, however if you're looking for a general purpose, scalable queueing system for Firebase then it is likely that building on top of [Google Cloud Functions for Firebase](https://firebase.google.com/docs/functions/) is the ideal route. 
+
 # Firebase Queue [![Build Status](https://travis-ci.org/firebase/firebase-queue.svg?branch=master)](https://travis-ci.org/firebase/firebase-queue) [![Coverage Status](https://img.shields.io/coveralls/firebase/firebase-queue.svg?branch=master&style=flat)](https://coveralls.io/r/firebase/firebase-queue) [![GitHub version](https://badge.fury.io/gh/firebase%2Ffirebase-queue.svg)](http://badge.fury.io/gh/firebase%2Ffirebase-queue)
 
 A fault-tolerant, multi-worker, multi-stage job pipeline built on the [Firebase Realtime
 Database](https://firebase.google.com/docs/database/).
-
 
 ## Table of Contents
 
