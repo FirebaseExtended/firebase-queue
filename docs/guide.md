@@ -213,7 +213,7 @@ These don't have to use a custom token, for instance you could use `auth != null
         "$taskId": {
           ".validate": "newData.hasChildren(['property_1', ..., 'property_n'])
                         || (auth.canProcessTasks
-                        && newData.hasChildren(['_state', '_state_changed', '_progress']))",
+                        && newData.hasChildren(['_state', '_state_changed']))",
           "_state": {
             ".validate": "newData.isString()"
           },
